@@ -63,6 +63,7 @@ load_config() {
     export LOGURU_NO_COLOR=1
 
     VENV_PATH=$(cfg '.env.venv_path')
+    LMMS_EVAL_DIR=$(cfg '.env.lmms_eval_dir // ""')
 
     # logs
     LOG_BASE=$(cfg '.log.dir')
@@ -105,6 +106,43 @@ load_config() {
     GEN_KWARGS=$(cfg '.eval.gen_kwargs // "max_new_tokens=32768"')
     MAX_NEW_TOKENS=$(parse_gen_kwarg "max_new_tokens" "32768")
     MAX_PIXELS=$(parse_gen_kwarg "max_pixels" "4014080")
+}
+
+# ── reinstall lmms-eval from source if configured ─────────────────────────────
+reinstall_lmms_eval() {
+    if [[ -z "${LMMS_EVAL_DIR:-}" || "${LMMS_EVAL_DIR}" == "null" || ! -d "${LMMS_EVAL_DIR}" ]]; then
+        return
+    fi
+
+    echo "[INFO][Machine ${MACHINE_RANK}] Reinstalling lmms-eval from ${LMMS_EVAL_DIR} (non-editable)..."
+    cd "${LMMS_EVAL_DIR}"
+
+    # Ensure uv is in PATH (it may be baked into the image at a non-standard location)
+    if ! command -v uv &>/dev/null; then
+        for _uv_path in "$HOME/.cargo/bin/uv" "$HOME/.local/bin/uv" "/usr/local/bin/uv" "/usr/bin/uv"; do
+            if [[ -x "$_uv_path" ]]; then
+                export PATH="$(dirname "$_uv_path"):$PATH"
+                break
+            fi
+        done
+    fi
+
+    if command -v uv &>/dev/null; then
+        export VIRTUAL_ENV="${VENV_PATH}"
+        uv pip install ".[all]" --python "${VENV_PATH}/bin/python"
+        uv pip install latex2sympy2_extended vllm rouge_score bert_score rdkit rdchiral \
+            --python "${VENV_PATH}/bin/python"
+    elif [[ -f "${VENV_PATH}/bin/pip" ]]; then
+        "${VENV_PATH}/bin/pip" install ".[all]"
+        "${VENV_PATH}/bin/pip" install latex2sympy2_extended vllm rouge_score bert_score rdkit rdchiral
+    else
+        echo "[WARN][Machine ${MACHINE_RANK}] Neither uv nor pip found. Bootstrapping pip..."
+        "${VENV_PATH}/bin/python" -m ensurepip --default-pip
+        "${VENV_PATH}/bin/python" -m pip install ".[all]"
+        "${VENV_PATH}/bin/python" -m pip install latex2sympy2_extended vllm rouge_score bert_score rdkit rdchiral
+    fi
+
+    echo "[INFO][Machine ${MACHINE_RANK}] lmms-eval reinstalled successfully."
 }
 
 # ── validate that virtual environment exists ──────────────────────────────────

@@ -33,6 +33,14 @@ def vstar_doc_to_text(doc, lmms_eval_specific_kwargs=None):
     return question
 
 
+def vstar_filter_direct_attributes(dataset):
+    return dataset.filter(lambda doc: doc.get("category", "") == "direct_attributes")
+
+
+def vstar_filter_relative_position(dataset):
+    return dataset.filter(lambda doc: doc.get("category", "") == "relative_position")
+
+
 vstar_reasoning_doc_to_messages = make_reasoning_doc_to_messages(vstar_doc_to_visual, vstar_doc_to_text)
 
 

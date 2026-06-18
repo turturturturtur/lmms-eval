@@ -11,6 +11,8 @@ import pandas as pd
 import requests
 from loguru import logger as eval_logger
 
+from lmms_eval.tasks._task_utils.file_utils import sanitize_for_excel
+
 
 def dump(data, f):
     def dump_pkl(data, pth):
@@ -25,6 +27,8 @@ def dump(data, f):
             fout.write("\n".join(lines))
 
     def dump_xlsx(data, f):
+        if hasattr(data, "map"):
+            data = data.map(sanitize_for_excel)
         data.to_excel(f, index=False)
 
     def dump_csv(data, f):

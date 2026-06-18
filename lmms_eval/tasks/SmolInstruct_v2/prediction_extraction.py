@@ -2,7 +2,7 @@ import re
 
 
 def llama_forward_synthesis(output_text):
-    pattern = "(\[|]|\[[^\]]+]|Br?|Cl?|H|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|;|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])+"
+    pattern = "(\[|]|\[[^\]]+]|Br?|Cl?|H|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|;|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])++"
 
     output_text = output_text.strip()
     if re.match(pattern + '$', output_text):
@@ -28,7 +28,7 @@ def llama_forward_synthesis(output_text):
 
 
 def llama_retrosynthesis(output_text):
-    pattern = "(\[|]|\[[^\]]+]|Br?|Cl?|H|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|;|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])+"
+    pattern = "(\[|]|\[[^\]]+]|Br?|Cl?|H|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|;|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])++"
     output_text = output_text.strip()
 
     m = re.match(pattern, output_text)
@@ -66,7 +66,7 @@ def llama_retrosynthesis(output_text):
 
 
 def llama_molecule_generation(output_text):
-    pattern = "(\[|]|\[[^\]]+]|Br?|Cl?|H|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|;|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])+"
+    pattern = "(\[|]|\[[^\]]+]|Br?|Cl?|H|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|;|=|#|-|\+|\\\\|\/|:|~|@|\?|>|\*|\$|\%[0-9]{2}|[0-9])++"
     output_text = output_text.strip()
 
     pos = output_text.find('\n')

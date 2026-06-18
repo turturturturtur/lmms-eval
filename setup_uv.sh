@@ -2,6 +2,8 @@
 # UV Environment Setup Script for lmms-eval
 # This script sets up a Python virtual environment using uv and installs dependencies
 
+export UV_INDEX_URL="https://mirrors.aliyun.com/pypi/simple/"
+
 set -e  # Exit on error
 
 # Colors for output
@@ -107,6 +109,8 @@ install_deps() {
     uv pip install rdkit
 
     uv pip install rdchiral
+
+    uv pip install "modelscope>=1.18.1"
 
     # Download NLTK wordnet data required by SmolInstruct molecule captioning metric
     # Place it under .venv so it is shared across cluster nodes via CPFS.

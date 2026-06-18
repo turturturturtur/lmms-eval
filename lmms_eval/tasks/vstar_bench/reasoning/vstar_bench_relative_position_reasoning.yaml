@@ -1,7 +1,6 @@
 include: ../_default_template_yaml
 task: "vstar_bench_relative_position_reasoning"
-dataset_kwargs:
-  category: "relative_position"
+process_docs: !function utils.vstar_filter_relative_position
 doc_to_messages: !function utils.vstar_reasoning_doc_to_messages
 process_results: !function utils.vstar_reasoning_process_results
 generation_kwargs:

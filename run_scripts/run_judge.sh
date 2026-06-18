@@ -75,6 +75,7 @@ fi
 # ── API 后端配置 (当 backend=api 时使用) ───────────────────────────────────────
 API_KEY=$(cfg '.judge.api.key // empty')
 API_BASE_URL=$(cfg '.judge.api.base_url // empty')
+API_TYPE_CFG=$(cfg '.judge.api_type // "openai"')
 
 # ── vLLM 后端配置 (当 backend=vllm 时使用) ─────────────────────────────────────
 VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/cpfs/<USER>/data/model/Qwen3-VL-8B-Instruct"')
@@ -296,12 +297,21 @@ elif [[ "${JUDGE_BACKEND}" == "api" ]]; then
     fi
     
     # Export for embedded task evaluators (e.g. mathvista) that read env vars at import time
-    # OPENAI_API_URL must keep the original /chat/completions suffix because tasks like mmbench
-    # use requests.post directly against the full endpoint URL.
-    export OPENAI_API_KEY="${JUDGE_API_KEY}"
-    export OPENAI_API_URL="${API_BASE_URL}"
-    export OPENAI_API_BASE="${JUDGE_BASE_URL}"
-    export API_TYPE="openai"
+    if [[ "${API_TYPE_CFG}" == "anthropic" ]]; then
+        export ANTHROPIC_API_KEY="${JUDGE_API_KEY}"
+        export ANTHROPIC_API_URL="${API_BASE_URL}"
+        export API_TYPE="anthropic"
+        export JUDGE_API_TYPE="anthropic"
+        echo "[INFO] Using Anthropic-compatible API provider"
+    else
+        # OPENAI_API_URL must keep the original /chat/completions suffix because tasks like mmbench
+        # use requests.post directly against the full endpoint URL.
+        export OPENAI_API_KEY="${JUDGE_API_KEY}"
+        export OPENAI_API_URL="${API_BASE_URL}"
+        export OPENAI_API_BASE="${JUDGE_BASE_URL}"
+        export API_TYPE="openai"
+        export JUDGE_API_TYPE="openai"
+    fi
     
 else
     echo "[ERROR] Unknown judge backend: ${JUDGE_BACKEND}. Use 'api' or 'vllm'"

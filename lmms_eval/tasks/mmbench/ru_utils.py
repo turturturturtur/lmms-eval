@@ -6,7 +6,7 @@ import pandas as pd
 import yaml
 from loguru import logger as eval_logger
 
-from lmms_eval.tasks._task_utils.file_utils import generate_submission_file
+from lmms_eval.tasks._task_utils.file_utils import generate_submission_file, sanitize_for_excel
 from lmms_eval.tasks.mmbench.mmbench_evals import MMBench_Evaluator
 
 with open(Path(__file__).parent / "mmbench.yaml", "r") as f:
@@ -157,6 +157,7 @@ def mmbench_aggregate_dev_results_eval(results, args):
 
 def mmbench_aggregate_dev_results_submission(results, args):
     df = pd.DataFrame(results)
+    df = df.map(sanitize_for_excel)
     excel_write_path = generate_submission_file("mmbench_ru_dev_results.xlsx", args)
     with pd.ExcelWriter(excel_write_path) as writer:
         df.to_excel(writer, index=False)
@@ -165,6 +166,7 @@ def mmbench_aggregate_dev_results_submission(results, args):
 
 def mmbench_aggregate_test_results(results, args):
     df = pd.DataFrame(results)
+    df = df.map(sanitize_for_excel)
     excel_write_path = generate_submission_file("mmbench_ru_test_results.xlsx", args)
     with pd.ExcelWriter(excel_write_path) as writer:
         df.to_excel(writer, index=False)

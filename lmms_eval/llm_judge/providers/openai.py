@@ -39,7 +39,13 @@ class OpenAIProvider(ServerInterface):
             from openai import OpenAI
 
             for url in self.api_urls:
-                self.clients.append(OpenAI(api_key=self.api_key, base_url=url))
+                self.clients.append(
+                    OpenAI(
+                        api_key=self.api_key,
+                        base_url=url,
+                        default_headers={"User-Agent": "Claude Code/1.0"},
+                    )
+                )
             self.use_client = True
         except ImportError:
             eval_logger.warning("OpenAI client not available, falling back to requests")
@@ -158,6 +164,7 @@ class OpenAIProvider(ServerInterface):
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
+            "User-Agent": "Claude Code/1.0",
         }
 
         target_url = url if url is not None else self.api_urls[0]
