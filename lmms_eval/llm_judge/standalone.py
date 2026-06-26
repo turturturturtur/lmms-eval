@@ -11,6 +11,7 @@ import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from loguru import logger
@@ -749,6 +750,21 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
         Raises:
             ValueError: If task cannot be loaded
         """
+        if task_name == "simplevqa":
+            try:
+                from lmms_eval.tasks.simplevqa import utils as simplevqa_utils
+
+                return SimpleNamespace(
+                    config=SimpleNamespace(
+                        process_results=simplevqa_utils.simplevqa_process_results,
+                        dataset_path="m-a-p/SimpleVQA",
+                        num_fewshot=0,
+                        metric_list=[{"metric": "exact_match"}],
+                    )
+                )
+            except Exception as e:
+                logger.debug(f"Failed to load lightweight SimpleVQA task: {e}")
+
         try:
             task_manager = _get_task_manager()
             task_dict = task_manager.load_task_or_group(task_name)
@@ -834,6 +850,16 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
         # 1) wemath/mathvision: flat acc_score + llm_judge_score
         # 2) mmmu/mmmu_pro: nested dict with hit + extraction_method + extraction_flag
         
+        # Detect task-specific normalized metrics.
+        is_simplevqa = bool(
+            self._current_task_name == "simplevqa"
+            or any(
+                "simplevqa_strict_exact_match" in r.get("metrics", {})
+                or "simplevqa_judged_exact_match" in r.get("metrics", {})
+                for r in results
+                if r
+            )
+        )
         # Detect SFE (uses 0-10 scoring, not binary 0/1)
         is_sfe = any("sfe_info" in r.get("metrics", {}) for r in results[:1] if r)
         
@@ -857,7 +883,34 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
             if "llm_judge_score" in metrics and metrics["llm_judge_score"] >= 0:
                 llm_scores.append(float(metrics["llm_judge_score"]))
         
-        if is_sfe and acc_scores:
+        if is_simplevqa and acc_scores:
+            # SimpleVQA writes LLM judge decisions back into exact_match. Do
+            # not apply the generic rule + fallback recombination again.
+            strict_scores = []
+            for sample in results:
+                metrics = sample.get("metrics", {})
+                if "simplevqa_strict_exact_match" in metrics:
+                    strict_scores.append(float(metrics["simplevqa_strict_exact_match"]))
+                elif "simplevqa_strict_exact_match" in sample:
+                    strict_scores.append(float(sample["simplevqa_strict_exact_match"]))
+                elif "exact_match" in sample:
+                    # Backward compatibility for JSONL files produced before
+                    # SimpleVQA exposed the explicit strict metric: the
+                    # top-level exact_match is the original rule score.
+                    strict_scores.append(float(sample["exact_match"]))
+                elif "exact_match" in metrics:
+                    strict_scores.append(float(metrics["exact_match"]))
+            final_acc = sum(acc_scores) / len(acc_scores)
+            strict_acc = sum(strict_scores) / len(strict_scores) if strict_scores else final_acc
+            summary["rule_acc"] = round(strict_acc, 4)
+            summary["llm_fallback_acc"] = round(max(final_acc - strict_acc, 0.0), 4)
+            if llm_scores:
+                summary["simplevqa_llm_fallback_accept_rate"] = round(sum(llm_scores) / len(llm_scores), 4)
+                summary["llm_judge_score_avg"] = round(sum(llm_scores) / len(llm_scores), 4)
+            summary["simplevqa_strict_exact_match"] = round(strict_acc, 4)
+            summary["simplevqa_judged_exact_match"] = round(final_acc, 4)
+            summary["total_acc"] = round(final_acc, 4)
+        elif is_sfe and acc_scores:
             # For SFE, exact_match already encodes the final score
             # (rouge for open_ended, iou for bbox, llm_score/10 for mcq/exact_match)
             summary["exact_match"] = round(sum(acc_scores) / len(acc_scores), 4)

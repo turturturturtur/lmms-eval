@@ -74,6 +74,7 @@ fi
 
 # ── API 后端配置 (当 backend=api 时使用) ───────────────────────────────────────
 API_KEY=$(cfg '.judge.api.key // empty')
+API_KEY_ENV=$(cfg '.judge.api.key_env // empty')
 API_BASE_URL=$(cfg '.judge.api.base_url // empty')
 API_TYPE_CFG=$(cfg '.judge.api_type // "openai"')
 
@@ -161,8 +162,8 @@ trap cleanup EXIT INT TERM
 # ══════════════════════════════════════════════════════════════════════════════
 # §4  启动 Judge 后端
 # ══════════════════════════════════════════════════════════════════════════════
-JUDGE_BASE_URL=""
-JUDGE_API_KEY=""
+JUDGE_BASE_URL="${JUDGE_BASE_URL:-}"
+JUDGE_API_KEY="${JUDGE_API_KEY:-}"
 
 # 启动 vLLM 的独立脚本路径
 START_VLLM_SCRIPT="$(dirname "$0")/tools/start_vllm_judge.sh"
@@ -215,6 +216,15 @@ except Exception:
 }
 
 load_api_keys() {
+    # Prefer an explicit env indirection so config_judge.json does not need to
+    # contain the secret value.
+    if [[ -n "${API_KEY_ENV}" && "${API_KEY_ENV}" != "null" ]]; then
+        _env_api_key="$(printenv "${API_KEY_ENV}" 2>/dev/null || true)"
+        if [[ -n "${_env_api_key}" ]]; then
+            API_KEY="${_env_api_key}"
+        fi
+    fi
+
     # 如果配置中没提供，尝试从环境变量获取
     if [[ -z "${API_KEY}" || "${API_KEY}" == "null" ]]; then
         # 尝试加载 setup_api_keys.sh 中的变量
@@ -278,9 +288,9 @@ elif [[ "${JUDGE_BACKEND}" == "api" ]]; then
     # 修正 base_url：去掉末尾的 /chat/completions
     _test_url="${API_BASE_URL%/chat/completions}"
     echo "[INFO] Testing API connectivity: ${_test_url}"
-    http_status=$(curl -s -o /dev/null -w "%{http_code}" \
-        -H "Authorization: Bearer ${API_KEY}" \
-        -H "Content-Type: application/json" \
+    http_status=$(printf 'Authorization: Bearer %s\nContent-Type: application/json\n' "${API_KEY}" | \
+        curl -s -o /dev/null -w "%{http_code}" \
+        -H @- \
         "${_test_url}/models" 2>/dev/null || echo "000")
     if [[ "${http_status}" == "200" ]]; then
         _api_ready=true
@@ -361,7 +371,6 @@ python -m lmms_eval judge \
     --input_result "${INPUT_FLAG}" \
     --task "${TASKS}" \
     --judge-model "${JUDGE_MODEL}" \
-    --judge-api-key "${JUDGE_API_KEY}" \
     --judge-base-url "${JUDGE_BASE_URL}" \
     --parallel "${JUDGE_PARALLEL}" \
     --output-dir "${OUTPUT_PATH}" \
