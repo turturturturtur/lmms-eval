@@ -64,8 +64,9 @@ DEFAULT_AUTH_SESSION_TTL_SECONDS = 15 * 24 * 60 * 60
 AUTH_VALIDATION_TIMEOUT_SECONDS = 20
 AUTH_IDENTITY_TIMEOUT_SECONDS = 20
 USER_PLACEHOLDER = "<USER>"
-DEFAULT_DLC_BINARY = "/mnt/cpfs/<USER>/dlc"
+DEFAULT_DLC_BINARY = "/mnt/cpfsB/<USER>/dlc"
 DEFAULT_DLC_PATH_TEMPLATE = DEFAULT_DLC_BINARY
+QWEN35_WORKER_BASENAME = "qwen35_worker.sh"
 DEFAULT_AUTH_FILE_PATH = LMMS_EVAL_ROOT / "local" / "webui_users.json"
 AUTH_FILE_ENV = "LMMS_EVAL_WEBUI_AUTH_FILE"
 AUTH_SESSION_TTL_ENV = "LMMS_EVAL_WEBUI_SESSION_TTL_SECONDS"
@@ -678,6 +679,7 @@ def _default_dlc_config() -> dict[str, Any]:
         raise RuntimeError(f"Missing dlc object in {DEFAULT_DLC_CONFIG_PATH}")
     dlc["submit"] = True
     dlc["job_name"] = DEFAULT_EVAL_JOB_NAME
+    dlc["run_script"] = f"/mnt/cpfsB/{USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/run_scripts/{QWEN35_WORKER_BASENAME}"
     dlc["workers"] = DEFAULT_DLC_WORKERS
     dlc["worker_gpu"] = DEFAULT_DLC_WORKER_GPU
     dlc["workspace_id"] = DEFAULT_DLC_WORKSPACE_ID
@@ -3038,6 +3040,13 @@ def _request_dlc_config(request: EvalRequest | PreviewRequest | ExportYamlReques
             raise HTTPException(status_code=400, detail=f"Missing dlc.{key} in dlc_config")
     if str(dlc["workspace_id"]) != DEFAULT_DLC_WORKSPACE_ID:
         raise HTTPException(status_code=400, detail=f"DLC workspace_id must be {DEFAULT_DLC_WORKSPACE_ID}")
+    run_script = str(dlc["run_script"])
+    if Path(run_script).name != QWEN35_WORKER_BASENAME:
+        raise HTTPException(
+            status_code=400,
+            detail=f"DLC run_script must point to {QWEN35_WORKER_BASENAME}, got: {run_script}",
+        )
+    dlc["run_script"] = run_script
     dlc["job_name"] = _validate_eval_job_name(request.job_name)
     return config
 

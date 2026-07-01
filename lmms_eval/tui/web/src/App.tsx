@@ -5,7 +5,7 @@ import TaskBuilder from './TaskBuilder'
 
 const API_BASE = ''
 const USER_PLACEHOLDER = '<USER>'
-const DEFAULT_DLC_PATH_TEMPLATE = '/mnt/cpfs/<USER>/dlc'
+const DEFAULT_DLC_PATH_TEMPLATE = '/mnt/cpfsB/<USER>/dlc'
 const DEFAULT_JUDGE_API_URL = ''
 const PAGES = ['evaluate', 'logs', 'tasks'] as const
 
@@ -706,7 +706,7 @@ export default function App() {
   const [maxNumSeqs, setMaxNumSeqs] = useState('192')
   const [basePort, setBasePort] = useState('8941')
   const [concurrency, setConcurrency] = useState('32')
-  const [genKwargs, setGenKwargs] = useState('max_new_tokens=2048,temperature=0,top_p=1.0')
+  const [genKwargs, setGenKwargs] = useState('')
   const [enableThinking, setEnableThinking] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
 
@@ -1498,7 +1498,7 @@ export default function App() {
                   <input
                     value={model}
                     onChange={e => setModel(e.target.value)}
-                    placeholder="/mnt/cpfs/<USER>/data/model/Qwen3-VL-8B-Instruct"
+                    placeholder="/mnt/cpfsB/<USER>/Innovator-Tune/models/Qwen3.5-9B"
                     className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
                   />
                 </div>

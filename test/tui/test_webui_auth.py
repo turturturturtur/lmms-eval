@@ -57,7 +57,7 @@ def _dlc_config() -> dict:
             "submit": True,
             "job_name": "eval_auth_test",
             "binary": "/tmp/dlc",
-            "run_script": "/tmp/worker.sh",
+            "run_script": "/tmp/qwen35_worker.sh",
             "workers": 1,
             "worker_gpu": 8,
             "worker_cpu": 16,
@@ -224,6 +224,55 @@ def test_preview_syncs_job_name_to_dlc_log_and_eval_paths(tmp_path: Path, monkey
     assert '"output_path": "/tmp/lmms-eval-results/eval_synced_name"' in command
     assert "eval_stale_name" not in command
     assert "stale_name" not in command
+
+
+def test_default_dlc_config_uses_qwen35_worker():
+    config = server._replace_user_placeholder(server._default_dlc_config(), "tianleniu")
+
+    assert config["dlc"]["binary"] == "/mnt/cpfsB/tianleniu/dlc"
+    assert config["dlc"]["run_script"] == "/mnt/cpfsB/tianleniu/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh"
+    assert "qwen3_vl_worker" not in config["dlc"]["run_script"]
+
+
+def test_preview_rejects_legacy_qwen3_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["dlc_config"]["dlc"]["run_script"] = "/tmp/qwen3_vl_worker.sh"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert "qwen35_worker.sh" in response.json()["detail"]
+
+
+def test_judge_preview_uses_qwen35_submit_and_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["tasks"] = ["ocrbench"]
+    payload["judge_api_url"] = "https://example.invalid/v1/chat/completions"
+    payload["judge_api_key"] = "sk-test"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert "qwen35_submit.sh" in command
+    assert '"run_script": "/tmp/qwen35_worker.sh"' in command
+    assert "config_judge.json" in command
+    assert "qwen3_vl_worker" not in command
+    assert "qwen3_vl_submit" not in command
 
 
 def test_dlc_job_list_marks_kill_permission_for_owner(monkeypatch: pytest.MonkeyPatch):
