@@ -70,19 +70,34 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
 # Strict Output format example
 4"""
 
-if API_TYPE == "vllm_openai":
-    client = OpenAI(
-        base_url=VLLM_BASE_URL,
-        api_key=VLLM_API_KEY,
-    )
-elif API_TYPE == "openai":
-    API_URL = os.getenv("OPENAI_API_URL") or os.getenv("OPENAI_BASE_URL") or ""
-    API_KEY = os.getenv("OPENAI_API_KEY") or ""
-    client = OpenAI(base_url=API_URL, api_key=API_KEY)
-elif API_TYPE == "azure":
-    API_URL = os.getenv("AZURE_ENDPOINT", "https://api.cognitive.microsoft.com/sts/v1.0/issueToken")
-    API_KEY = os.getenv("AZURE_API_KEY", "YOUR_API_KEY")
-    client = AzureOpenAI(azure_endpoint=API_URL, api_version="2023-07-01-preview", api_key=API_KEY)
+client = None
+
+
+def _build_judge_client():
+    if API_TYPE == "vllm_openai":
+        if not VLLM_BASE_URL:
+            raise ValueError("VLLM_BASE_URL/OPENAI_BASE_URL is required for SFE vllm_openai judge.")
+        return OpenAI(base_url=VLLM_BASE_URL, api_key=VLLM_API_KEY)
+    if API_TYPE == "openai":
+        api_url = os.getenv("OPENAI_API_URL") or os.getenv("OPENAI_BASE_URL") or ""
+        api_key = os.getenv("OPENAI_API_KEY") or ""
+        if not api_url or not api_key:
+            raise ValueError("OPENAI_API_URL/OPENAI_BASE_URL and OPENAI_API_KEY are required for SFE openai judge.")
+        return OpenAI(base_url=api_url, api_key=api_key)
+    if API_TYPE == "azure":
+        api_url = os.getenv("AZURE_ENDPOINT") or ""
+        api_key = os.getenv("AZURE_API_KEY") or ""
+        if not api_url or not api_key:
+            raise ValueError("AZURE_ENDPOINT and AZURE_API_KEY are required for SFE azure judge.")
+        return AzureOpenAI(azure_endpoint=api_url, api_version="2023-07-01-preview", api_key=api_key)
+    raise ValueError(f"Unsupported SFE API_TYPE: {API_TYPE}")
+
+
+def _get_judge_client():
+    global client
+    if client is None:
+        client = _build_judge_client()
+    return client
 
 
 scorer = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=True)
@@ -175,7 +190,6 @@ def ensure_sfe_images_downloaded():
 
 def get_chat_response(content: str, max_tokens: int, retries: int = 5):
     global MODEL_VERSION
-    global client
 
     messages = [
         {
@@ -194,7 +208,7 @@ def get_chat_response(content: str, max_tokens: int, retries: int = 5):
 
     for attempt in range(retries):
         try:
-            response = client.chat.completions.create(**payload)
+            response = _get_judge_client().chat.completions.create(**payload)
             content = response.choices[0].message.content.strip()
             return content
         except requests.exceptions.RequestException as e:
@@ -310,11 +324,7 @@ def construct_prompt(doc):
 
 
 def sfe_doc_to_text(doc, lmms_eval_specific_kwargs=None):
-    if lmms_eval_specific_kwargs is None:
-        question = construct_prompt(doc)
-    else:
-        question = construct_prompt(doc, lmms_eval_specific_kwargs["multiple_choice_prompt"], lmms_eval_specific_kwargs["open_ended_prompt"], lmms_eval_specific_kwargs["prompt_type"])
-    return question
+    return construct_prompt(doc)
 
 
 def _get_local_image_paths(doc):
@@ -336,22 +346,14 @@ def sfe_doc_to_visual(doc):
     visual = []
     
     for local_path in local_paths:
-        # 检查文件是否存在
         if not os.path.exists(local_path):
-            eval_logger.warning(f"Image file not found: {local_path}")
-            # 创建占位符图像
-            placeholder = Image.new('RGB', (224, 224), color='gray')
-            visual.append(placeholder)
-            continue
+            raise FileNotFoundError(f"SFE image file not found: {local_path}; sample_id={doc.get('id', '')}")
         
         try:
             img = Image.open(local_path).convert("RGB")
             visual.append(img)
         except Exception as e:
-            eval_logger.warning(f"Failed to load image {local_path}: {e}")
-            # 创建占位符图像
-            placeholder = Image.new('RGB', (224, 224), color='gray')
-            visual.append(placeholder)
+            raise RuntimeError(f"Failed to load SFE image {local_path}; sample_id={doc.get('id', '')}") from e
     
     return visual
 
@@ -521,7 +523,7 @@ def sfe_process_results(doc, results):
 
 
 def sfe_save_results(results, args):
-    path = os.path.join("/mnt/innovator/code/yangboxue/lmms-eval/logs/sfe", FILE_NAME)
+    path = generate_submission_file(FILE_NAME, args, subpath="results")
     with open(path, "w") as f:
         json.dump(results, f)
     eval_logger.info(f"Results saved to {path}.")

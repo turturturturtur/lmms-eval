@@ -1,0 +1,9 @@
+{
+  "admins": [
+    {
+      "access_key_id": "replace-with-access-key-id",
+      "display_name": "WebUI Admin",
+      "username": "admin"
+    }
+  ]
+}

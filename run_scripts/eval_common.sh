@@ -16,12 +16,76 @@ cfg()     { jq -r "$1"       "${CONFIG}"; }
 cfg_bool() { jq -r "$1 // false" "${CONFIG}"; }
 cfg_int() { jq -r "$1 // 0" "${CONFIG}"; }
 
+cfg_required_positive_int() {
+    local jq_expr="$1"
+    local name="$2"
+    local value
+
+    if ! value="$(jq -er "${jq_expr}" "${CONFIG}")"; then
+        echo "[ERROR] Missing required positive integer config: ${name}" >&2
+        exit 2
+    fi
+    if [[ -z "${value}" || "${value}" == "null" ]]; then
+        echo "[ERROR] Missing required positive integer config: ${name}" >&2
+        exit 2
+    fi
+    if ! [[ "${value}" =~ ^[0-9]+$ ]]; then
+        echo "[ERROR] ${name} must be a positive integer, got: ${value}" >&2
+        exit 2
+    fi
+    if (( value <= 0 )); then
+        echo "[ERROR] ${name} must be > 0, got: ${value}" >&2
+        exit 2
+    fi
+    printf '%s' "${value}"
+}
+
+ensure_timeout_command() {
+    if ! command -v timeout &>/dev/null; then
+        echo "[ERROR] GNU timeout command is required for per-task lmms-eval hard timeouts." >&2
+        exit 2
+    fi
+}
+
+classify_lmms_eval_task_status() {
+    local rc="$1"
+    local timeout_seconds="$2"
+
+    if ! [[ "${rc}" =~ ^[0-9]+$ ]]; then
+        echo "[ERROR] task exit code must be a non-negative integer, got: ${rc}" >&2
+        return 2
+    fi
+    if ! [[ "${timeout_seconds}" =~ ^[0-9]+$ ]] || (( timeout_seconds <= 0 )); then
+        echo "[ERROR] task timeout seconds must be a positive integer, got: ${timeout_seconds}" >&2
+        return 2
+    fi
+
+    case "${rc}" in
+        0)
+            printf 'success\tcompleted'
+            ;;
+        124|137|143)
+            printf 'timeout\ttimeout_after_%ss' "${timeout_seconds}"
+            ;;
+        *)
+            printf 'failed\texit_code_%s' "${rc}"
+            ;;
+    esac
+}
+
 # ── parse gen_kwargs ──────────────────────────────────────────────────────────
 parse_gen_kwarg() {
     local key=$1
     local default=$2
-    local value
-    value=$(echo "$GEN_KWARGS" | grep -oP "${key}=\K[^,]+" | head -1)
+    local value=""
+    local item
+    IFS=',' read -ra _GEN_KWARG_ITEMS <<< "${GEN_KWARGS}"
+    for item in "${_GEN_KWARG_ITEMS[@]}"; do
+        if [[ "${item}" == "${key}="* ]]; then
+            value="${item#*=}"
+            break
+        fi
+    done
     echo "${value:-$default}"
 }
 
@@ -105,6 +169,8 @@ load_config() {
     GEN_KWARGS=$(cfg '.eval.gen_kwargs // "max_new_tokens=32768"')
     MAX_NEW_TOKENS=$(parse_gen_kwarg "max_new_tokens" "32768")
     MAX_PIXELS=$(parse_gen_kwarg "max_pixels" "4014080")
+    TASK_TIMEOUT_SECONDS=$(cfg_required_positive_int '.eval.task_timeout_seconds' 'eval.task_timeout_seconds')
+    TASK_TIMEOUT_KILL_AFTER_SECONDS=$(cfg_required_positive_int '.eval.task_timeout_kill_after_seconds' 'eval.task_timeout_kill_after_seconds')
 }
 
 # ── validate that virtual environment exists ──────────────────────────────────
@@ -127,8 +193,15 @@ stage_datasets() {
         return
     fi
 
-    local src="/mnt/cpfs/evaluation_cache/lmms_eval"
-    if [[ -d "${src}" ]]; then
+    local src=""
+    for candidate in /mnt/cpfsB/evaluation_cache/lmms_eval /mnt/cpfs/evaluation_cache/lmms_eval; do
+        if [[ -d "${candidate}" ]]; then
+            src="${candidate}"
+            break
+        fi
+    done
+
+    if [[ -n "${src}" ]]; then
         if [[ -n "${LMMS_EVAL_DATASETS_CACHE:-}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]]; then
             echo "[INFO][Machine ${MACHINE_RANK}] Staging datasets from ${src} to ${LMMS_EVAL_DATASETS_CACHE} ..."
             mkdir -p "${LMMS_EVAL_DATASETS_CACHE}"

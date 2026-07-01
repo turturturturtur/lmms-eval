@@ -12,24 +12,102 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LMMS_EVAL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
 # ══════════════════════════════════════════════════════════════════════════════
 # §0  读取 JSON 配置
 # ══════════════════════════════════════════════════════════════════════════════
-CONFIG="${1:-$(dirname "$0")/config_judge.json}"
+CONFIG="${1:-${SCRIPT_DIR}/config_judge.json}"
 # 如果默认配置文件不存在，尝试使用 config_math.json 作为备选
 if [[ ! -f "${CONFIG}" && "${CONFIG}" == *"config_judge.json" ]]; then
-    if [[ -f "$(dirname "$0")/config_math.json" ]]; then
+    if [[ -f "${SCRIPT_DIR}/config_math.json" ]]; then
         echo "[INFO] config_judge.json not found, trying config_math.json"
-        CONFIG="$(dirname "$0")/config_math.json"
+        CONFIG="${SCRIPT_DIR}/config_math.json"
     fi
 fi
 [[ ! -f "${CONFIG}" ]] && { echo "[ERROR] Config not found: ${CONFIG}"; exit 1; }
-command -v jq &>/dev/null || { echo "[ERROR] jq is required but not installed."; exit 1; }
+JSON_PYTHON="$(command -v python3 || command -v python || true)"
+[[ -z "${JSON_PYTHON}" ]] && { echo "[ERROR] python3 or python is required to read JSON config."; exit 1; }
 
-cfg()     { jq -r "$1"       "${CONFIG}"; }
-cfg_int() { jq -r "$1 // 0" "${CONFIG}"; }
+cfg() {
+    "${JSON_PYTHON}" - "${CONFIG}" "$1" <<'PY'
+import ast
+import json
+import sys
+
+config_path, expr = sys.argv[1], sys.argv[2]
+with open(config_path, encoding="utf-8") as f:
+    data = json.load(f)
+
+
+def parse_default(raw):
+    raw = raw.strip()
+    if raw == "empty":
+        return ""
+    if raw == "null":
+        return None
+    if raw == "true":
+        return True
+    if raw == "false":
+        return False
+    try:
+        return ast.literal_eval(raw)
+    except Exception:
+        try:
+            return int(raw)
+        except ValueError:
+            try:
+                return float(raw)
+            except ValueError:
+                return raw
+
+
+path_expr, default = expr, None
+has_default = False
+if " // " in expr:
+    path_expr, default_expr = expr.split(" // ", 1)
+    default = parse_default(default_expr)
+    has_default = True
+
+if not path_expr.startswith("."):
+    raise SystemExit(f"Unsupported config expression: {expr}")
+
+value = data
+missing = False
+for part in [p for p in path_expr[1:].split(".") if p]:
+    if isinstance(value, dict) and part in value:
+        value = value[part]
+    else:
+        missing = True
+        break
+
+if missing or value is None:
+    value = default if has_default else None
+
+if value is None:
+    print("null")
+elif isinstance(value, bool):
+    print("true" if value else "false")
+elif isinstance(value, (dict, list)):
+    print(json.dumps(value, ensure_ascii=False))
+else:
+    print(value)
+PY
+}
+cfg_int() {
+    if [[ "$1" == *" // "* ]]; then
+        cfg "$1"
+    else
+        cfg "$1 // 0"
+    fi
+}
 cfg_bool() { 
-    local val=$(jq -r "$1 // false" "${CONFIG}")
+    local expr="$1"
+    if [[ "${expr}" != *" // "* ]]; then
+        expr="${expr} // false"
+    fi
+    local val=$(cfg "${expr}")
     [[ "$val" == "true" ]] && echo "true" || echo "false"
 }
 
@@ -127,6 +205,7 @@ fi
 
 echo "[INFO] Activating virtual environment: ${VENV_PATH}"
 source "${VENV_PATH}/bin/activate"
+export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
 
 # 验证 lmms-eval 可用
 if ! python -c "import lmms_eval" 2>/dev/null; then
@@ -249,9 +328,9 @@ load_api_keys() {
             [[ "${_saved_flags}" == *u* ]] && set -u
         fi
         
-        # 优先级：环境变量 > 配置文件
-        API_KEY="${OPENAI_COMPATIBLE_KEY:-${OPENAI_API_KEY:-${CHATGPT_DASHSCOPE_API_KEY:-}}}"
-        API_BASE_URL="${OPENAI_COMPATIBLE_URL:-${OPENAI_API_BASE:-${DASHSCOPE_API_BASE:-${API_BASE_URL}}}}"
+        # 优先级：显式 judge 环境变量 > OpenAI 兼容变量 > 配置文件
+        API_KEY="${JUDGE_API_KEY:-${OPENAI_COMPATIBLE_KEY:-${OPENAI_API_KEY:-${CHATGPT_DASHSCOPE_API_KEY:-}}}}"
+        API_BASE_URL="${JUDGE_BASE_URL:-${OPENAI_COMPATIBLE_URL:-${OPENAI_API_BASE:-${DASHSCOPE_API_BASE:-${API_BASE_URL}}}}}"
     fi
 }
 
@@ -291,8 +370,9 @@ elif [[ "${JUDGE_BACKEND}" == "api" ]]; then
     fi
     
     if [[ "${_api_ready}" != "true" ]]; then
-        echo "[WARN] API backend unavailable. Falling back to local vLLM..."
-        start_vllm_backend
+        echo "[ERROR] API backend unavailable; refusing to fall back to local vLLM for an API-judge run."
+        echo "[ERROR] Please check JUDGE_BASE_URL/OPENAI_API_BASE and JUDGE_API_KEY/OPENAI_API_KEY."
+        exit 1
     fi
     
     # Export for embedded task evaluators (e.g. mathvista) that read env vars at import time

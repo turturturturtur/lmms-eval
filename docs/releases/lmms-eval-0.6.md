@@ -280,6 +280,8 @@ client = EvalClient("http://eval-server:8000")
 job = client.evaluate(
     model="qwen2_5_vl",
     tasks=["mmmu_val", "mme"],
+    timeout_seconds=3600,
+    timeout_kill_after_seconds=60,
     model_args={"pretrained": "Qwen/Qwen2.5-VL-7B-Instruct"},
 )
 

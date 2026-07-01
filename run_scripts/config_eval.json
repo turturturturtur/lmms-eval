@@ -11,7 +11,7 @@
     "openai_api_url": "https://yunwu.ai/v1/chat/completions"
   },
   "log": {
-    "dir": "/mnt/cpfs/<USER>/vllm_logs"
+    "dir": "/mnt/cpfs/<USER>/lmms-eval/eval_logs/eval_qwen3vl_tp1"
   },
   "distributed": {
     "master_addr": "127.0.0.1",
@@ -25,14 +25,20 @@
     "max_model_len": 65536,
     "gpu_memory_utilization": 0.9,
     "max_num_seqs": 1024,
-    "base_port": 8001
+    "base_port": 8001,
+    "reasoning_parser": "",
+    "enable_thinking": false,
+    "is_qwen3_vl": true
   },
   "eval": {
     "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite",
-    "output_path": "/mnt/cpfs/<USER>/lmms-eval/eval_result",
+    "output_path": "/mnt/cpfs/<USER>/lmms-eval/eval_result/eval_qwen3vl_tp1",
     "concurrency": 128,
     "gen_kwargs": "max_new_tokens=32768,max_pixels=4014080,temperature=1.0,top_p=1.0,top_k=40,presence_penalty=2.0",
     "limit": -1,
+    "task_timeout_seconds": 43200,
+    "task_timeout_kill_after_seconds": 300,
+    "system_instruction": "",
     "debug": false
   }
 }

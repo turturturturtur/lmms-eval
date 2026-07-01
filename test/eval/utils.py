@@ -317,6 +317,8 @@ def run_evaluation_test(
             job = client.evaluate(
                 model=model,
                 tasks=tasks,
+                timeout_seconds=int(timeout),
+                timeout_kill_after_seconds=30,
                 model_args=model_args,
                 batch_size=batch_size,
                 limit=limit,

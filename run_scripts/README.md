@@ -109,6 +109,8 @@ run_scripts/
     "concurrency": 128,
     "gen_kwargs": "max_new_tokens=32768,max_pixels=4014080,temperature=1.0",
     "limit": -1,
+    "task_timeout_seconds": 43200,
+    "task_timeout_kill_after_seconds": 300,
     "debug": false
   }
 }
@@ -143,6 +145,8 @@ run_scripts/
 | `eval.concurrency` | int | lmms-eval 对 vLLM backend 的并发请求数 |
 | `eval.gen_kwargs` | string | 生成参数，逗号分隔键值对 |
 | `eval.limit` | int | 每个任务最大样本数（`-1` 表示无限制，仅调试使用） |
+| `eval.task_timeout_seconds` | int | 单个 lmms-eval task 的硬超时时间，必填正整数 |
+| `eval.task_timeout_kill_after_seconds` | int | task 超时后 SIGTERM 到 SIGKILL 的等待时间，必填正整数 |
 | `eval.debug` | bool | 调试模式（`true` 时退出不杀死 vLLM 进程） |
 
 ### `config_dlc.json` — DLC 集群调度配置
@@ -447,7 +451,9 @@ cp run_scripts/qwen3_vl_submit.sh run_scripts/my_model_submit.sh
   "eval": {
     "tasks": "mme,mmmu_val",
     "concurrency": 128,
-    "gen_kwargs": "max_new_tokens=4096,temperature=0.0"
+    "gen_kwargs": "max_new_tokens=4096,temperature=0.0",
+    "task_timeout_seconds": 43200,
+    "task_timeout_kill_after_seconds": 300
   }
 }
 ```

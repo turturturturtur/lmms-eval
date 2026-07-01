@@ -1,8 +1,12 @@
 import json
+import re
 
 
 def seed_doc_to_visual(doc):
-    return [doc["image"].convert("RGB")]
+    image = doc.get("image")
+    if image is None:
+        raise ValueError(f"SEED-Bench-2-Plus sample is missing image: question_id={doc.get('question_id')!r}")
+    return [image.convert("RGB")]
 
 
 def parse_choice_img(choice: str, img_token: str):
@@ -12,8 +16,10 @@ def parse_choice_img(choice: str, img_token: str):
 
 
 def seed_doc_to_text(doc, model_specific_kwargs=None):
+    if model_specific_kwargs is None:
+        raise ValueError("SEED-Bench-2-Plus requires model_specific_kwargs with img_token and post_prompt")
     question = doc["question"]
-    question.replace("<img>", model_specific_kwargs["img_token"])
+    question = question.replace("<img>", model_specific_kwargs["img_token"])
     question += "\n" + f"A. {parse_choice_img(doc['choice_A'], model_specific_kwargs['img_token'])}\n"
     question += f"B. {parse_choice_img(doc['choice_B'], model_specific_kwargs['img_token'])}\n"
     question += f"C. {parse_choice_img(doc['choice_C'], model_specific_kwargs['img_token'])}\n"
@@ -22,10 +28,23 @@ def seed_doc_to_text(doc, model_specific_kwargs=None):
     return f"{question}\n{model_specific_kwargs['post_prompt']}"
 
 
+def extract_seed_answer_letter(response: str) -> str:
+    response = response.strip()
+    patterns = [
+        r"^\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?\s*$",
+        r"(?:answer|option|choice)(?:\s+is)?\s*[:：]?\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?",
+        r"^\s*([A-D])[\.\)]\s+",
+        r"\(([A-D])\)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, response, flags=re.IGNORECASE)
+        if match:
+            return match.group(1).upper()
+    return response[:1].upper() if len(response) == 1 and response.upper() in "ABCD" else ""
+
+
 def seed_process_result(doc, result):
-    pred = result[0].strip()
-    if len(pred) > 1:
-        pred = pred[0]
+    pred = extract_seed_answer_letter(result[0])
     answer = doc["answer"]
     data_type = doc["question_image_type"].capitalize()
 

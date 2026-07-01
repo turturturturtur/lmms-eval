@@ -24,10 +24,15 @@ def ai2d_doc_to_text(doc, lmms_eval_specific_kwargs=None):
 
 
 def ai2d_doc_to_visual(doc):
-    return [doc["image"].convert("RGB")]
+    image = doc.get("image")
+    if image is None:
+        raise ValueError(f"AI2D sample is missing image: question={doc.get('question', '')[:80]!r}")
+    return [image.convert("RGB")]
 
 
 def ai2d_doc_to_target(doc, model_specific_target_kwargs):
+    if "options" not in doc or "answer" not in doc:
+        raise KeyError(f"AI2D sample must contain options and answer fields, got keys={sorted(doc.keys())}")
     if model_specific_target_kwargs == "mcq":
         len_choices = len(doc["options"])
         options = [chr(ord("A") + i) for i in range(len_choices)]
@@ -58,20 +63,36 @@ class MultiChoiceRegexFilter(ExtendedRegexFilter):
         filtered_resps = []
 
         for r, doc in zip(resps, docs):
-            # Regex to directly extract the option letter from the model response
-            option_letter_regex = re.compile(r"^\s*([A-Z])\.")
+            num_options = len(doc["options"])
+            valid_letters = "".join(chr(ord("A") + i) for i in range(num_options))
+            answer_patterns = [
+                re.compile(rf"^\s*[\(\[]?\s*([{valid_letters}])\s*[\)\]\.]?\s*$", re.IGNORECASE),
+                re.compile(rf"(?:answer|option|choice)(?:\s+is)?\s*[:：]?\s*[\(\[]?\s*([{valid_letters}])\s*[\)\]\.]?", re.IGNORECASE),
+                re.compile(rf"^\s*([{valid_letters}])[\.\)]\s+", re.IGNORECASE),
+                re.compile(rf"\(([{valid_letters}])\)", re.IGNORECASE),
+            ]
+            normalized_choices = {
+                self.filter_ignores(choice.strip()): chr(ord("A") + i)
+                for i, choice in enumerate(doc["options"])
+                if isinstance(choice, str) and choice.strip()
+            }
 
             # Process each response
             filtered = []
             for resp in r:
-                # Try to match the option letter at the start of the response
-                match = option_letter_regex.match(resp)
-                if match:
-                    # If a match is found, append the matched letter
-                    filtered.append(match.group(1))
-                else:
-                    # If no match, return the original response
-                    filtered.append(resp)
+                extracted = None
+                for pattern in answer_patterns:
+                    match = pattern.search(resp)
+                    if match:
+                        extracted = match.group(1).upper()
+                        break
+                if extracted is None:
+                    normalized_resp = self.filter_ignores(resp.strip())
+                    for choice_text, letter in normalized_choices.items():
+                        if choice_text and choice_text in normalized_resp:
+                            extracted = letter
+                            break
+                filtered.append(extracted if extracted is not None else resp.strip())
 
             # Assuming we need the first response that matches or the original response
             filtered_resps.append(filtered[0])

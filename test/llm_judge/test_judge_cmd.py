@@ -15,6 +15,8 @@ try:
     from lmms_eval.cli.judge_cmd import (
         _detect_task_from_filename,
         _get_output_path,
+        _result_json_path_for_output,
+        _write_judge_results_json,
         add_judge_parser,
         run_judge,
     )
@@ -84,6 +86,34 @@ class TestOutputPath:
         
         assert result == tmp_path / "input_judged.jsonl"
 
+    def test_result_json_path_for_samples_output(self, tmp_path):
+        """Test WebUI-readable result JSON path next to judged samples."""
+        output = tmp_path / "20260701_031944_samples_ocrbench.jsonl"
+
+        result = _result_json_path_for_output(output)
+
+        assert result == tmp_path / "20260701_031944_results.json"
+
+    def test_write_judge_results_json(self, tmp_path):
+        """Test writing judge aggregate results in lmms-eval result shape."""
+        output = tmp_path / "20260701_031944_samples_ocrbench.jsonl"
+        input_file = tmp_path / "input_samples_ocrbench.jsonl"
+
+        result_json = _write_judge_results_json(
+            output_path=output,
+            task_name="ocrbench",
+            summary={"ocrbench_accuracy.score": 0.5, "llm_judge_success": 1.0},
+            n_samples=2,
+            input_file=input_file,
+            judge_model="deepseek-v4-pro",
+            effective_mode="judge",
+        )
+
+        assert result_json == tmp_path / "20260701_031944_results.json"
+        payload = result_json.read_text(encoding="utf-8")
+        assert '"ocrbench_accuracy.score": 0.5' in payload
+        assert '"model": "deepseek-v4-pro"' in payload
+
 
 class TestArgumentParser:
     """Tests for argument parsing."""
@@ -121,18 +151,26 @@ class TestArgumentParser:
 
 class TestRunJudge:
     """Tests for the run_judge function."""
+
+    def _run_judge_without_group_expansion(self, args):
+        with patch("lmms_eval.cli.judge_cmd._expand_group_tasks", side_effect=lambda task_list: task_list):
+            with patch("lmms_eval.cli.judge_cmd._make_table", return_value="table"):
+                run_judge(args)
     
     @patch("lmms_eval.cli.judge_cmd.JudgeRunner")
-    def test_run_judge_single_file(self, mock_runner_class):
+    def test_run_judge_single_file(self, mock_runner_class, tmp_path):
         """Test judging a single file."""
         mock_runner = MagicMock()
         mock_runner.judge_file.return_value = [{"id": 1}]
+        mock_runner.compute_summary.return_value = {"score": 1.0}
         mock_runner_class.return_value = mock_runner
+        test_file = tmp_path / "test_samples_test_task.jsonl"
+        test_file.write_text('{"doc_id": 0}\n')
         
         args = argparse.Namespace(
-            input_result="test.jsonl",
+            input_result=str(test_file),
             task="test_task",
-            output="output.jsonl",
+            output=str(tmp_path / "output.jsonl"),
             output_dir=None,
             judge_mode="rule",
             judge_model="gpt-4o-mini",
@@ -143,10 +181,7 @@ class TestRunJudge:
             verbose=False,
         )
         
-        # Create test file
-        with patch("pathlib.Path.exists", return_value=True):
-            with patch("pathlib.Path.glob", return_value=[Path("test.jsonl")]):
-                run_judge(args)
+        self._run_judge_without_group_expansion(args)
         
         mock_runner.judge_file.assert_called_once()
         mock_runner.save_results.assert_called_once()
@@ -156,6 +191,7 @@ class TestRunJudge:
         """Test auto-detection of task from filename."""
         mock_runner = MagicMock()
         mock_runner.judge_file.return_value = [{"id": 1}]
+        mock_runner.compute_summary.return_value = {"score": 1.0}
         mock_runner_class.return_value = mock_runner
         
         # Create test file
@@ -178,23 +214,26 @@ class TestRunJudge:
         
         with monkeypatch.context() as m:
             m.chdir(tmp_path)
-            run_judge(args)
+            self._run_judge_without_group_expansion(args)
         
         # Verify task was auto-detected
         call_args = mock_runner.judge_file.call_args
         assert call_args[0][1] == "mathvision_reason_testmini"
     
     @patch("lmms_eval.cli.judge_cmd.JudgeRunner")
-    def test_run_judge_dry_run(self, mock_runner_class):
+    def test_run_judge_dry_run(self, mock_runner_class, tmp_path):
         """Test dry run mode."""
         mock_runner = MagicMock()
         mock_runner.judge_file.return_value = [{"id": 1}]
+        mock_runner.compute_summary.return_value = {"score": 1.0}
         mock_runner_class.return_value = mock_runner
+        test_file = tmp_path / "test_samples_test_task.jsonl"
+        test_file.write_text('{"doc_id": 0}\n')
         
         args = argparse.Namespace(
-            input_result="test.jsonl",
+            input_result=str(test_file),
             task="test_task",
-            output="output.jsonl",
+            output=str(tmp_path / "output.jsonl"),
             output_dir=None,
             judge_mode="rule",
             judge_model="gpt-4o-mini",
@@ -205,16 +244,13 @@ class TestRunJudge:
             verbose=False,
         )
         
-        with patch("pathlib.Path.exists", return_value=True):
-            with patch("pathlib.Path.glob", return_value=[Path("test.jsonl")]):
-                run_judge(args)
+        self._run_judge_without_group_expansion(args)
         
         mock_runner.judge_file.assert_called_once()
         mock_runner.save_results.assert_not_called()  # Should not save in dry run
     
     @patch("lmms_eval.cli.judge_cmd.JudgeRunner")
-    @patch("sys.exit")
-    def test_run_judge_file_not_found(self, mock_exit, mock_runner_class):
+    def test_run_judge_file_not_found(self, mock_runner_class):
         """Test handling of file not found."""
         args = argparse.Namespace(
             input_result="nonexistent.jsonl",
@@ -230,14 +266,12 @@ class TestRunJudge:
             verbose=False,
         )
         
-        with patch("pathlib.Path.exists", return_value=False):
-            run_judge(args)
-        
-        mock_exit.assert_called_with(1)
+        with pytest.raises(SystemExit) as exc_info:
+            self._run_judge_without_group_expansion(args)
+        assert exc_info.value.code == 1
     
     @patch("lmms_eval.cli.judge_cmd.JudgeRunner")
-    @patch("sys.exit")
-    def test_run_judge_auto_detect_failure(self, mock_exit, mock_runner_class, tmp_path):
+    def test_run_judge_auto_detect_failure(self, mock_runner_class, tmp_path):
         """Test handling of auto-detect failure."""
         mock_runner = MagicMock()
         mock_runner_class.return_value = mock_runner
@@ -260,11 +294,9 @@ class TestRunJudge:
             verbose=False,
         )
         
-        with patch("pathlib.Path.glob", return_value=[test_file]):
-            run_judge(args)
-        
-        # Should exit with error
-        mock_exit.assert_called_with(1)
+        with pytest.raises(SystemExit) as exc_info:
+            self._run_judge_without_group_expansion(args)
+        assert exc_info.value.code == 1
         mock_runner.judge_file.assert_not_called()
     
     @patch("lmms_eval.cli.judge_cmd.JudgeRunner")
@@ -272,6 +304,7 @@ class TestRunJudge:
         """Test batch processing with wildcards."""
         mock_runner = MagicMock()
         mock_runner.judge_file.return_value = [{"id": 1}]
+        mock_runner.compute_summary.return_value = {"score": 1.0}
         mock_runner_class.return_value = mock_runner
         
         # Create test files
@@ -295,7 +328,7 @@ class TestRunJudge:
         
         with monkeypatch.context() as m:
             m.chdir(tmp_path)
-            run_judge(args)
+            self._run_judge_without_group_expansion(args)
         
         # Should process all 3 files
         assert mock_runner.judge_file.call_count == 3

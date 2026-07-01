@@ -97,7 +97,16 @@ def doc_to_visual(doc: Dict[str, Any], lmms_eval_specific_kwargs=None):
     if mode.startswith("noimage"):
         return None
 
-    return [img.convert("RGB") for img in doc["images_list"]]
+    images = doc.get("images_list")
+    if images is None:
+        raise ValueError(f"MicroVQA sample is missing images_list: question={doc.get('question', '')[:80]!r}")
+
+    visual = []
+    for idx, img in enumerate(images):
+        if img is None:
+            raise ValueError(f"MicroVQA sample has null image at index={idx}; question={doc.get('question', '')[:80]!r}")
+        visual.append(img.convert("RGB"))
+    return visual
 
 
 def doc_to_target(doc: Dict[str, Any], model_specific_target_kwargs=None) -> int:

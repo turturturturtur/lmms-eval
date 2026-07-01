@@ -21,6 +21,18 @@ ProviderFactory = None
 ServerConfig = None
 SCIVQR_SUBJECTS = {"math", "physics", "chemistry", "biology", "geography", "astronomy"}
 
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None or raw == "":
+        return default
+    return int(raw)
+
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None or raw == "":
+        return default
+    return float(raw)
+
 def _get_provider_factory():
     global ProviderFactory
     if ProviderFactory is None:
@@ -249,7 +261,7 @@ class JudgeRunner:
                 if trigger_key is not None and "llm_judge_score" in llm_metrics and not is_sfe:
                     llm_metrics[trigger_key] = llm_metrics["llm_judge_score"]
                 result_sample["metrics"] = llm_metrics
-                result_sample["judge_mode"] = "llm_fallback"
+                result_sample["judge_mode"] = "llm_judge" if self.judge_mode == "judge" else "llm_fallback"
                 
         except Exception as e:
             logger.warning(f"Error judging sample {doc_id}: {e}")
@@ -285,6 +297,8 @@ class JudgeRunner:
         answer = str(doc.get("answer", ""))
         if not answer and target is not None:
             answer = str(target)
+        if not answer:
+            answer = self._extract_answer_from_metrics(fallback_metrics)
         prediction = results[0] if results else ""
         
         if not answer:
@@ -361,6 +375,13 @@ class JudgeRunner:
                 if isinstance(parsed, bool):
                     metrics["llm_judge_score"] = int(parsed)
                     metrics["correct"] = parsed
+                    self._sync_ocrbench_metric(
+                        metrics,
+                        score=int(parsed),
+                        raw=response.content,
+                        model=response.model_used,
+                        success=parsed is not None,
+                    )
                 else:
                     metrics["llm_judge_result"] = parsed
                 return metrics
@@ -463,6 +484,13 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
             metrics["llm_judge_model"] = judge_result.get("model", self.judge_model)
             metrics["llm_judge_success"] = judge_result.get("success", False)
             metrics["llm_judge_failed"] = False
+            self._sync_ocrbench_metric(
+                metrics,
+                score=metrics["llm_judge_score"],
+                raw=metrics["llm_judge_raw"],
+                model=metrics["llm_judge_model"],
+                success=metrics["llm_judge_success"],
+            )
             
             return metrics
             
@@ -514,13 +542,18 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
             
             config = SC(
                 model_name=self.judge_model,
-                temperature=0.0,
-                max_tokens=16,
+                temperature=_env_float("JUDGE_TEMPERATURE", 0.0),
+                max_tokens=_env_int("JUDGE_MAX_TOKENS", 16),
+                timeout=_env_int("JUDGE_TIMEOUT", 60),
+                num_retries=_env_int("JUDGE_NUM_RETRIES", 5),
+                retry_delay=_env_float("JUDGE_RETRY_DELAY", 10.0),
                 max_concurrent=self.parallel,
             )
             logger.info(
                 f"Judge ServerConfig: model={config.model_name}, temperature={config.temperature}, "
-                f"max_tokens={config.max_tokens}, max_concurrent={config.max_concurrent}"
+                f"max_tokens={config.max_tokens}, timeout={config.timeout}, "
+                f"num_retries={config.num_retries}, retry_delay={config.retry_delay}, "
+                f"max_concurrent={config.max_concurrent}"
             )
             
             self._judge_provider = PF.create_provider(api_type=api_type, config=config)
@@ -574,7 +607,7 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
             metrics["llm_judge_score"] = sample["api_judge_accuracy"]
             metrics["needs_llm_judge"] = True
         # Nested metric objects (e.g. wemath_loose / wemath_strict)
-        for key in ["wemath_loose", "wemath_strict", "scivqr_acc", "scivqr_open", "scivqr_reasoning"]:
+        for key in ["wemath_loose", "wemath_strict", "scivqr_acc", "scivqr_open", "scivqr_reasoning", "ocrbench_accuracy"]:
             if key in sample:
                 metrics[key] = sample[key]
         # SFE-specific fields needed for standalone judge and aggregation
@@ -598,9 +631,20 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
         Returns:
             True if LLM judge should be applied
         """
+        # Explicit judge mode means re-judge every sample with LLM-as-judge.
+        if self.judge_mode == "judge":
+            return True
         # Check explicit flag from tasks that defer LLM judging to standalone phase
         if metrics.get("needs_llm_judge") is True:
             return True
+        # OCRBench stores the per-sample score inside a nested metric object.
+        ocrbench = metrics.get("ocrbench_accuracy")
+        if isinstance(ocrbench, dict):
+            val = ocrbench.get("score")
+            if val == 0 or val is False:
+                return True
+            if isinstance(val, float) and val < 0.1:
+                return True
         # Check common accuracy metrics
         for key in ["acc_score", "accuracy", "correct", "score", "exact_match", "gpt_eval_score"]:
             if key in metrics:
@@ -612,6 +656,36 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
                 if isinstance(val, float) and val < 0.1:
                     return True
         return False
+
+    @staticmethod
+    def _extract_answer_from_metrics(metrics: Dict[str, Any]) -> str:
+        """Recover ground truth from serialized nested metrics when doc is absent."""
+        ocrbench = metrics.get("ocrbench_accuracy")
+        if isinstance(ocrbench, dict):
+            answer = ocrbench.get("ground_truth")
+            if answer is not None:
+                return str(answer)
+        return ""
+
+    @staticmethod
+    def _sync_ocrbench_metric(
+        metrics: Dict[str, Any],
+        score: int,
+        raw: str,
+        model: str,
+        success: bool,
+    ) -> None:
+        """Write LLM judge output back to OCRBench's nested metric shape."""
+        ocrbench = metrics.get("ocrbench_accuracy")
+        if not isinstance(ocrbench, dict):
+            return
+        updated = dict(ocrbench)
+        updated["score"] = int(score)
+        updated["llm_judge_score"] = int(score)
+        updated["llm_judge_raw"] = raw
+        updated["llm_judge_model"] = model
+        updated["llm_judge_success"] = bool(success)
+        metrics["ocrbench_accuracy"] = updated
 
     def _is_scivqr_task(self) -> bool:
         return bool(self._current_task_name and self._current_task_name.startswith("scivqr"))

@@ -8,7 +8,7 @@ validation across the HTTP server and client.
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StrictInt
 
 
 class JobStatus(str, Enum):
@@ -36,6 +36,8 @@ class EvaluateRequest(BaseModel):
     predict_only: bool = Field(default=False, description="Only generate predictions")
     num_gpus: int = Field(default=1, description="Number of GPUs to use")
     output_dir: Optional[str] = Field(default=None, description="Output directory for results")
+    timeout_seconds: StrictInt = Field(..., gt=0, description="Hard timeout for this evaluation job in seconds")
+    timeout_kill_after_seconds: StrictInt = Field(..., gt=0, description="Seconds to wait after SIGTERM before SIGKILL")
 
 
 class JobInfo(BaseModel):

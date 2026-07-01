@@ -15,16 +15,36 @@ import os
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from loguru import logger as eval_logger
-
-from lmms_eval.utils import get_eval_banner, make_table
 
 SCIVQR_SUBJECTS = ["math", "physics", "chemistry", "biology", "geography", "astronomy"]
 SCIVQR_TASKS = {"scivqr_mcq", "scivqr_open", "scivqr_reasoning"}
 SCIVQR_DEFAULT_TESTED_MODEL = "InternVL3-8B-Instruct"
 SCIVQR_DEFAULT_REASONING_PREDICTION_MODEL = "o1"
+JudgeRunner = None
+Aggregator = None
+score_file = None
+
+
+def _load_judge_runtime_objects(include_score: bool = False):
+    global JudgeRunner, Aggregator, score_file
+    if JudgeRunner is None:
+        from lmms_eval.llm_judge.standalone import JudgeRunner as _JudgeRunner
+        JudgeRunner = _JudgeRunner
+    if Aggregator is None:
+        from lmms_eval.llm_judge.aggregator import Aggregator as _Aggregator
+        Aggregator = _Aggregator
+    if include_score and score_file is None:
+        from lmms_eval.llm_judge.scorer import score_file as _score_file
+        score_file = _score_file
+    return JudgeRunner, Aggregator, score_file
+
+
+def _make_table(results: dict, key: str = "results") -> str:
+    from lmms_eval.utils import make_table
+    return make_table(results, key)
 
 
 def _normalize_judge_mode(mode: Optional[str]) -> str:
@@ -239,6 +259,41 @@ def _detect_mode_from_files(judge_items: List[Tuple[str, Path]]) -> str:
     return "judge"
 
 
+def _expand_group_tasks(task_list: List[str]) -> List[str]:
+    """Expand lmms-eval group names into leaf tasks."""
+    if task_list == ["auto-detect"]:
+        return task_list
+    try:
+        from lmms_eval.tasks import get_task_dict
+        from lmms_eval.evaluator_utils import get_subtask_list
+
+        def _collect_leaf_tasks(subtasks):
+            leaves = []
+            for name, children in subtasks.items():
+                if not children:
+                    leaves.append(name)
+                else:
+                    leaves.extend(children)
+            return leaves
+
+        expanded_task_list = []
+        for task_name in task_list:
+            try:
+                task_dict = get_task_dict(task_name)
+                subtasks = get_subtask_list(task_dict)
+                leaves = _collect_leaf_tasks(subtasks)
+                if leaves:
+                    expanded_task_list.extend(leaves)
+                else:
+                    expanded_task_list.append(task_name)
+            except Exception:
+                expanded_task_list.append(task_name)
+        return expanded_task_list
+    except Exception as e:
+        eval_logger.debug(f"Failed to expand group tasks: {e}")
+        return task_list
+
+
 def _resolve_input_files(input_result: str, task_list: List[str]) -> List[Tuple[str, Path]]:
     """Resolve input files for given tasks.
     
@@ -281,7 +336,7 @@ def _resolve_input_files(input_result: str, task_list: List[str]) -> List[Tuple[
     if input_path.is_dir():
         result = []
         if task_list == ["auto-detect"]:
-            files = sorted(input_path.glob("*samples_*.jsonl"))
+            files = sorted(input_path.rglob("*samples_*.jsonl"))
             if not files:
                 if _resolve_scivqr_official_files(input_path):
                     raise ValueError(
@@ -304,7 +359,7 @@ def _resolve_input_files(input_result: str, task_list: List[str]) -> List[Tuple[
                         result.extend((task, f) for f in official_files)
                         continue
                 pattern = f"*samples_{task}.jsonl"
-                files = sorted(input_path.glob(pattern))
+                files = sorted(input_path.rglob(pattern))
                 if not files:
                     raise ValueError(
                         f"No file found for task: {task} (pattern: {pattern}) in directory: {input_path}"
@@ -341,6 +396,54 @@ def _get_output_path(input_file: Path, output: Optional[str], output_dir: Option
         return out_dir / input_file.name
     # Default: add _judged suffix
     return input_file.parent / f"{input_file.stem}_judged.jsonl"
+
+
+def _result_json_path_for_output(output_path: Path) -> Path:
+    """Return the WebUI-readable result JSON path next to a judged samples JSONL."""
+    stem = output_path.stem
+    if "_samples_" in stem:
+        prefix = stem.split("_samples_", 1)[0]
+    else:
+        prefix = stem
+    return output_path.with_name(f"{prefix}_results.json")
+
+
+def _write_judge_results_json(
+    *,
+    output_path: Path,
+    task_name: str,
+    summary: dict,
+    n_samples: int,
+    input_file: Path,
+    judge_model: str,
+    effective_mode: str,
+) -> Path:
+    """Write aggregate judge metrics in the same shape as lmms-eval result JSON."""
+    result_json = _result_json_path_for_output(output_path)
+    result_json.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "results": {
+            task_name: {str(key): value for key, value in summary.items()}
+        },
+        "n-shot": {task_name: " "},
+        "higher_is_better": {task_name: {}},
+        "n-samples": {
+            task_name: {
+                "original": n_samples,
+                "effective": n_samples,
+            }
+        },
+        "judge": {
+            "mode": effective_mode,
+            "model": judge_model,
+            "input_file": str(input_file),
+            "samples_file": str(output_path),
+        },
+    }
+    with result_json.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False, default=str)
+    eval_logger.info(f"Saved judge aggregate results to {result_json}")
+    return result_json
 
 
 def _defer_scivqr_reasoning_save(task_name: str, output: Optional[str], output_dir: Optional[str], item_counts: Counter) -> bool:
@@ -531,9 +634,7 @@ def run_judge(args: argparse.Namespace) -> None:
 
     # Import here to avoid heavy imports during CLI parsing
     try:
-        from lmms_eval.llm_judge.standalone import JudgeRunner
-        from lmms_eval.llm_judge.aggregator import Aggregator
-        from lmms_eval.llm_judge.scorer import score_file
+        JudgeRunner, Aggregator, _score_file = _load_judge_runtime_objects()
     except ImportError as e:
         eval_logger.error(f"Failed to import JudgeRunner: {e}")
         eval_logger.error("Please ensure lmms-eval is installed: pip install -e .")
@@ -552,38 +653,7 @@ def run_judge(args: argparse.Namespace) -> None:
         eval_logger.error("No tasks specified.")
         sys.exit(1)
 
-    # Expand group tasks into their subtasks so that judge can find sample files
-    if task_list != ["auto-detect"]:
-        try:
-            from lmms_eval.tasks import get_task_dict
-            from lmms_eval.evaluator_utils import get_subtask_list
-
-            def _collect_leaf_tasks(subtasks):
-                """Recursively collect leaf task names from get_subtask_list result."""
-                leaves = []
-                for name, children in subtasks.items():
-                    if not children:
-                        leaves.append(name)
-                    else:
-                        leaves.extend(children)
-                return leaves
-
-            expanded_task_list = []
-            for task_name in task_list:
-                try:
-                    task_dict = get_task_dict(task_name)
-                    subtasks = get_subtask_list(task_dict)
-                    leaves = _collect_leaf_tasks(subtasks)
-                    if leaves:
-                        expanded_task_list.extend(leaves)
-                    else:
-                        expanded_task_list.append(task_name)
-                except Exception:
-                    # If resolution fails, keep the original name
-                    expanded_task_list.append(task_name)
-            task_list = expanded_task_list
-        except Exception as e:
-            eval_logger.debug(f"Failed to expand group tasks: {e}")
+    task_list = _expand_group_tasks(task_list)
 
     # Resolve input files for the requested tasks
     try:
@@ -621,14 +691,14 @@ def run_judge(args: argparse.Namespace) -> None:
     runner = None
     if effective_mode == "judge":
         runner = JudgeRunner(
-            judge_mode="auto",
+            judge_mode="judge",
             judge_model=args.judge_model,
             judge_api_key=args.judge_api_key,
             judge_base_url=args.judge_base_url,
             parallel=args.parallel,
         )
         eval_logger.info(
-            f"judge ({args.input_result}), judge_mode: (auto), "
+            f"judge ({args.input_result}), judge_mode: (judge), "
             f"judge_model: ({args.judge_model}), parallel: {args.parallel}"
         )
     else:
@@ -654,6 +724,7 @@ def run_judge(args: argparse.Namespace) -> None:
 
         try:
             if effective_mode == "score":
+                _JudgeRunner, _Aggregator, score_file = _load_judge_runtime_objects(include_score=True)
                 # Offline re-scoring: re-run process_results + aggregation
                 output_dir = Path(args.output_dir) if args.output_dir else None
                 results_dict, _ = score_file(
@@ -695,6 +766,16 @@ def run_judge(args: argparse.Namespace) -> None:
                 if not args.dry_run and not _defer_scivqr_reasoning_save(task_name, args.output, args.output_dir, item_counts):
                     output_path = _get_output_path(input_file, args.output, args.output_dir, task_name)
                     runner.save_results(results, output_path)
+                    if summary:
+                        _write_judge_results_json(
+                            output_path=output_path,
+                            task_name=task_name,
+                            summary=_expand_scivqr_subject_summary(task_name, summary),
+                            n_samples=len(results),
+                            input_file=input_file,
+                            judge_model=args.judge_model,
+                            effective_mode=effective_mode,
+                        )
 
                 success_count += 1
 
@@ -728,6 +809,16 @@ def run_judge(args: argparse.Namespace) -> None:
                     runner._current_task = runner._load_task(task_name)
                     output_path = _get_output_path(Path(_scivqr_reasoning_chunk_name()), args.output, args.output_dir, task_name)
                     runner.save_results(merged_results, output_path)
+                    if summary:
+                        _write_judge_results_json(
+                            output_path=output_path,
+                            task_name=task_name,
+                            summary=display_summary,
+                            n_samples=len(merged_results),
+                            input_file=Path(args.input_result),
+                            judge_model=args.judge_model,
+                            effective_mode=effective_mode,
+                        )
             except Exception as e:
                 eval_logger.debug(f"Merged summary failed for {task_name}: {e}")
 
@@ -816,7 +907,7 @@ def run_judge(args: argparse.Namespace) -> None:
             "n-shot": combined_nshot,
             "higher_is_better": combined_hib,
         }
-        eval_logger.info("\n" + make_table(combined_dict))
+        eval_logger.info("\n" + _make_table(combined_dict))
 
     if error_count > 0:
         sys.exit(1)

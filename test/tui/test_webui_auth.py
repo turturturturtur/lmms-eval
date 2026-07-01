@@ -1,0 +1,505 @@
+import json
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+from lmms_eval.tui import server
+
+
+@pytest.fixture(autouse=True)
+def auth_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    path = tmp_path / "webui_users.json"
+    path.write_text(
+        json.dumps(
+            {
+                "admins": [
+                    {
+                        "username": "admin",
+                        "display_name": "Admin User",
+                        "access_key_id": "admin-ak",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv(server.AUTH_FILE_ENV, str(path))
+    monkeypatch.setenv(server.AUTH_SESSION_TTL_ENV, str(server.DEFAULT_AUTH_SESSION_TTL_SECONDS))
+    monkeypatch.setattr(server, "_validate_auth_credentials", lambda access_key_id, secret_access_key: secret_access_key != "wrong-secret")
+    monkeypatch.setattr(server, "_load_authenticated_aliyun_identity", lambda access_key_id, _secret_access_key: {"aliyun_user_id": f"user-{access_key_id}"})
+    server._auth_sessions.clear()
+    server._dlc_jobs_cache.clear()
+    server._dlc_pool_usage_cache = None
+    yield path
+    server._auth_sessions.clear()
+    server._dlc_jobs_cache.clear()
+    server._dlc_pool_usage_cache = None
+
+
+def _client() -> TestClient:
+    return TestClient(server.app)
+
+
+def _login(client: TestClient, access_key_id: str = "normal-ak", secret_access_key: str = "normal-secret"):
+    return client.post(
+        "/auth/login",
+        json={
+            "access_key_id": access_key_id,
+            "secret_access_key": secret_access_key,
+        },
+    )
+
+
+def _dlc_config() -> dict:
+    return {
+        "dlc": {
+            "submit": True,
+            "job_name": "eval_auth_test",
+            "binary": "/tmp/dlc",
+            "run_script": "/tmp/worker.sh",
+            "workers": 1,
+            "worker_gpu": 8,
+            "worker_cpu": 16,
+            "worker_memory": 128,
+            "worker_shared_memory": 64,
+            "worker_image": "registry.example/image:latest",
+            "data_source_uris": "nas://example",
+            "resource_id": "resource-id",
+            "workspace_id": server.DEFAULT_DLC_WORKSPACE_ID,
+            "vpc_id": "vpc-id",
+            "switch_id": "switch-id",
+            "security_group_id": "sg-id",
+            "extended_cidrs": "0.0.0.0/0",
+        }
+    }
+
+
+def _eval_payload() -> dict:
+    return {
+        "user": "",
+        "job_name": "eval_auth_test",
+        "model": "/tmp/model",
+        "dlc_path": "/tmp/dlc",
+        "model_args": "",
+        "tasks": ["ai2d"],
+        "judge_api_url": "",
+        "judge_api_key": "",
+        "env_vars": "",
+        "batch_size": 1,
+        "limit": 1,
+        "output_path": "/tmp/lmms-eval-results",
+        "log_samples": True,
+        "verbosity": "INFO",
+        "device": None,
+        "env_setup": "",
+        "run_mode": "dlc",
+        "dlc_config": _dlc_config(),
+        "model_tp": 1,
+        "max_model_len": 4096,
+        "gpu_memory_utilization": 0.9,
+        "max_num_seqs": 16,
+        "base_port": 9000,
+        "concurrency": 2,
+        "gen_kwargs": "",
+        "enable_thinking": False,
+        "debug": False,
+    }
+
+
+def test_protected_api_requires_login():
+    response = _client().get("/defaults")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required"
+
+
+def test_login_me_and_logout():
+    client = _client()
+
+    login_response = _login(client)
+
+    assert login_response.status_code == 200
+    assert login_response.json()["username"] == "normal-ak"
+    assert login_response.json()["role"] == "user"
+    assert "secret_access_key" not in login_response.text
+
+    me_response = client.get("/auth/me")
+
+    assert me_response.status_code == 200
+    assert me_response.json()["access_key_id"] == "normal-ak"
+
+    logout_response = client.post("/auth/logout")
+
+    assert logout_response.status_code == 200
+    assert client.get("/auth/me").status_code == 401
+
+
+def test_invalid_login_returns_401():
+    response = _login(_client(), secret_access_key="wrong-secret")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Access Key validation failed"
+
+
+def test_auth_file_rejects_local_secret(auth_file: Path):
+    data = json.loads(auth_file.read_text(encoding="utf-8"))
+    data["admins"][0]["secret_access_key"] = "must-not-be-local"
+    auth_file.write_text(json.dumps(data), encoding="utf-8")
+
+    with pytest.raises(Exception, match="must not contain secret_access_key"):
+        server._load_auth_admins()
+
+
+def test_admin_role_comes_from_local_access_key_id():
+    client = _client()
+
+    response = _login(client, access_key_id="admin-ak", secret_access_key="admin-secret")
+
+    assert response.status_code == 200
+    assert response.json()["username"] == "admin"
+    assert response.json()["display_name"] == "Admin User"
+    assert response.json()["role"] == "admin"
+
+
+def test_start_eval_uses_session_credentials_and_ignores_request_credentials(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["access_key"] = "forged-ak"
+    payload["secret_access_key"] = "forged-secret"
+    response = client.post("/eval/start", json=payload)
+
+    assert response.status_code == 200
+    job_id = response.json()["job_id"]
+    command = server._jobs[job_id]["command"]
+    assert "normal-ak" in command
+    assert "normal-secret" in command
+    assert "forged-ak" not in command
+    assert "forged-secret" not in command
+
+
+def test_preview_redacts_session_credentials(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client, access_key_id="admin-ak", secret_access_key="admin-secret").status_code == 200
+
+    response = client.post("/eval/preview", json=_eval_payload())
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert "********" in command
+    assert "admin-ak" not in command
+    assert "admin-secret" not in command
+
+
+def test_preview_syncs_job_name_to_dlc_log_and_eval_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["job_name"] = "eval_synced_name"
+    payload["output_path"] = "/tmp/lmms-eval-results/stale_name"
+    payload["dlc_config"]["dlc"]["job_name"] = "eval_stale_name"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    expected_log_dir = server._path_with_leaf(server._default_eval_config()["log"]["dir"], "eval_synced_name", field_name="log.dir")
+    assert '"job_name": "eval_synced_name"' in command
+    assert f'"dir": "{expected_log_dir}"' in command
+    assert '"output_path": "/tmp/lmms-eval-results/eval_synced_name"' in command
+    assert "eval_stale_name" not in command
+    assert "stale_name" not in command
+
+
+def test_dlc_job_list_marks_kill_permission_for_owner(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(server, "_resolve_dlc_binary", lambda: "/tmp/dlc")
+    monkeypatch.setattr(
+        server,
+        "_list_dlc_jobs_from_cli",
+        lambda **_kwargs: [
+            {
+                "job_id": "dlcowned",
+                "name": "eval_owned",
+                "status": "Running",
+                "user_id": "user-normal-ak",
+            },
+            {
+                "job_id": "dlcother",
+                "name": "eval_other",
+                "status": "Running",
+                "user_id": "user-other-ak",
+            },
+            {
+                "job_id": "dlcdone",
+                "name": "judge_done",
+                "status": "Succeeded",
+                "user_id": "user-normal-ak",
+            },
+        ],
+    )
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.get("/dlc/jobs")
+
+    assert response.status_code == 200
+    jobs = {job["job_id"]: job for job in response.json()["jobs"]}
+    assert jobs["dlcowned"]["can_kill"] is True
+    assert jobs["dlcowned"]["kill_disabled_reason"] == ""
+    assert jobs["dlcother"]["can_kill"] is False
+    assert "Only the job owner" in jobs["dlcother"]["kill_disabled_reason"]
+    assert jobs["dlcdone"]["can_kill"] is False
+    assert "not killable" in jobs["dlcdone"]["kill_disabled_reason"]
+
+
+def test_dlc_job_list_marks_admin_can_kill_active_jobs(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(server, "_resolve_dlc_binary", lambda: "/tmp/dlc")
+    monkeypatch.setattr(
+        server,
+        "_list_dlc_jobs_from_cli",
+        lambda **_kwargs: [
+            {
+                "job_id": "dlcother",
+                "name": "eval_other",
+                "status": "EnvPreparing",
+                "user_id": "user-other-ak",
+            },
+        ],
+    )
+
+    client = _client()
+    assert _login(client, access_key_id="admin-ak", secret_access_key="admin-secret").status_code == 200
+
+    response = client.get("/dlc/jobs")
+
+    assert response.status_code == 200
+    assert response.json()["jobs"][0]["can_kill"] is True
+
+
+def test_user_can_kill_own_active_dlc_job(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        server,
+        "_get_dlc_job_detail",
+        lambda job_id: {
+            "JobId": job_id,
+            "DisplayName": "eval_owned",
+            "Status": "Running",
+            "UserId": "user-normal-ak",
+        },
+    )
+    calls: list[tuple[list[str], str, str]] = []
+
+    def fake_run(args: list[str], auth_user: dict, *, timeout: int = 30) -> str:
+        calls.append((args, auth_user["access_key_id"], auth_user["secret_access_key"]))
+        assert timeout == server.DLC_STOP_TIMEOUT_SECONDS
+        return "stopped"
+
+    monkeypatch.setattr(server, "_run_authenticated_dlc_command", fake_run)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.post("/dlc/jobs/dlcowned/kill")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "kill_requested"
+    assert calls == [(["stop", "job", "dlcowned", "--force", "--quiet"], "normal-ak", "normal-secret")]
+
+
+def test_authenticated_dlc_command_uses_session_credentials(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(server, "_resolve_dlc_binary", lambda: "/tmp/dlc")
+    calls: list[list[str]] = []
+
+    class Completed:
+        returncode = 0
+        stdout = "ok"
+        stderr = ""
+
+    def fake_run(command: list[str], **_kwargs) -> Completed:
+        calls.append(command)
+        return Completed()
+
+    monkeypatch.setattr(server.subprocess, "run", fake_run)
+
+    output = server._run_authenticated_dlc_command(
+        ["stop", "job", "dlcowned", "--force", "--quiet"],
+        {
+            "access_key_id": "normal-ak",
+            "secret_access_key": "normal-secret",
+        },
+    )
+
+    assert output == "ok"
+    command = calls[0]
+    assert command[:5] == ["/tmp/dlc", "stop", "job", "dlcowned", "--force"]
+    assert "--access_id" in command
+    assert "normal-ak" in command
+    assert "--access_key" in command
+    assert "normal-secret" in command
+    assert "--ignore_local_config" in command
+
+
+def test_authenticated_dlc_command_timeout_redacts_credentials(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(server, "_resolve_dlc_binary", lambda: "/tmp/dlc")
+
+    def fake_run(*_args, **_kwargs):
+        raise server.subprocess.TimeoutExpired(cmd="/tmp/dlc", timeout=1)
+
+    monkeypatch.setattr(server.subprocess, "run", fake_run)
+
+    with pytest.raises(server.HTTPException) as exc_info:
+        server._run_authenticated_dlc_command(
+            ["stop", "job", "dlcowned", "--force", "--quiet"],
+            {
+                "access_key_id": "normal-ak",
+                "secret_access_key": "normal-secret",
+            },
+        )
+
+    detail = str(exc_info.value.detail)
+    assert "normal-ak" not in detail
+    assert "normal-secret" not in detail
+    assert "********" in detail
+
+
+def test_authenticated_dlc_command_failure_redacts_credentials(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(server, "_resolve_dlc_binary", lambda: "/tmp/dlc")
+
+    class Completed:
+        returncode = 1
+        stdout = ""
+        stderr = "failed for normal-ak with normal-secret"
+
+    monkeypatch.setattr(server.subprocess, "run", lambda *_args, **_kwargs: Completed())
+
+    with pytest.raises(server.HTTPException) as exc_info:
+        server._run_authenticated_dlc_command(
+            ["stop", "job", "dlcowned", "--force", "--quiet"],
+            {
+                "access_key_id": "normal-ak",
+                "secret_access_key": "normal-secret",
+            },
+        )
+
+    detail = str(exc_info.value.detail)
+    assert "normal-ak" not in detail
+    assert "normal-secret" not in detail
+    assert "********" in detail
+
+
+def test_user_cannot_kill_other_users_dlc_job(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        server,
+        "_get_dlc_job_detail",
+        lambda job_id: {
+            "JobId": job_id,
+            "DisplayName": "eval_other",
+            "Status": "Running",
+            "UserId": "user-other-ak",
+        },
+    )
+    called = False
+
+    def fake_run(*_args, **_kwargs) -> str:
+        nonlocal called
+        called = True
+        return "stopped"
+
+    monkeypatch.setattr(server, "_run_authenticated_dlc_command", fake_run)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.post("/dlc/jobs/dlcother/kill")
+
+    assert response.status_code == 403
+    assert "Only the job owner" in response.json()["detail"]
+    assert called is False
+
+
+def test_admin_can_kill_other_users_dlc_job(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        server,
+        "_get_dlc_job_detail",
+        lambda job_id: {
+            "JobId": job_id,
+            "DisplayName": "judge_other",
+            "Status": "Queuing",
+            "UserId": "user-other-ak",
+        },
+    )
+    calls: list[list[str]] = []
+
+    def fake_run(args: list[str], _auth_user: dict, *, timeout: int = 30) -> str:
+        calls.append(args)
+        return "stopped"
+
+    monkeypatch.setattr(server, "_run_authenticated_dlc_command", fake_run)
+
+    client = _client()
+    assert _login(client, access_key_id="admin-ak", secret_access_key="admin-secret").status_code == 200
+
+    response = client.post("/dlc/jobs/dlcother/kill")
+
+    assert response.status_code == 200
+    assert calls == [["stop", "job", "dlcother", "--force", "--quiet"]]
+
+
+def test_kill_inactive_dlc_job_returns_409(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        server,
+        "_get_dlc_job_detail",
+        lambda job_id: {
+            "JobId": job_id,
+            "DisplayName": "eval_done",
+            "Status": "Succeeded",
+            "UserId": "user-normal-ak",
+        },
+    )
+    monkeypatch.setattr(server, "_run_authenticated_dlc_command", lambda *_args, **_kwargs: pytest.fail("kill command should not run"))
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.post("/dlc/jobs/dlcdone/kill")
+
+    assert response.status_code == 409
+    assert "not killable" in response.json()["detail"]
+
+
+def test_kill_non_view_log_job_returns_400(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(
+        server,
+        "_get_dlc_job_detail",
+        lambda job_id: {
+            "JobId": job_id,
+            "DisplayName": "train_other",
+            "Status": "Running",
+            "UserId": "user-normal-ak",
+        },
+    )
+    monkeypatch.setattr(server, "_run_authenticated_dlc_command", lambda *_args, **_kwargs: pytest.fail("kill command should not run"))
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.post("/dlc/jobs/dlctrain/kill")
+
+    assert response.status_code == 400
+    assert "must start with" in response.json()["detail"]

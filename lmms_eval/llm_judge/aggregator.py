@@ -129,6 +129,11 @@ class Aggregator:
             "accuracy_func": "sfe_standalone_aggregate",
             "data_key": "sfe_info",
         },
+        "simplevqa": {
+            "module": "lmms_eval.tasks.simplevqa.utils",
+            "accuracy_func": "simplevqa_standalone_aggregate",
+            "data_key": "simplevqa_judge",
+        },
     }
     
     def __init__(self):

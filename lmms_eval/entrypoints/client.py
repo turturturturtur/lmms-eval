@@ -9,6 +9,8 @@ Example usage:
     >>> job = client.evaluate(
     ...     model="qwen_vl",
     ...     tasks=["mmmu_val"],
+    ...     timeout_seconds=3600,
+    ...     timeout_kill_after_seconds=60,
     ...     model_args={"pretrained": "Qwen/Qwen2-VL-7B-Instruct"},
     ... )
     >>> print(f"Job submitted: {job['job_id']}")
@@ -144,6 +146,8 @@ class EvalClient:
         self,
         model: str,
         tasks: List[str],
+        timeout_seconds: int,
+        timeout_kill_after_seconds: int,
         model_args: Optional[Dict[str, Any]] = None,
         num_fewshot: Optional[int] = None,
         batch_size: Optional[Union[int, str]] = None,
@@ -171,6 +175,8 @@ class EvalClient:
             predict_only: Only generate predictions, skip metrics
             num_gpus: Number of GPUs to use
             output_dir: Output directory for results
+            timeout_seconds: Hard timeout for this evaluation job in seconds
+            timeout_kill_after_seconds: Seconds to wait after SIGTERM before SIGKILL
 
         Returns:
             Dict with job_id, status, position_in_queue, message
@@ -188,6 +194,8 @@ class EvalClient:
             "predict_only": predict_only,
             "num_gpus": num_gpus,
             "output_dir": output_dir,
+            "timeout_seconds": timeout_seconds,
+            "timeout_kill_after_seconds": timeout_kill_after_seconds,
         }
         # Remove None values
         payload = {k: v for k, v in payload.items() if v is not None}
@@ -301,7 +309,12 @@ class AsyncEvalClient:
 
     Example:
         >>> async with AsyncEvalClient() as client:
-        ...     job = await client.evaluate(model="qwen_vl", tasks=["mmmu_val"])
+        ...     job = await client.evaluate(
+        ...         model="qwen_vl",
+        ...         tasks=["mmmu_val"],
+        ...         timeout_seconds=3600,
+        ...         timeout_kill_after_seconds=60,
+        ...     )
         ...     result = await client.wait_for_job(job["job_id"])
     """
 

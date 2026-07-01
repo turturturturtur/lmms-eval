@@ -34,9 +34,16 @@ def _extract_answer_letter(text: str) -> str:
     Return an empty string if no letter is found.
     """
     text = text.strip()
-    match = re.match(r"[\(\s]*([A-Z])[\)\.\s]*", text, flags=re.IGNORECASE)
-    if match:
-        return match.group(1).upper()
+    patterns = [
+        r"^\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?\s*$",
+        r"(?:answer|option|choice)(?:\s+is)?\s*[:：]?\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?",
+        r"^\s*([A-D])[\.\)]\s+",
+        r"\(([A-D])\)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return match.group(1).upper()
     return ""
 
 
@@ -55,7 +62,10 @@ def embspatial_doc_to_text(doc: dict[str, Any], lmms_eval_specific_kwargs: Optio
 
 
 def embspatial_doc_to_visual(doc: dict) -> list:
-    return [doc["image"].convert("RGB")]
+    image = doc.get("image")
+    if image is None:
+        raise ValueError(f"EmbSpatial sample is missing image: question_id={doc.get('question_id')!r}")
+    return [image.convert("RGB")]
 
 
 def embspatial_process_results(doc, results):

@@ -5,7 +5,7 @@ def doc_to_visual(doc):
     image = doc.get("image")
     if isinstance(image, Image.Image):
         return [image.convert("RGB")]
-    return []
+    raise ValueError(f"EMVista sample is missing a PIL image: problem={doc.get('problem', '')[:80]!r}")
 
 def doc_to_text(doc, lmms_eval_specific_kwargs=None):
     pre_prompt = lmms_eval_specific_kwargs.get("pre_prompt", "") if lmms_eval_specific_kwargs else ""

@@ -30,6 +30,8 @@ ipython_config.py
 
 # Environment and secrets
 .env
+local/*.pid
+local/webui_users.json
 
 # Caches and temp
 **/.cache
@@ -41,6 +43,7 @@ output/
 
 # Logs
 logs/
+eval_logs/
 *.log
 wandb/
 zk.log

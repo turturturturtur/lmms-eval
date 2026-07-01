@@ -7,9 +7,12 @@ GPU resource management.
 """
 
 import asyncio
+import os
+import signal
 import tempfile
 import uuid
 from collections import defaultdict
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -306,6 +309,8 @@ class JobScheduler:
         This allows GPU-based evaluation to run in a separate process
         while the server remains responsive.
         """
+        timeout_seconds = self._required_positive_int(config, "timeout_seconds")
+        timeout_kill_after_seconds = self._required_positive_int(config, "timeout_kill_after_seconds")
         output_path = config.get("output_dir") or tempfile.mkdtemp(prefix=self._temp_dir_prefix)
 
         # Build command
@@ -358,7 +363,39 @@ class JobScheduler:
             *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
+            preexec_fn=os.setsid,
         )
+
+        try:
+            await asyncio.wait_for(
+                self._wait_for_process_with_logs(proc),
+                timeout=timeout_seconds,
+            )
+        except asyncio.TimeoutError as exc:
+            await self._terminate_process_group(proc, timeout_kill_after_seconds)
+            raise TimeoutError(
+                f"Evaluation timed out after {timeout_seconds}s; "
+                f"process group terminated with kill_after={timeout_kill_after_seconds}s"
+            ) from exc
+
+        if proc.returncode != 0:
+            raise RuntimeError(f"Evaluation failed with return code {proc.returncode}")
+
+        return self._parse_output_directory(output_path)
+
+    @staticmethod
+    def _required_positive_int(config: dict, key: str) -> int:
+        value = config.get(key)
+        if type(value) is not int:
+            raise ValueError(f"{key} must be a positive integer, got {value!r}")
+        if value <= 0:
+            raise ValueError(f"{key} must be > 0, got {value!r}")
+        return value
+
+    @staticmethod
+    async def _wait_for_process_with_logs(proc: asyncio.subprocess.Process) -> None:
+        if proc.stdout is None:
+            raise RuntimeError("Evaluation subprocess stdout pipe was not created")
 
         while True:
             line = await proc.stdout.readline()
@@ -368,10 +405,28 @@ class JobScheduler:
 
         await proc.wait()
 
-        if proc.returncode != 0:
-            raise RuntimeError(f"Evaluation failed with return code {proc.returncode}")
+    @staticmethod
+    async def _terminate_process_group(proc: asyncio.subprocess.Process, kill_after_seconds: int) -> None:
+        if type(kill_after_seconds) is not int or kill_after_seconds <= 0:
+            raise ValueError(f"kill_after_seconds must be a positive integer, got {kill_after_seconds!r}")
+        if proc.returncode is not None:
+            return
 
-        return self._parse_output_directory(output_path)
+        with suppress(ProcessLookupError):
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, signal.SIGTERM)
+
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=kill_after_seconds)
+            return
+        except asyncio.TimeoutError:
+            pass
+
+        with suppress(ProcessLookupError):
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, signal.SIGKILL)
+
+        await proc.wait()
 
     @staticmethod
     def _parse_output_directory(output_path: str) -> Dict[str, Dict[str, Any]]:

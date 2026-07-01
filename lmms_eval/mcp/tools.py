@@ -174,6 +174,8 @@ def register_tools(mcp: FastMCP, scheduler) -> None:
     async def evaluate(
         model: str,
         tasks: list[str],
+        timeout_seconds: int,
+        timeout_kill_after_seconds: int,
         model_args: Optional[dict] = None,
         batch_size: Optional[int] = None,
         limit: Optional[int] = None,
@@ -196,6 +198,8 @@ def register_tools(mcp: FastMCP, scheduler) -> None:
             gen_kwargs: Generation kwargs as string.
             log_samples: Whether to log individual sample results.
             num_gpus: Number of GPUs to use.
+            timeout_seconds: Hard timeout for this evaluation job in seconds.
+            timeout_kill_after_seconds: Seconds to wait after SIGTERM before SIGKILL.
             mode: Execution mode - "auto" (wait up to wait_timeout_s, then return run_id), "async" (return run_id immediately), "sync" (wait until done).
             wait_timeout_s: For mode="auto", how long to wait before returning a run_id (default: 90s).
 
@@ -219,6 +223,8 @@ def register_tools(mcp: FastMCP, scheduler) -> None:
             gen_kwargs=gen_kwargs,
             log_samples=log_samples,
             num_gpus=num_gpus,
+            timeout_seconds=timeout_seconds,
+            timeout_kill_after_seconds=timeout_kill_after_seconds,
         )
 
         job_id, position = await _scheduler.add_job(request)

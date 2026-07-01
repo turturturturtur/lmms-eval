@@ -87,6 +87,7 @@ class VLLMBackend(lmms):
         video_fps: Frames per second for video processing
         max_frames_num: Maximum number of frames to extract from video
         is_qwen3_vl: Whether the model is Qwen3-VL
+        enable_thinking: Whether to pass Qwen chat_template_kwargs.enable_thinking
         prefix_aware_queue: Whether to use prefix-aware queue ordering
         shuffle_requests: Whether to randomly shuffle requests before dispatch
     """
@@ -116,6 +117,7 @@ class VLLMBackend(lmms):
         video_fps: Optional[float] = None,
         max_frames_num: int = 64,
         is_qwen3_vl: bool = False,
+        enable_thinking: Optional[Union[bool, str]] = None,
         prefix_aware_queue: bool = True,
         prefix_hash_chars: int = 256,
         chat_template: Optional[str] = None,
@@ -158,6 +160,10 @@ class VLLMBackend(lmms):
         self.video_fps = float(video_fps) if video_fps is not None else None
         self.max_frames_num = int(max_frames_num)
         self.is_qwen3_vl = is_qwen3_vl if not isinstance(is_qwen3_vl, str) else is_qwen3_vl.lower() == "true"
+        if enable_thinking is None or str(enable_thinking).strip().lower() in {"", "null", "none"}:
+            self.enable_thinking = None
+        else:
+            self.enable_thinking = parse_bool(enable_thinking)
         self.prefix_aware_queue = parse_bool(prefix_aware_queue)
         self.prefix_hash_chars = max(32, int(prefix_hash_chars))
         self.chat_template = chat_template
@@ -481,6 +487,8 @@ class VLLMBackend(lmms):
                 payload["min_p"] = min_p
             if skip_special_tokens is not None:
                 payload["skip_special_tokens"] = skip_special_tokens
+            if self.enable_thinking is not None:
+                payload["chat_template_kwargs"] = {"enable_thinking": self.enable_thinking}
             
             # Log generation config once
             if self._rank == 0 and not _gen_config_printed:
@@ -489,6 +497,7 @@ class VLLMBackend(lmms):
                     f"temperature={temperature}, top_p={top_p}, top_k={top_k}, "
                     f"repetition_penalty={repetition_penalty}, min_p={min_p}, "
                     f"presence_penalty={presence_penalty}, frequency_penalty={frequency_penalty}, "
+                    f"enable_thinking={self.enable_thinking}, "
                     f"gen_kwargs={request_gen_kwargs}"
                 )
                 _gen_config_printed = True

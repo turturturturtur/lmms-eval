@@ -7,7 +7,10 @@ REPLACE_PROMPT = "Please answer directly with only the letter of the correct opt
 
 
 def realworldqa_doc_to_visual(doc):
-    return [doc["image"].convert("RGB")]
+    image = doc.get("image")
+    if image is None:
+        raise ValueError(f"RealWorldQA sample is missing image: question={doc.get('question', '')[:80]!r}")
+    return [image.convert("RGB")]
 
 
 def realworldqa_doc_to_text(doc, lmms_eval_specific_kwargs=None):
@@ -85,33 +88,43 @@ class MultiChoiceRegexFilter(ExtendedRegexFilter):
             without_paren_to_target = {}
 
             # Regex to extract multiple choice options from the question
-            multiple_choices_regex = re.compile(r"\b([A-Z])\.\s+([^\n]*)")
+            multiple_choices_regex = re.compile(r"(?:\(([A-Z])\)|\b([A-Z])\.)\s*([^\n]*)")
             matches = multiple_choices_regex.findall(doc["question"])
 
             # Build regex patterns and mappings for each choice
             for m in matches:
-                choice_text = m[1].strip()
-                fallback_regexes.append(f"{re.escape(choice_text)}")
-                choice_to_alpha[choice_text] = next_alpha
-
-                next_alpha = chr(ord(next_alpha) + 1)
+                letter = (m[0] or m[1]).strip()
+                choice_text = m[2].strip()
+                if not letter or not choice_text:
+                    continue
+                normalized_choice = re.sub(r"[^\w\s]", " ", choice_text).strip().lower()
+                fallback_regexes.append(f"{re.escape(normalized_choice)}")
+                choice_to_alpha[normalized_choice] = letter
 
             # Compile regex to match any of the extracted choices
-            fallback_regex = re.compile("|".join(fallback_regexes))
+            fallback_regex = re.compile("|".join(fallback_regexes), flags=re.IGNORECASE) if fallback_regexes else None
+            answer_letter_regexes = [
+                re.compile(r"^\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?\s*$", re.IGNORECASE),
+                re.compile(r"(?:answer|option|choice)(?:\s+is)?\s*[:：]?\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?", re.IGNORECASE),
+                re.compile(r"^\s*([A-D])[\.\)]\s+", re.IGNORECASE),
+                re.compile(r"\(([A-D])\)", re.IGNORECASE),
+            ]
 
             # Process each response
             filtered = []
             for resp in r:
-                # Remove any punctuation and extra spaces
-                cleaned_resp = re.sub(r"[^\w\s]", "", resp).strip()
-                # Try to match cleaned response with the choice text
-                match = fallback_regex.search(cleaned_resp)
-                if match and match.group() in choice_to_alpha:
-                    # Map the matched choice text back to its corresponding letter
-                    filtered.append(choice_to_alpha[match.group()])
-                else:
-                    # If no match, return the cleaned response
-                    filtered.append(cleaned_resp)
+                extracted = None
+                for regex in answer_letter_regexes:
+                    match = regex.search(resp)
+                    if match:
+                        extracted = match.group(1).upper()
+                        break
+                if extracted is None and fallback_regex is not None:
+                    cleaned_resp = re.sub(r"[^\w\s]", " ", resp).strip().lower()
+                    match = fallback_regex.search(cleaned_resp)
+                    if match:
+                        extracted = choice_to_alpha.get(match.group())
+                filtered.append(extracted if extracted is not None else re.sub(r"[^\w\s]", "", resp).strip())
 
             filtered_resps.append(filtered[0])
 

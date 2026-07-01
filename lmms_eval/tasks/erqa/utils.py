@@ -24,9 +24,16 @@ def _extract_answer_letter(text: str) -> str:
     Return an empty string if no letter is found.
     """
     text = text.strip()
-    match = re.match(r"[\(\s]*([A-Z])[\)\.\s]*", text, flags=re.IGNORECASE)
-    if match:
-        return match.group(1).upper()
+    patterns = [
+        r"^\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?\s*$",
+        r"(?:answer|option|choice)(?:\s+is)?\s*[:：]?\s*[\(\[]?\s*([A-D])\s*[\)\]\.]?",
+        r"^\s*([A-D])[\.\)]\s+",
+        r"\(([A-D])\)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return match.group(1).upper()
     return ""
 
 
@@ -36,9 +43,10 @@ def erqa_doc_to_text(doc: dict) -> str:
 
 def erqa_doc_to_visual(doc: dict) -> list:
     image_list = []
-    for image in doc["images"]:
-        if image is not None:
-            image_list.append(image.convert("RGB"))
+    for idx, image in enumerate(doc["images"]):
+        if image is None:
+            raise ValueError(f"ERQA sample has missing image at index={idx}; question_id={doc.get('question_id')!r}")
+        image_list.append(image.convert("RGB"))
     return image_list
 
 

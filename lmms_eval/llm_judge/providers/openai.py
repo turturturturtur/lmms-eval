@@ -77,6 +77,13 @@ class OpenAIProvider(ServerInterface):
                 "model": config.model_name,
                 "messages": messages,
             }
+            disable_thinking = os.getenv("JUDGE_DISABLE_THINKING", os.getenv("AUTOMIX_DISABLE_THINKING", "")).lower() in {"1", "true", "yes"}
+            extra_body = None
+            if disable_thinking:
+                extra_body = {
+                    "enable_thinking": False,
+                    "chat_template_kwargs": {"enable_thinking": False},
+                }
             if config.temperature is not None:
                 payload["temperature"] = config.temperature
             if config.max_tokens is not None:
@@ -95,15 +102,22 @@ class OpenAIProvider(ServerInterface):
                 try:
                     if self.use_client:
                         client = self._next_client()
-                        response = client.chat.completions.create(**payload)
-                        content = response.choices[0].message.content
+                        client_payload = dict(payload)
+                        if extra_body is not None:
+                            client_payload["extra_body"] = extra_body
+                        response = client.chat.completions.create(timeout=config.timeout, **client_payload)
+                        message = response.choices[0].message
+                        content = message.content or getattr(message, "reasoning_content", "") or ""
                         model_used = response.model
                         usage = response.usage.model_dump() if hasattr(response.usage, "model_dump") else None
                         raw_response = response
                     else:
+                        if extra_body is not None:
+                            payload.update(extra_body)
                         url = self.api_urls[attempt % len(self.api_urls)]
                         response = self._make_request(payload, config.timeout, url)
-                        content = response["choices"][0]["message"]["content"]
+                        message = response["choices"][0]["message"]
+                        content = message.get("content") or message.get("reasoning_content") or ""
                         model_used = response["model"]
                         usage = response.get("usage")
                         raw_response = response

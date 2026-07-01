@@ -455,6 +455,8 @@ client = EvalClient("http://eval-server:8000")
 job = client.evaluate(
     model="qwen2_5_vl",
     tasks=["mmmu_val", "mme"],
+    timeout_seconds=3600,
+    timeout_kill_after_seconds=60,
     model_args={"pretrained": "Qwen/Qwen2.5-VL-7B-Instruct"},
     num_fewshot=0,
     batch_size=1,
@@ -475,6 +477,8 @@ async with AsyncEvalClient("http://eval-server:8000") as client:
     job = await client.evaluate(
         model="qwen3_vl",
         tasks=["mmmu_val"],
+        timeout_seconds=3600,
+        timeout_kill_after_seconds=60,
         model_args={"pretrained": "Qwen/Qwen3-VL-4B-Instruct"},
     )
     result = await client.wait_for_job(job["job_id"])
@@ -509,6 +513,8 @@ for epoch in range(num_epochs):
             model="vllm",
             model_args={"model": checkpoint_path},
             tasks=["mmmu_val", "mathvista"],
+            timeout_seconds=3600,
+            timeout_kill_after_seconds=60,
         )
 
         # Training continues immediately
