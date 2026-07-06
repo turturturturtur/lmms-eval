@@ -2,13 +2,13 @@
   "_comment": "lmms-eval Judge 配置文件 - 支持 API 和 vLLM 两种后端",
   
   "env": {
-    "hf_home": "/mnt/cpfs/public_data/public_dataset/.cache/huggingface",
+    "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
-    "venv_path": "/mnt/cpfs/yangyicun/lmms-eval/.venv"
+    "venv_path": "/mnt/cpfsB/yangyicun/lmms-eval/.venv"
   },
   
   "log": {
-    "dir": "/mnt/cpfs/yangyicun/judge_logs"
+    "dir": "/mnt/cpfsB/yangyicun/judge_logs"
   },
   
   "judge": {
@@ -22,17 +22,17 @@
     "parallel": 128,
     
     "_comment_model": "当使用 API 后端时的 judge 模型名称",
-    "model": "gpt-4o-mini",
+    "model": "deepseek-v4-flash",
     
     "api": {
       "_comment": "API 后端配置 (backend=api 时生效)",
       "key": "",
-      "base_url": "https://yunwu.ai/v1"
+      "base_url": "http://8.130.30.251:8801/v1"
     },
     
     "vllm": {
       "_comment": "vLLM 后端配置 (backend=vllm 时生效)",
-      "model_path": "/mnt/cpfs/public_data/public_model/Qwen3.5/Qwen3.5-27B",
+      "model_path": "/mnt/cpfsB/public_data/public_model/Qwen3.5/Qwen3.5-27B",
       "tp": 4,
       "max_model_len": 32768,
       "gpu_memory_utilization": "0.9",
@@ -43,13 +43,13 @@
   
   "eval": {
     "_comment_input": "输入路径: 可以是包含 *samples_*.jsonl 文件的目录，或单个 jsonl 文件",
-    "input_result_path": "/mnt/cpfs/yangyicun/lmms-eval/eval_result/Qwen3-VL-8B-Instruct/2026-04-06_00-06-36/model__Qwen3-VL-8B-Instruct",
+    "input_result_path": "/mnt/cpfsB/yangyicun/lmms-eval/eval_result/Qwen3-VL-8B-Instruct/2026-04-06_00-06-36/model__Qwen3-VL-8B-Instruct",
     
     "_comment_tasks": "要 judge 的 task 列表，逗号分隔。会从 input_result_path 中查找 *samples_<task>.jsonl 文件",
     "tasks": "mmmu_val_qwen3_official,mmmu_pro_standard_qwen3_official,wemath_testmini_qwen3,mathvision_reason_testmini_qwen3,mathvision_testmini_qwen3",
     
     "_comment_output": "judge 结果输出目录",
-    "output_path": "/mnt/cpfs/yangyicun/judge_results",
+    "output_path": "/mnt/cpfsB/yangyicun/judge_results",
     
     "verbosity": "INFO",
     

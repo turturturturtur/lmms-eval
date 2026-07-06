@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react'
 
 const API_BASE = ''
 const JOB_PAGE_SIZE = 100
@@ -6,6 +7,7 @@ const JOB_MAX_PAGES = 3
 const SAMPLE_PAGE_SIZE = 50
 const JOB_NAME_PREFIXES = ['eval_', 'judge_']
 const JOB_NAME_PREFIX_QUERY = JOB_NAME_PREFIXES.join(',')
+const SAMPLE_MEDIA_COLUMN_KEY = '__sample_media__'
 
 interface DlcJobSummary {
   job_id: string
@@ -74,11 +76,22 @@ interface DlcMetricsResponse {
   message: string
 }
 
+interface DlcSampleMedia {
+  url: string
+  label: string
+  source: string
+  media_type: string
+}
+
+type DlcMetricSampleRow = Record<string, unknown> & {
+  _media?: DlcSampleMedia[]
+}
+
 interface DlcMetricSamplesResponse {
   job_id: string
   metric_id: string
   columns: string[]
-  rows: Record<string, unknown>[]
+  rows: DlcMetricSampleRow[]
   total: number
   offset: number
   limit: number
@@ -111,12 +124,67 @@ interface ChoiceAnswerStats {
 }
 
 type JobColumnKey = 'job_stage' | 'name' | 'user_name' | 'job_id' | 'status' | 'resource_id' | 'create_time' | 'duration_seconds'
+type JobTableColumnKey = JobColumnKey | 'action'
 type ColumnFilters = Record<JobColumnKey, string[]>
 
 interface JobColumn {
   key: JobColumnKey
   label: string
   getValue: (job: DlcJobSummary) => unknown
+}
+
+interface ColumnResizeSession {
+  key: JobTableColumnKey
+  startX: number
+  startWidth: number
+  previousCursor: string
+  previousUserSelect: string
+}
+
+interface SampleColumnResizeSession {
+  key: string
+  startX: number
+  startWidth: number
+  previousCursor: string
+  previousUserSelect: string
+}
+
+interface PanelResizeSession {
+  startX: number
+  startWidth: number
+  previousCursor: string
+  previousUserSelect: string
+}
+
+const DEFAULT_JOB_LIST_PANEL_WIDTH = 960
+const MIN_JOB_LIST_PANEL_WIDTH = 420
+const MIN_JOB_DETAIL_PANEL_WIDTH = 360
+const MAX_JOB_LIST_PANEL_WIDTH = 1400
+const PANEL_RESIZER_WIDTH = 8
+
+function maxJobListPanelWidth(containerWidth?: number): number {
+  if (!containerWidth || containerWidth <= 0) return MAX_JOB_LIST_PANEL_WIDTH
+  return Math.min(
+    MAX_JOB_LIST_PANEL_WIDTH,
+    Math.max(MIN_JOB_LIST_PANEL_WIDTH, containerWidth - MIN_JOB_DETAIL_PANEL_WIDTH - PANEL_RESIZER_WIDTH),
+  )
+}
+
+function clampJobListPanelWidth(width: number, containerWidth?: number): number {
+  return Math.min(maxJobListPanelWidth(containerWidth), Math.max(MIN_JOB_LIST_PANEL_WIDTH, Math.round(width)))
+}
+
+function defaultJobListPanelWidth(containerWidth?: number): number {
+  const baseWidth = containerWidth && containerWidth >= 1536
+    ? 1120
+    : containerWidth && containerWidth >= 1280
+      ? DEFAULT_JOB_LIST_PANEL_WIDTH
+      : 720
+  return clampJobListPanelWidth(baseWidth, containerWidth)
+}
+
+function initialJobListPanelWidth(): number {
+  return defaultJobListPanelWidth(typeof window === 'undefined' ? undefined : window.innerWidth)
 }
 
 function valueToText(value: unknown): string {
@@ -194,6 +262,63 @@ const JOB_COLUMNS: JobColumn[] = [
   { key: 'create_time', label: 'Created', getValue: job => job.create_time },
   { key: 'duration_seconds', label: 'Duration', getValue: job => formatDuration(job.duration_seconds) },
 ]
+
+const DEFAULT_JOB_COLUMN_WIDTHS: Record<JobTableColumnKey, number> = {
+  job_stage: 96,
+  name: 420,
+  user_name: 170,
+  job_id: 230,
+  status: 120,
+  resource_id: 190,
+  create_time: 190,
+  duration_seconds: 120,
+  action: 96,
+}
+
+const MIN_JOB_COLUMN_WIDTHS: Record<JobTableColumnKey, number> = {
+  job_stage: 88,
+  name: 160,
+  user_name: 110,
+  job_id: 160,
+  status: 100,
+  resource_id: 120,
+  create_time: 150,
+  duration_seconds: 96,
+  action: 88,
+}
+
+const MAX_JOB_COLUMN_WIDTH = 1200
+
+function clampJobColumnWidth(key: JobTableColumnKey, width: number): number {
+  return Math.min(MAX_JOB_COLUMN_WIDTH, Math.max(MIN_JOB_COLUMN_WIDTHS[key], Math.round(width)))
+}
+
+const MAX_SAMPLE_COLUMN_WIDTH = 1800
+
+function defaultSampleColumnWidth(key: string): number {
+  if (key === SAMPLE_MEDIA_COLUMN_KEY) return 150
+  const normalized = key.toLowerCase()
+  if (normalized === '_sample_file') return 180
+  if (normalized === 'doc_id') return 110
+  if (['exact_match', 'score', 'judge_score', 'answer'].includes(normalized)) return 120
+  if (normalized.includes('hash')) return 220
+  if (normalized.includes('token')) return 180
+  if (normalized.includes('reason')) return 380
+  if (
+    ['input', 'target', 'filtered_resps', 'response', 'model_output', 'prediction', 'pred', 'extracted_answer'].includes(normalized)
+  ) {
+    return 380
+  }
+  return 260
+}
+
+function minSampleColumnWidth(key: string): number {
+  return key === SAMPLE_MEDIA_COLUMN_KEY ? 128 : 96
+}
+
+function clampSampleColumnWidth(key: string, width: number): number {
+  return Math.min(MAX_SAMPLE_COLUMN_WIDTH, Math.max(minSampleColumnWidth(key), Math.round(width)))
+}
 
 const QUERY_FIELD_GETTERS: Record<string, (job: DlcJobSummary) => unknown> = {
   name: job => job.name,
@@ -409,6 +534,22 @@ function jsonPreview(value: unknown): string {
   }
 }
 
+function isSampleMedia(value: unknown): value is DlcSampleMedia {
+  if (!value || typeof value !== 'object') return false
+  const media = value as Record<string, unknown>
+  return (
+    typeof media.url === 'string' &&
+    typeof media.label === 'string' &&
+    typeof media.source === 'string' &&
+    typeof media.media_type === 'string' &&
+    media.media_type.startsWith('image/')
+  )
+}
+
+function sampleMedia(row: DlcMetricSampleRow): DlcSampleMedia[] {
+  return Array.isArray(row._media) ? row._media.filter(isSampleMedia) : []
+}
+
 function extractResourceSummary(job: Record<string, unknown>): Array<[string, string]> {
   const specs = job.JobSpecs
   if (!Array.isArray(specs)) return []
@@ -468,13 +609,13 @@ function AnswerPieChart({
 }) {
   let cursor = 0
   return (
-    <div className="border border-neutral-200 bg-white p-3">
+    <div className="overflow-hidden border border-neutral-200 bg-white p-3">
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs font-semibold text-neutral-800">{title}</div>
         <div className="font-mono text-[11px] text-neutral-400">{total}</div>
       </div>
-      <div className="mt-3 grid grid-cols-[128px_minmax(0,1fr)] items-center gap-3">
-        <svg viewBox="0 0 120 120" className="h-32 w-32" role="img" aria-label={title}>
+      <div className="mt-3 grid grid-cols-1 items-center gap-3 sm:grid-cols-[128px_minmax(0,1fr)]">
+        <svg viewBox="0 0 120 120" className="mx-auto h-28 w-28 sm:h-32 sm:w-32" role="img" aria-label={title}>
           {buckets.length === 0 ? (
             <circle cx="60" cy="60" r="46" fill="#e5e7eb">
               <title>No option data</title>
@@ -501,7 +642,7 @@ function AnswerPieChart({
             })
           )}
         </svg>
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0 max-w-full space-y-1">
           {buckets.length === 0 ? (
             <div className="text-[11px] italic text-neutral-400">No option data</div>
           ) : (
@@ -565,6 +706,14 @@ export default function LogViewer() {
   const [onlyWrongSamples, setOnlyWrongSamples] = useState(false)
   const [samplesLoading, setSamplesLoading] = useState(false)
   const [samplesError, setSamplesError] = useState('')
+  const [jobListPanelWidth, setJobListPanelWidth] = useState(initialJobListPanelWidth)
+  const [jobColumnWidths, setJobColumnWidths] = useState<Record<JobTableColumnKey, number>>(DEFAULT_JOB_COLUMN_WIDTHS)
+  const [sampleColumnWidths, setSampleColumnWidths] = useState<Record<string, number>>({})
+  const [previewMedia, setPreviewMedia] = useState<DlcSampleMedia | null>(null)
+  const splitPaneRef = useRef<HTMLDivElement | null>(null)
+  const panelResizeSessionRef = useRef<PanelResizeSession | null>(null)
+  const columnResizeSessionRef = useRef<ColumnResizeSession | null>(null)
+  const sampleColumnResizeSessionRef = useRef<SampleColumnResizeSession | null>(null)
 
   const fetchJobs = async (): Promise<DlcJobSummary[]> => {
     setJobsLoading(true)
@@ -607,6 +756,7 @@ export default function LogViewer() {
     setSamples(null)
     setSampleOffset(0)
     setOnlyWrongSamples(false)
+    setPreviewMedia(null)
     setDetailError('')
     setDetailLoading(Boolean(job))
     if (!job) {
@@ -644,6 +794,7 @@ export default function LogViewer() {
     if (!selectedJob) return
     setSelectedMetric(metric)
     setSampleOffset(offset)
+    setPreviewMedia(null)
     setSamplesLoading(true)
     setSamplesError('')
     try {
@@ -711,6 +862,75 @@ export default function LogViewer() {
     }
   }, [sampleOffset, onlyWrongSamples])
 
+  useEffect(() => {
+    const finishResize = () => {
+      const panelSession = panelResizeSessionRef.current
+      const session = columnResizeSessionRef.current
+      const sampleSession = sampleColumnResizeSessionRef.current
+      if (panelSession) {
+        document.body.style.cursor = panelSession.previousCursor
+        document.body.style.userSelect = panelSession.previousUserSelect
+        panelResizeSessionRef.current = null
+      }
+      if (session) {
+        document.body.style.cursor = session.previousCursor
+        document.body.style.userSelect = session.previousUserSelect
+        columnResizeSessionRef.current = null
+      }
+      if (sampleSession) {
+        document.body.style.cursor = sampleSession.previousCursor
+        document.body.style.userSelect = sampleSession.previousUserSelect
+        sampleColumnResizeSessionRef.current = null
+      }
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const panelSession = panelResizeSessionRef.current
+      if (panelSession) {
+        const nextWidth = clampJobListPanelWidth(
+          panelSession.startWidth + event.clientX - panelSession.startX,
+          splitPaneRef.current?.clientWidth,
+        )
+        setJobListPanelWidth(prev => {
+          if (prev === nextWidth) return prev
+          return nextWidth
+        })
+      }
+
+      const session = columnResizeSessionRef.current
+      if (session) {
+        const nextWidth = clampJobColumnWidth(session.key, session.startWidth + event.clientX - session.startX)
+        setJobColumnWidths(prev => {
+          if (prev[session.key] === nextWidth) return prev
+          return { ...prev, [session.key]: nextWidth }
+        })
+      }
+
+      const sampleSession = sampleColumnResizeSessionRef.current
+      if (sampleSession) {
+        const nextWidth = clampSampleColumnWidth(sampleSession.key, sampleSession.startWidth + event.clientX - sampleSession.startX)
+        setSampleColumnWidths(prev => {
+          if (prev[sampleSession.key] === nextWidth) return prev
+          return { ...prev, [sampleSession.key]: nextWidth }
+        })
+      }
+    }
+
+    const handleWindowResize = () => {
+      setJobListPanelWidth(prev => clampJobListPanelWidth(prev, splitPaneRef.current?.clientWidth))
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', finishResize)
+    window.addEventListener('resize', handleWindowResize)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', finishResize)
+      window.removeEventListener('resize', handleWindowResize)
+      finishResize()
+    }
+  }, [])
+
   const parsedQuery = useMemo<{ predicate: (job: DlcJobSummary) => boolean; error: string }>(() => {
     try {
       return { predicate: parseJobQuery(jobQuery), error: '' }
@@ -751,6 +971,141 @@ export default function LogViewer() {
   const userCommand = valueToText(detailJob.UserCommand)
   const sampleRangeStart = !samples || samples.total === 0 ? 0 : samples.offset + 1
   const sampleRangeEnd = samples ? Math.min(samples.offset + samples.limit, samples.total) : 0
+  const sampleHasMedia = useMemo(() => Boolean(samples?.rows.some(row => sampleMedia(row).length > 0)), [samples])
+  const sampleTableColumnKeys = useMemo(
+    () => (samples ? (sampleHasMedia ? [SAMPLE_MEDIA_COLUMN_KEY, ...samples.columns] : samples.columns) : []),
+    [samples, sampleHasMedia],
+  )
+  const sampleTableWidth = useMemo(
+    () => sampleTableColumnKeys.reduce((total, key) => total + (sampleColumnWidths[key] ?? defaultSampleColumnWidth(key)), 0),
+    [sampleTableColumnKeys, sampleColumnWidths],
+  )
+  const jobTableWidth = useMemo(
+    () => Object.values(jobColumnWidths).reduce((total, width) => total + width, 0),
+    [jobColumnWidths],
+  )
+
+  useEffect(() => {
+    if (!samples) {
+      setSampleColumnWidths({})
+      setPreviewMedia(null)
+      return
+    }
+    const nextWidths: Record<string, number> = {}
+    const keys = sampleHasMedia ? [SAMPLE_MEDIA_COLUMN_KEY, ...samples.columns] : samples.columns
+    for (const key of keys) {
+      nextWidths[key] = defaultSampleColumnWidth(key)
+    }
+    setSampleColumnWidths(nextWidths)
+  }, [selectedMetric?.metric_id, samples?.columns.join('\u0001'), sampleHasMedia])
+
+  const panelContainerWidth = () => splitPaneRef.current?.clientWidth
+
+  const resetJobListPanelWidth = () => {
+    setJobListPanelWidth(defaultJobListPanelWidth(panelContainerWidth()))
+  }
+
+  const resizeJobListPanelBy = (delta: number) => {
+    setJobListPanelWidth(prev => clampJobListPanelWidth(prev + delta, panelContainerWidth()))
+  }
+
+  const startJobListPanelResize = (event: ReactMouseEvent<HTMLElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    panelResizeSessionRef.current = {
+      startX: event.clientX,
+      startWidth: jobListPanelWidth,
+      previousCursor: document.body.style.cursor,
+      previousUserSelect: document.body.style.userSelect,
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
+  const startJobColumnResize = (event: ReactMouseEvent<HTMLElement>, key: JobTableColumnKey) => {
+    event.preventDefault()
+    event.stopPropagation()
+    columnResizeSessionRef.current = {
+      key,
+      startX: event.clientX,
+      startWidth: jobColumnWidths[key],
+      previousCursor: document.body.style.cursor,
+      previousUserSelect: document.body.style.userSelect,
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
+  const resetJobColumnWidth = (key: JobTableColumnKey) => {
+    setJobColumnWidths(prev => ({ ...prev, [key]: DEFAULT_JOB_COLUMN_WIDTHS[key] }))
+  }
+
+  const renderResizeHandle = (key: JobTableColumnKey, label: string) => (
+    <span
+      role="separator"
+      aria-label={`Resize ${label} column`}
+      title={`Drag to resize ${label}; double-click to reset`}
+      onMouseDown={event => startJobColumnResize(event, key)}
+      onDoubleClick={event => {
+        event.preventDefault()
+        event.stopPropagation()
+        resetJobColumnWidth(key)
+      }}
+      className="absolute right-0 top-0 z-20 h-full w-2 cursor-col-resize select-none border-r border-transparent hover:border-neutral-500 hover:bg-neutral-200/70"
+    >
+      <span className="absolute right-[3px] top-1/2 h-4 -translate-y-1/2 border-r border-neutral-300" />
+    </span>
+  )
+
+  const startSampleColumnResize = (event: ReactMouseEvent<HTMLElement>, key: string) => {
+    event.preventDefault()
+    event.stopPropagation()
+    sampleColumnResizeSessionRef.current = {
+      key,
+      startX: event.clientX,
+      startWidth: sampleColumnWidths[key] ?? defaultSampleColumnWidth(key),
+      previousCursor: document.body.style.cursor,
+      previousUserSelect: document.body.style.userSelect,
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
+  const resetSampleColumnWidth = (key: string) => {
+    setSampleColumnWidths(prev => ({ ...prev, [key]: defaultSampleColumnWidth(key) }))
+  }
+
+  const renderSampleResizeHandle = (key: string, label: string) => (
+    <span
+      role="separator"
+      aria-label={`Resize ${label} sample column`}
+      title={`Drag to resize ${label}; double-click to reset`}
+      onMouseDown={event => startSampleColumnResize(event, key)}
+      onDoubleClick={event => {
+        event.preventDefault()
+        event.stopPropagation()
+        resetSampleColumnWidth(key)
+      }}
+      className="absolute right-0 top-0 z-20 h-full w-2 cursor-col-resize select-none border-r border-transparent hover:border-neutral-500 hover:bg-neutral-200/70"
+    >
+      <span className="absolute right-[3px] top-1/2 h-4 -translate-y-1/2 border-r border-neutral-300" />
+    </span>
+  )
+
+  const renderSampleHeader = (key: string) => {
+    const label = key === SAMPLE_MEDIA_COLUMN_KEY ? 'Images' : key
+    const width = sampleColumnWidths[key] ?? defaultSampleColumnWidth(key)
+    return (
+      <th
+        key={key}
+        style={{ width, minWidth: minSampleColumnWidth(key) }}
+        className="relative select-none border-b border-r border-neutral-200 px-3 py-2 pr-5 text-left text-[10px] uppercase tracking-wider text-neutral-500"
+      >
+        <span className="block truncate">{label}</span>
+        {renderSampleResizeHandle(key, label)}
+      </th>
+    )
+  }
 
   const toggleColumnFilterValue = (key: JobColumnKey, value: string) => {
     setColumnFilters(prev => {
@@ -773,9 +1128,13 @@ export default function LogViewer() {
     const options = columnFilterOptions[column.key]
     const isOpen = openFilterKey === column.key
     return (
-      <th key={column.key} className="relative px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">
+      <th
+        key={column.key}
+        style={{ width: jobColumnWidths[column.key], minWidth: MIN_JOB_COLUMN_WIDTHS[column.key] }}
+        className="relative select-none px-3 py-2 pr-5 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200"
+      >
         <div className="flex items-center gap-1">
-          <span>{column.label}</span>
+          <span className="truncate">{column.label}</span>
           <button
             type="button"
             onClick={event => {
@@ -822,74 +1181,154 @@ export default function LogViewer() {
             )}
           </div>
         )}
+        {renderResizeHandle(column.key, column.label)}
       </th>
+    )
+  }
+
+  const renderPanelResizeHandle = () => (
+    <div
+      role="separator"
+      aria-label="Resize job list and job detail panels"
+      aria-orientation="vertical"
+      aria-valuemin={MIN_JOB_LIST_PANEL_WIDTH}
+      aria-valuemax={maxJobListPanelWidth(panelContainerWidth())}
+      aria-valuenow={jobListPanelWidth}
+      aria-valuetext={`${jobListPanelWidth}px job list panel width`}
+      tabIndex={0}
+      title="Drag to resize panels; double-click to reset"
+      onMouseDown={startJobListPanelResize}
+      onDoubleClick={event => {
+        event.preventDefault()
+        event.stopPropagation()
+        resetJobListPanelWidth()
+      }}
+      onKeyDown={event => {
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault()
+          resizeJobListPanelBy(event.shiftKey ? -80 : -24)
+        } else if (event.key === 'ArrowRight') {
+          event.preventDefault()
+          resizeJobListPanelBy(event.shiftKey ? 80 : 24)
+        } else if (event.key === 'Home') {
+          event.preventDefault()
+          setJobListPanelWidth(MIN_JOB_LIST_PANEL_WIDTH)
+        } else if (event.key === 'End') {
+          event.preventDefault()
+          setJobListPanelWidth(maxJobListPanelWidth(panelContainerWidth()))
+        } else if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          resetJobListPanelWidth()
+        }
+      }}
+      className="group relative z-20 hidden w-2 shrink-0 cursor-col-resize select-none items-center justify-center border-x border-transparent bg-white outline-none transition-colors hover:border-neutral-300 hover:bg-neutral-100 focus:border-neutral-600 focus:bg-neutral-100 active:bg-neutral-200 md:flex"
+      data-testid="viewlog-panel-resizer"
+    >
+      <span className="h-12 border-r border-neutral-300 transition-colors group-hover:border-neutral-600 group-focus:border-neutral-800" />
+    </div>
+  )
+
+  const renderSampleMediaCell = (row: DlcMetricSampleRow) => {
+    const media = sampleMedia(row)
+    return (
+      <td className="overflow-hidden border-r border-neutral-100 px-3 py-2 align-top">
+        {media.length === 0 ? (
+          <span className="font-mono text-[11px] text-neutral-300">N/A</span>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {media.map((item, index) => (
+              <button
+                key={`${item.url}-${index}`}
+                type="button"
+                onClick={() => setPreviewMedia(item)}
+                className="h-16 w-20 overflow-hidden border border-neutral-200 bg-neutral-50 p-1 hover:border-black"
+                title={item.source || item.label}
+              >
+                <img
+                  src={item.url}
+                  alt={item.label || `sample image ${index + 1}`}
+                  loading="lazy"
+                  className="h-full w-full object-contain"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+      </td>
     )
   }
 
   if (selectedMetric) {
     return (
-      <div className="flex flex-1 min-h-0 flex-col bg-white">
-        <div className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMetric(null)
-                setSamples(null)
-                setSamplesError('')
-                setSampleOffset(0)
-                setOnlyWrongSamples(false)
-              }}
-              className="mb-2 text-[10px] uppercase tracking-wider text-neutral-500 hover:text-black"
-            >
-              Back to job
-            </button>
-            <h2 className="text-sm font-semibold text-neutral-900 truncate">
-              {selectedMetric.display_name} / {selectedMetric.metric_name || 'samples'}
-            </h2>
-            <div className="mt-1 text-[10px] font-mono text-neutral-400 truncate">
-              {selectedJob?.job_id} / {selectedMetric.sample_jsonls.join(', ') || 'no sample file'}
+      <div className="flex h-full w-full min-w-0 flex-col overflow-hidden bg-white">
+        <div className="border-b border-neutral-200 px-4 py-3 sm:px-6 sm:py-4">
+          <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedMetric(null)
+                  setSamples(null)
+                  setSamplesError('')
+                  setSampleOffset(0)
+                  setOnlyWrongSamples(false)
+                  setPreviewMedia(null)
+                }}
+                className="mb-2 text-[10px] uppercase tracking-wider text-neutral-500 hover:text-black"
+              >
+                Back to job
+              </button>
+              <h2 className="text-sm font-semibold text-neutral-900 truncate">
+                {selectedMetric.display_name} / {selectedMetric.metric_name || 'samples'}
+              </h2>
+              <div className="mt-1 text-[10px] font-mono text-neutral-400 truncate">
+                {selectedJob?.job_id} / {selectedMetric.sample_jsonls.join(', ') || 'no sample file'}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              role="switch"
-              aria-label="Only Wrong"
-              aria-checked={onlyWrongSamples}
-              onClick={() => {
-                setOnlyWrongSamples(prev => !prev)
-                setSampleOffset(0)
-              }}
-              disabled={samplesLoading}
-              className={`relative flex h-8 w-24 shrink-0 items-center border px-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                onlyWrongSamples ? 'border-black bg-black text-white' : 'border-neutral-200 bg-white text-neutral-500 hover:border-black'
-              }`}
-              title="Only Wrong"
-            >
-              <span className={`absolute text-[10px] font-semibold ${onlyWrongSamples ? 'left-2 text-white' : 'right-2 text-neutral-500'}`}>
-                {onlyWrongSamples ? 'On' : 'Off'}
-              </span>
-              <span className={`relative z-10 h-5 w-5 bg-current transition-transform ${onlyWrongSamples ? 'translate-x-16' : 'translate-x-0'}`} />
-            </button>
-            <span className="text-[10px] font-semibold text-neutral-500">Only Wrong</span>
-            <button
-              onClick={() => setSampleOffset(Math.max(0, sampleOffset - SAMPLE_PAGE_SIZE))}
-              disabled={samplesLoading || sampleOffset === 0}
-              className="border border-neutral-200 px-3 py-2 text-[10px] uppercase tracking-wider text-neutral-500 disabled:text-neutral-300 disabled:cursor-not-allowed hover:border-black hover:text-black"
-            >
-              Prev
-            </button>
-            <div className="text-[10px] uppercase tracking-wider text-neutral-400">
-              {sampleRangeStart}-{sampleRangeEnd} / {samples?.total ?? 0}
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
+              <div className="flex min-w-0 items-center gap-2">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-label="Only Wrong"
+                  aria-checked={onlyWrongSamples}
+                  onClick={() => {
+                    setOnlyWrongSamples(prev => !prev)
+                    setSampleOffset(0)
+                  }}
+                  disabled={samplesLoading}
+                  className={`relative flex h-8 w-24 shrink-0 items-center border px-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                    onlyWrongSamples ? 'border-black bg-black text-white' : 'border-neutral-200 bg-white text-neutral-500 hover:border-black'
+                  }`}
+                  title="Only Wrong"
+                >
+                  <span className={`absolute text-[10px] font-semibold ${onlyWrongSamples ? 'left-2 text-white' : 'right-2 text-neutral-500'}`}>
+                    {onlyWrongSamples ? 'On' : 'Off'}
+                  </span>
+                  <span className={`relative z-10 h-5 w-5 bg-current transition-transform ${onlyWrongSamples ? 'translate-x-16' : 'translate-x-0'}`} />
+                </button>
+                <span className="whitespace-nowrap text-[10px] font-semibold text-neutral-500">Only Wrong</span>
+              </div>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setSampleOffset(Math.max(0, sampleOffset - SAMPLE_PAGE_SIZE))}
+                  disabled={samplesLoading || sampleOffset === 0}
+                  className="shrink-0 border border-neutral-200 px-3 py-2 text-[10px] uppercase tracking-wider text-neutral-500 disabled:text-neutral-300 disabled:cursor-not-allowed hover:border-black hover:text-black"
+                >
+                  Prev
+                </button>
+                <div className="min-w-[96px] shrink-0 text-center text-[10px] uppercase tracking-wider text-neutral-400">
+                  {sampleRangeStart}-{sampleRangeEnd} / {samples?.total ?? 0}
+                </div>
+                <button
+                  onClick={() => setSampleOffset(sampleOffset + SAMPLE_PAGE_SIZE)}
+                  disabled={samplesLoading || !samples || sampleOffset + SAMPLE_PAGE_SIZE >= samples.total}
+                  className="shrink-0 border border-neutral-200 px-3 py-2 text-[10px] uppercase tracking-wider text-neutral-500 disabled:text-neutral-300 disabled:cursor-not-allowed hover:border-black hover:text-black"
+                >
+                  Next
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => setSampleOffset(sampleOffset + SAMPLE_PAGE_SIZE)}
-              disabled={samplesLoading || !samples || sampleOffset + SAMPLE_PAGE_SIZE >= samples.total}
-              className="border border-neutral-200 px-3 py-2 text-[10px] uppercase tracking-wider text-neutral-500 disabled:text-neutral-300 disabled:cursor-not-allowed hover:border-black hover:text-black"
-            >
-              Next
-            </button>
           </div>
         </div>
 
@@ -907,21 +1346,26 @@ export default function LogViewer() {
                 <div className="border border-neutral-200 bg-white p-4 text-xs text-neutral-400 italic">No samples available.</div>
               ) : (
                 <div className="overflow-auto border border-neutral-200">
-                  <table className="min-w-[1200px] w-full border-collapse text-xs">
+                  <table
+                    className="table-fixed border-collapse text-xs"
+                    style={{ width: sampleTableWidth, minWidth: sampleTableWidth }}
+                  >
+                    <colgroup>
+                      {sampleTableColumnKeys.map(column => (
+                        <col key={column} style={{ width: sampleColumnWidths[column] ?? defaultSampleColumnWidth(column) }} />
+                      ))}
+                    </colgroup>
                     <thead className="sticky top-0 bg-neutral-50 z-10">
                       <tr>
-                        {samples.columns.map(column => (
-                          <th key={column} className="border-b border-r border-neutral-200 px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500">
-                            {column}
-                          </th>
-                        ))}
+                        {sampleTableColumnKeys.map(column => renderSampleHeader(column))}
                       </tr>
                     </thead>
                     <tbody>
                       {samples.rows.map((row, rowIndex) => (
                         <tr key={`${samples.offset}-${rowIndex}`} className="border-b border-neutral-100 align-top hover:bg-neutral-50">
+                          {sampleHasMedia && renderSampleMediaCell(row)}
                           {samples.columns.map(column => (
-                            <td key={column} className="max-w-[420px] border-r border-neutral-100 px-3 py-2 font-mono text-[11px] text-neutral-700">
+                            <td key={column} className="overflow-hidden border-r border-neutral-100 px-3 py-2 font-mono text-[11px] text-neutral-700">
                               <pre className="max-h-44 overflow-auto whitespace-pre-wrap break-words">{jsonPreview(row[column])}</pre>
                             </td>
                           ))}
@@ -934,13 +1378,49 @@ export default function LogViewer() {
             </div>
           )}
         </div>
+        {previewMedia && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+            onClick={() => setPreviewMedia(null)}
+          >
+            <div
+              className="flex max-h-full max-w-full flex-col overflow-hidden border border-neutral-700 bg-black"
+              onClick={event => event.stopPropagation()}
+            >
+              <div className="flex items-center justify-between gap-4 border-b border-neutral-800 px-3 py-2">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-semibold text-white">{previewMedia.label || 'image'}</div>
+                  <div className="max-w-[80vw] truncate font-mono text-[10px] text-neutral-400">{previewMedia.source}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMedia(null)}
+                  className="shrink-0 border border-neutral-600 px-3 py-1 text-[10px] uppercase tracking-wider text-neutral-200 hover:border-white hover:text-white"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="min-h-0 overflow-auto p-3">
+                <img
+                  src={previewMedia.url}
+                  alt={previewMedia.label || 'sample image'}
+                  className="max-h-[82vh] max-w-[92vw] object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
 
   return (
-    <div className="flex flex-1 min-h-0 bg-white">
-      <div className="w-full md:w-[560px] xl:w-[680px] min-w-[420px] border-r border-neutral-200 flex flex-col">
+    <div ref={splitPaneRef} className="flex h-full w-full min-w-0 bg-white">
+      <div
+        style={{ '--job-list-panel-width': `${jobListPanelWidth}px` } as CSSProperties}
+        className="w-full shrink-0 border-r border-neutral-200 flex flex-col md:w-[var(--job-list-panel-width)] md:min-w-[420px]"
+        data-testid="viewlog-job-list-panel"
+      >
         <div className="border-b border-neutral-100 p-4 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -984,11 +1464,26 @@ export default function LogViewer() {
         </div>
 
         <div className="flex-1 min-h-0 overflow-auto">
-          <table className="min-w-[1280px] w-full border-collapse text-xs">
+          <table
+            className="table-fixed border-collapse text-xs"
+            style={{ width: jobTableWidth, minWidth: jobTableWidth }}
+          >
+            <colgroup>
+              {JOB_COLUMNS.map(column => (
+                <col key={column.key} style={{ width: jobColumnWidths[column.key] }} />
+              ))}
+              <col key="action" style={{ width: jobColumnWidths.action }} />
+            </colgroup>
             <thead className="sticky top-0 bg-neutral-50 z-10">
               <tr>
                 {JOB_COLUMNS.map(column => renderColumnHeader(column))}
-                <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Action</th>
+                <th
+                  style={{ width: jobColumnWidths.action, minWidth: MIN_JOB_COLUMN_WIDTHS.action }}
+                  className="relative select-none px-3 py-2 pr-5 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200"
+                >
+                  <span className="truncate">Action</span>
+                  {renderResizeHandle('action', 'Action')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -1003,43 +1498,63 @@ export default function LogViewer() {
                     onClick={() => setSelectedJob(job)}
                     className={jobRowClass(job, selectedJob?.job_id === job.job_id)}
                   >
-                    <td className="px-3 py-2">
+                    <td className="overflow-hidden px-3 py-2 align-top">
                       <span className={`inline-flex border px-2 py-0.5 text-[10px] font-mono ${stageClass(job.job_stage)}`}>
                         {job.job_stage || 'unknown'}
                       </span>
                     </td>
-                    <td className="px-3 py-2 font-mono text-neutral-800 max-w-[300px]" title={judgeHint(job) || job.name}>
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate">{job.name}</span>
-                        {job.requires_llm_judge && (
-                          <span
-                            className="shrink-0 border border-emerald-300 bg-emerald-100 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-800"
-                            title={judgeHint(job)}
-                          >
-                            Needs judge
-                          </span>
-                        )}
-                        {job.job_stage === 'judge' && (
-                          <span className="shrink-0 border border-neutral-300 bg-white/70 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-neutral-600">
-                            Judge job
-                          </span>
-                        )}
+                    <td className="overflow-hidden px-3 py-2 font-mono text-neutral-800 align-top" title={job.name}>
+                      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
+                        <div className="inline-flex min-w-max items-center gap-2 whitespace-nowrap">
+                          <span>{job.name}</span>
+                          {job.requires_llm_judge && (
+                            <span
+                              className="shrink-0 border border-emerald-300 bg-emerald-100 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-800"
+                              title={judgeHint(job)}
+                            >
+                              Needs judge
+                            </span>
+                          )}
+                          {job.job_stage === 'judge' && (
+                            <span className="shrink-0 border border-neutral-300 bg-white/70 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-neutral-600">
+                              Judge job
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {job.requires_llm_judge && (
-                        <div className="mt-1 truncate text-[10px] text-emerald-800" title={listText(job.llm_judge_tasks)}>
-                          {listText(job.llm_judge_tasks) || 'LLM-as-judge'}
+                        <div className="mt-1 w-full overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent text-[10px] text-emerald-800" title={listText(job.llm_judge_tasks)}>
+                          <span className="inline-block min-w-max whitespace-nowrap">
+                            {listText(job.llm_judge_tasks) || 'LLM-as-judge'}
+                          </span>
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2 font-mono text-neutral-600 max-w-[180px] truncate" title={job.user_name}>{job.user_name || 'N/A'}</td>
-                    <td className="px-3 py-2 font-mono text-neutral-600">{job.job_id}</td>
-                    <td className="px-3 py-2">
+                    <td className="overflow-hidden px-3 py-2 font-mono text-neutral-600 align-top" title={job.user_name}>
+                      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
+                        <span className="inline-block min-w-max whitespace-nowrap">{job.user_name || 'N/A'}</span>
+                      </div>
+                    </td>
+                    <td className="overflow-hidden px-3 py-2 font-mono text-neutral-600 align-top" title={job.job_id}>
+                      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
+                        <span className="inline-block min-w-max whitespace-nowrap">{job.job_id}</span>
+                      </div>
+                    </td>
+                    <td className="overflow-hidden px-3 py-2 align-top">
                       <span className={`inline-flex border px-2 py-0.5 text-[10px] font-mono ${statusClass(job.status)}`}>{job.status || 'unknown'}</span>
                     </td>
-                    <td className="px-3 py-2 font-mono text-neutral-500">{job.resource_id || 'N/A'}</td>
-                    <td className="px-3 py-2 font-mono text-neutral-500 whitespace-nowrap">{job.create_time || 'N/A'}</td>
-                    <td className="px-3 py-2 font-mono text-neutral-500">{formatDuration(job.duration_seconds)}</td>
-                    <td className="px-3 py-2">
+                    <td className="overflow-hidden px-3 py-2 font-mono text-neutral-500 align-top" title={job.resource_id || 'N/A'}>
+                      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
+                        <span className="inline-block min-w-max whitespace-nowrap">{job.resource_id || 'N/A'}</span>
+                      </div>
+                    </td>
+                    <td className="overflow-hidden px-3 py-2 font-mono text-neutral-500 align-top" title={job.create_time || 'N/A'}>
+                      <div className="w-full overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent">
+                        <span className="inline-block min-w-max whitespace-nowrap">{job.create_time || 'N/A'}</span>
+                      </div>
+                    </td>
+                    <td className="overflow-hidden px-3 py-2 font-mono text-neutral-500 align-top">{formatDuration(job.duration_seconds)}</td>
+                    <td className="overflow-hidden px-3 py-2 align-top">
                       <button
                         type="button"
                         onClick={event => {
@@ -1065,6 +1580,8 @@ export default function LogViewer() {
         </div>
       </div>
 
+      {renderPanelResizeHandle()}
+
       <div className="flex-1 min-w-0 flex flex-col bg-neutral-50/30">
         {!selectedJob ? (
           <div className="flex flex-1 items-center justify-center text-xs uppercase tracking-wider text-neutral-400">
@@ -1078,8 +1595,10 @@ export default function LogViewer() {
           <>
             <div className="border-b border-neutral-200 bg-white px-6 py-4">
               <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <h2 className="text-sm font-semibold text-neutral-900 truncate">{selectedJob.name}</h2>
+                <div className="min-w-0 flex-1">
+                  <div className="max-w-full overflow-x-auto scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent" title={selectedJob.name}>
+                    <h2 className="inline-block min-w-max whitespace-nowrap text-sm font-semibold text-neutral-900">{selectedJob.name}</h2>
+                  </div>
                   <div className="mt-1 font-mono text-[11px] text-neutral-500">{selectedJob.job_id}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">

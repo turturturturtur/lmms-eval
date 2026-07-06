@@ -64,8 +64,8 @@ def _dlc_config() -> dict:
             "worker_memory": 128,
             "worker_shared_memory": 64,
             "worker_image": "registry.example/image:latest",
-            "data_source_uris": "nas://example",
-            "resource_id": "resource-id",
+            "data_source_uris": f"cpfs://example/::/mnt/cpfsB,{server.REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss",
+            "resource_id": server.DEFAULT_DLC_RESOURCE_ID,
             "workspace_id": server.DEFAULT_DLC_WORKSPACE_ID,
             "vpc_id": "vpc-id",
             "switch_id": "switch-id",
@@ -79,7 +79,10 @@ def _eval_payload() -> dict:
     return {
         "user": "",
         "job_name": "eval_auth_test",
+        "eval_inference_mode": "ckpt",
         "model": "/tmp/model",
+        "api_url": server.DEFAULT_API_EVAL_URL,
+        "api_key": "",
         "dlc_path": "/tmp/dlc",
         "model_args": "",
         "tasks": ["ai2d"],
@@ -226,12 +229,133 @@ def test_preview_syncs_job_name_to_dlc_log_and_eval_paths(tmp_path: Path, monkey
     assert "stale_name" not in command
 
 
+def test_defaults_leave_evaluate_user_empty_and_keep_placeholders(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("LMMS_EVAL_WEBUI_USER", "configured-user")
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.get("/defaults")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"] == ""
+    assert data["dlc_path"] == server.DEFAULT_DLC_PATH_TEMPLATE
+    assert server.USER_PLACEHOLDER in data["model"]
+    assert server.USER_PLACEHOLDER in data["output_path"]
+    assert server.USER_PLACEHOLDER in data["env_vars"]
+    assert data["judge_api_url"] == server.DEFAULT_JUDGE_API_URL
+    assert data["judge_api_key"] == ""
+    assert data["dlc_config"]["dlc"]["binary"] == server.DEFAULT_DLC_PATH_TEMPLATE
+    assert server.USER_PLACEHOLDER in data["dlc_config"]["dlc"]["run_script"]
+    assert "configured-user" not in json.dumps(data)
+
+
+def test_username_alias_placeholder_is_replaced_for_webui_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["user"] = "alice"
+    payload["model"] = "/mnt/cpfsB/<USERNAME>/model"
+    payload["output_path"] = "/mnt/cpfsB/<USERNAME>/lmms-eval/eval_result/eval_alias"
+    payload["dlc_path"] = "/mnt/cpfsB/<USERNAME>/dlc"
+    payload["dlc_config"]["dlc"]["binary"] = "/mnt/cpfsB/<USERNAME>/dlc"
+    payload["dlc_config"]["dlc"]["run_script"] = "/mnt/cpfsB/<USERNAME>/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert "/mnt/cpfsB/alice/dlc" in command
+    assert "/mnt/cpfsB/alice/model" in command
+    assert "<USERNAME>" not in command
+
+
 def test_default_dlc_config_uses_qwen35_worker():
     config = server._replace_user_placeholder(server._default_dlc_config(), "tianleniu")
 
     assert config["dlc"]["binary"] == "/mnt/cpfsB/tianleniu/dlc"
     assert config["dlc"]["run_script"] == "/mnt/cpfsB/tianleniu/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh"
+    assert config["dlc"]["resource_id"] == server.DEFAULT_DLC_RESOURCE_ID
+    assert config["dlc"]["judge"]["resource_id"] == server.DEFAULT_DLC_RESOURCE_ID
+    assert server.REQUIRED_NAS_MOUNT_URI in config["dlc"]["data_source_uris"]
+    assert server.REQUIRED_NAS_MOUNT_URI in config["dlc"]["judge"]["data_source_uris"]
     assert "qwen3_vl_worker" not in config["dlc"]["run_script"]
+
+
+def test_preview_rejects_missing_eval_nas_mount(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["dlc_config"]["dlc"]["data_source_uris"] = "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert f"dlc.data_source_uris must include {server.REQUIRED_NAS_MOUNT_URI}" in response.json()["detail"]
+
+
+def test_preview_rejects_missing_judge_nas_mount(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["dlc_config"]["dlc"]["judge"] = {
+        "resource_id": server.DEFAULT_DLC_RESOURCE_ID,
+        "data_source_uris": "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss",
+    }
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert f"dlc.judge.data_source_uris must include {server.REQUIRED_NAS_MOUNT_URI}" in response.json()["detail"]
+
+
+def test_preview_rejects_non_default_dlc_resource_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["dlc_config"]["dlc"]["resource_id"] = "bad-resource-id"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert f"dlc.resource_id must be {server.DEFAULT_DLC_RESOURCE_ID}" in response.json()["detail"]
+
+
+def test_preview_rejects_non_default_judge_resource_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["dlc_config"]["dlc"]["judge"] = {"resource_id": "bad-resource-id"}
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert f"dlc.judge.resource_id must be {server.DEFAULT_DLC_RESOURCE_ID}" in response.json()["detail"]
 
 
 def test_preview_rejects_legacy_qwen3_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -271,8 +395,83 @@ def test_judge_preview_uses_qwen35_submit_and_worker(tmp_path: Path, monkeypatch
     assert "qwen35_submit.sh" in command
     assert '"run_script": "/tmp/qwen35_worker.sh"' in command
     assert "config_judge.json" in command
+    assert '"model": "deepseek-v4-flash"' in command
+    assert '"base_url": "https://example.invalid/v1/chat/completions"' in command
     assert "qwen3_vl_worker" not in command
     assert "qwen3_vl_submit" not in command
+
+
+def test_ckpt_reasoning_task_syncs_judge_key_into_eval_env():
+    payload = _eval_payload()
+    payload["tasks"] = ["mathverse_testmini_reasoning"]
+    payload["judge_api_url"] = "https://judge.example.invalid/v1"
+    payload["judge_api_key"] = "sk-judge-secret"
+
+    request = server.EvalRequest(**payload)
+    eval_config = server._build_eval_config(request)
+    judge_config = server._build_judge_config(request, eval_config)
+
+    assert server._task_requires_llm_judge("mathverse_testmini_reasoning") is True
+    assert eval_config["env"]["judge_api_key"] == "sk-judge-secret"
+    assert eval_config["env"]["judge_base_url"] == "https://judge.example.invalid/v1"
+    assert eval_config["env"]["openai_api_key"] == "sk-judge-secret"
+    assert judge_config is not None
+    assert judge_config["eval"]["tasks"] == "mathverse_testmini_reasoning"
+
+    redacted = server._redact_eval_config(eval_config)
+    assert redacted["env"]["judge_api_key"] == server.MASKED_SECRET
+    assert redacted["env"]["openai_api_key"] == server.MASKED_SECRET
+
+
+def test_api_eval_preview_redacts_token_and_forces_cpu_dlc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "sk-api-secret"
+    payload["dlc_config"]["dlc"]["worker_gpu"] = 8
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert '"backend": "openai"' in command
+    assert '"worker_gpu": 0' in command
+    assert '"worker_cpu": 16' in command
+    assert "sk-api-secret" not in command
+    assert server.MASKED_SECRET in command
+
+
+def test_api_eval_judge_preview_redacts_eval_and_judge_tokens(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["tasks"] = ["simplevqa"]
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "eval-api-secret-for-judge-preview"
+    payload["judge_api_url"] = "https://judge.example.invalid/v1"
+    payload["judge_api_key"] = "judge-api-secret-for-preview"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert "config_judge.json" in command
+    assert "eval-api-secret-for-judge-preview" not in command
+    assert "judge-api-secret-for-preview" not in command
+    assert command.count(server.MASKED_SECRET) >= 2
 
 
 def test_dlc_job_list_marks_kill_permission_for_owner(monkeypatch: pytest.MonkeyPatch):

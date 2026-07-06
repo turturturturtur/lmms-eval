@@ -1,11 +1,11 @@
 {
   "env": {
-    "hf_home": "/mnt/cpfs/public_data/public_dataset/.cache/huggingface",
+    "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
-    "venv_path": "/mnt/cpfs/yangyicun/lmms-eval/.venv"
+    "venv_path": "/mnt/cpfsB/yangyicun/lmms-eval/.venv"
   },
   "log": {
-    "dir": "/mnt/cpfs/yangyicun/vllm_logs"
+    "dir": "/mnt/cpfsB/yangyicun/vllm_logs"
   },
   "distributed": {
     "master_addr": "127.0.0.1",
@@ -14,7 +14,7 @@
     "rank": 0
   },
   "model": {
-    "path": "/mnt/cpfs/yangyicun/data/model/Qwen3-VL-8B-Instruct",
+    "path": "/mnt/cpfsB/yangyicun/data/model/Qwen3-VL-8B-Instruct",
     "tp": 1,
     "max_model_len": 65536,
     "gpu_memory_utilization": 0.8,
@@ -23,7 +23,7 @@
   },
   "eval": {
     "tasks": "mmmu_val_qwen3_official,mmmu_pro_standard_qwen3_official,wemath_testmini_qwen3,mathvision_reason_testmini_qwen3,mathvision_testmini_qwen3",
-    "output_path": "/mnt/cpfs/yangyicun/lmms-eval/eval_result",
+    "output_path": "/mnt/cpfsB/yangyicun/lmms-eval/eval_result",
     "concurrency": 1024,
     "verbosity": "DEBUG",
     "max_new_tokens": 32768,
@@ -35,7 +35,7 @@
     "debug": true
   },
   "dlc": {
-    "binary": "/mnt/cpfs/yangyicun/dlc",
+    "binary": "/mnt/cpfsB/yangyicun/dlc",
     "run_script": "/mnt/workspace/wangcong/lmms-eval/examples/qwen3-vl/vllm_qwen3_vl_async_multi_gpu_with_judge.sh",
     "workers": 16,
     "worker_gpu": 8,
@@ -45,8 +45,8 @@
     "priority": 9,
     "running_timeout": 86400,
     "rdma": true,
-    "worker_image": "dsw-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/pai/python:3.13.9-gpu-cu129-ubuntu22.04-9e1c8c7e-1764331625",
-    "data_source_uris": "cpfs://cpfs-298fffb575a502fe.cn-wulanchabu/ptc-29f47d9393ad2b16/exp-29f2869e7d984aa6/::/mnt/cpfs,oss://pai-wlcb-ai-oss.oss-cn-wulanchabu-internal.aliyuncs.com/::/mnt/oss",
+    "worker_image": "pai-wl-acr-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/tianleniu/innovatorvl:innovator-vl-20260616_accelerated",
+    "data_source_uris": "cpfs://cpfs-298fffb575a502fe.cn-wulanchabu/ptc-29f47d9393ad2b16/exp-29f2869e7d984aa6/::/mnt/cpfsB,oss://pai-wlcb-ai-oss.oss-cn-wulanchabu-internal.aliyuncs.com/::/mnt/oss",
     "resource_id": "quotaev2tl4w6aw0",
     "workspace_id": "240810",
     "vpc_id": "vpc-0jl5rpw5qokp6p2ettip6",

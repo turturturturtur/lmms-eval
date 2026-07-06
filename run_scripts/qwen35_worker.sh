@@ -19,6 +19,17 @@ CMD_MODEL_PATH="${2:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+MODEL_BACKEND="$(cfg '.model.backend // "vllm"')"
+MODEL_BACKEND="$(printf '%s' "${MODEL_BACKEND}" | tr '[:upper:]' '[:lower:]')"
+if [[ "${MODEL_BACKEND}" != "vllm" && "${MODEL_BACKEND}" != "openai" ]]; then
+    echo "[ERROR] model.backend must be vllm or openai, got: ${MODEL_BACKEND}" >&2
+    exit 2
+fi
+BATCH_SIZE="$(cfg_int '.eval.batch_size // 1')"
+if (( BATCH_SIZE < 1 )); then
+    echo "[ERROR] eval.batch_size must be positive, got: ${BATCH_SIZE}" >&2
+    exit 2
+fi
 SYSTEM_INSTRUCTION=$(cfg '.eval.system_instruction // ""')
 CONFIG_REASONING_PARSER="$(cfg '.model.reasoning_parser // "qwen3"')"
 MODEL_REASONING_PARSER="${EVAL_REASONING_PARSER:-${CONFIG_REASONING_PARSER}}"
@@ -71,6 +82,8 @@ if [[ "${CONFIG_IS_QWEN3_VL}" != "False" ]]; then
 fi
 MODEL_IS_QWEN3_VL="False"
 MODEL_ENABLE_THINKING="$(normalize_bool_arg "${MODEL_ENABLE_THINKING}" "model.enable_thinking" 1)"
+CONFIG_ENFORCE_EAGER="$(cfg '.model.enforce_eager // false')"
+MODEL_ENFORCE_EAGER="$(normalize_bool_arg "${CONFIG_ENFORCE_EAGER}" "model.enforce_eager")"
 
 innovator_vllm_pythonpath() {
     if [[ -d "${INNOVATOR_SITECUSTOMIZE}" ]]; then
@@ -109,6 +122,13 @@ setup_native_libs() {
     local candidates=()
     if [[ -n "${CONDA_PREFIX:-}" ]]; then
         candidates+=("${CONDA_PREFIX}/lib")
+    fi
+    if [[ -n "${VENV_PATH:-}" && -x "${VENV_PATH}/bin/python" ]]; then
+        local resolved_python
+        resolved_python="$(readlink -f "${VENV_PATH}/bin/python" 2>/dev/null || true)"
+        if [[ -n "${resolved_python}" ]]; then
+            candidates+=("$(dirname "$(dirname "${resolved_python}")")/lib")
+        fi
     fi
     if [[ -n "${LMMS_EVAL_EXTRA_LD_LIBRARY_DIRS:-}" ]]; then
         local extra_lib_dirs=()
@@ -215,6 +235,48 @@ print("[INFO] lmms-eval venv dependency check passed.")
 PY
 }
 
+check_api_runtime_deps() {
+    VENV_PATH="${VENV_PATH}" "${VENV_PATH}/bin/python" - <<'PY'
+import importlib.metadata as md
+import sys
+
+errors = []
+for name in (
+    "openai",
+    "pytablewriter",
+    "sacrebleu",
+    "evaluate",
+    "rouge-score",
+    "rouge",
+    "jiwer",
+    "tenacity",
+    "python-dotenv",
+    "openpyxl",
+):
+    try:
+        md.version(name)
+    except md.PackageNotFoundError:
+        errors.append(f"missing package: {name}")
+
+if errors:
+    print("[ERROR] lmms-eval API dependency check failed:", file=sys.stderr)
+    for item in errors:
+        print(f"  - {item}", file=sys.stderr)
+    raise SystemExit(1)
+
+print("[INFO] lmms-eval API dependency check passed.")
+PY
+}
+
+compute_api_resources() {
+    LOCAL_GPU_NUM=0
+    NPROC_PER_NODE=1
+    NUM_MACHINES=${WORLD_SIZE}
+    MACHINE_RANK=${RANK}
+    MAIN_GPU_NUM=0
+    NUM_BACKENDS=0
+}
+
 trim_whitespace() {
     local value="$1"
     value="${value#"${value%%[![:space:]]*}"}"
@@ -234,10 +296,25 @@ task_slug() {
 
 build_vllm_backend_model_args() {
     local args
-    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True"
+    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True"
     if [[ -n "${MODEL_ENABLE_THINKING}" ]]; then
         args="${args},enable_thinking=${MODEL_ENABLE_THINKING}"
     fi
+    printf '%s' "${args}"
+}
+
+build_openai_model_args() {
+    if [[ -z "${OPENAI_API_URL:-}" || "${OPENAI_API_URL}" == "null" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] env.openai_api_url is required for API evaluation." >&2
+        exit 2
+    fi
+    if [[ -z "${OPENAI_API_KEY:-}" || "${OPENAI_API_KEY}" == "null" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] env.openai_api_key is required for API evaluation." >&2
+        exit 2
+    fi
+
+    local args
+    args="model=${MODEL},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},httpx_trust_env=False"
     printf '%s' "${args}"
 }
 
@@ -305,8 +382,12 @@ launch_vllm_backends() {
         if [[ -n "${MODEL_REASONING_PARSER}" && "${MODEL_REASONING_PARSER}" != "null" ]]; then
             reasoning_args=(--reasoning-parser "${MODEL_REASONING_PARSER}")
         fi
+        local eager_args=()
+        if [[ "${MODEL_ENFORCE_EAGER}" == "True" ]]; then
+            eager_args=(--enforce-eager)
+        fi
 
-        echo "[INFO][Machine ${MACHINE_RANK}] Starting model vLLM  GPUs=${GPUS}  port=${PORT}  backend=FLASHINFER  reasoning_parser=${MODEL_REASONING_PARSER:-none}  is_qwen3_vl=${MODEL_IS_QWEN3_VL}  enable_thinking=${MODEL_ENABLE_THINKING:-unset}..."
+        echo "[INFO][Machine ${MACHINE_RANK}] Starting model vLLM  GPUs=${GPUS}  port=${PORT}  backend=FLASHINFER  reasoning_parser=${MODEL_REASONING_PARSER:-none}  is_qwen3_vl=${MODEL_IS_QWEN3_VL}  enable_thinking=${MODEL_ENABLE_THINKING:-unset}  enforce_eager=${MODEL_ENFORCE_EAGER}..."
 
         INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 \
         PYTHONPATH="$(innovator_vllm_pythonpath)" \
@@ -322,6 +403,7 @@ launch_vllm_backends() {
             --mm-encoder-tp-mode data \
             --trust-remote-code \
             --enable-prefix-caching \
+            "${eager_args[@]}" \
             "${reasoning_args[@]}" \
             > "${MODEL_LOG}" 2>&1 &
         PIDS+=($!)
@@ -357,8 +439,28 @@ run_lmms_eval_task() {
     if [[ -n "${SYSTEM_INSTRUCTION}" && "${SYSTEM_INSTRUCTION}" != "null" ]]; then
         system_args=(--system_instruction "${SYSTEM_INSTRUCTION}")
     fi
+    local model_backend_name
     local model_args
-    model_args="$(build_vllm_backend_model_args)"
+    local launcher=()
+    local batch_size_arg="1"
+    if [[ "${MODEL_BACKEND}" == "openai" ]]; then
+        model_backend_name="openai"
+        model_args="$(build_openai_model_args)"
+        launcher=("${VENV_PATH}/bin/python")
+        batch_size_arg="${BATCH_SIZE}"
+    else
+        model_backend_name="vllm_backend"
+        model_args="$(build_vllm_backend_model_args)"
+        launcher=(
+            "${VENV_PATH}/bin/python" -m torch.distributed.run
+            --nnodes="${NUM_MACHINES}"
+            --node_rank="${_MACHINE_RANK}"
+            --nproc_per_node="${NPROC_PER_NODE}"
+            --master_addr="${MASTER_ADDR}"
+            --master_port="${eval_master_port}"
+        )
+        batch_size_arg="1"
+    fi
     local gen_args=()
     if [[ -n "${GEN_KWARGS}" && "${GEN_KWARGS}" != "null" ]]; then
         gen_args=(--gen_kwargs "${GEN_KWARGS}")
@@ -369,18 +471,13 @@ run_lmms_eval_task() {
         --signal=TERM \
         --kill-after="${TASK_TIMEOUT_KILL_AFTER_SECONDS}s" \
         "${TASK_TIMEOUT_SECONDS}s" \
-        "${VENV_PATH}/bin/torchrun" \
-        --nnodes="${NUM_MACHINES}" \
-        --node_rank="${_MACHINE_RANK}" \
-        --nproc_per_node="${NPROC_PER_NODE}" \
-        --master_addr="${MASTER_ADDR}" \
-        --master_port="${eval_master_port}" \
+        "${launcher[@]}" \
         -m lmms_eval \
-        --model       vllm_backend \
+        --model       "${model_backend_name}" \
         --model_args  "${model_args}" \
         "${gen_args[@]}" \
         --tasks       "${task}" \
-        --batch_size  1 \
+        --batch_size  "${batch_size_arg}" \
         --output_path "${task_output_path}" \
         --verbosity   "${VERBOSITY}" \
         --log_samples \
@@ -402,9 +499,11 @@ run_lmms_eval_task() {
         write_task_manifest_row "${task}" "${task_status}" "${started_at}" "${ended_at}" "${rc}" "${task_output_path}" "${status_reason}" "${eval_log}"
     elif [[ "${task_status}" == "timeout" ]]; then
         echo "[ERROR][Machine ${_MACHINE_RANK}] lmms-eval task timed out: ${task}  timeout=${TASK_TIMEOUT_SECONDS}s  kill_after=${TASK_TIMEOUT_KILL_AFTER_SECONDS}s  exit_code=${rc}  log=${eval_log}" >&2
+        clean_failed_task_output "${task}" "${task_output_path}"
         write_task_manifest_row "${task}" "${task_status}" "${started_at}" "${ended_at}" "${rc}" "${task_output_path}" "${status_reason}" "${eval_log}"
     elif [[ "${task_status}" == "failed" ]]; then
         echo "[ERROR][Machine ${_MACHINE_RANK}] lmms-eval task failed: ${task}  exit_code=${rc}  log=${eval_log}" >&2
+        clean_failed_task_output "${task}" "${task_output_path}"
         write_task_manifest_row "${task}" "${task_status}" "${started_at}" "${ended_at}" "${rc}" "${task_output_path}" "${status_reason}" "${eval_log}"
     else
         echo "[ERROR][Machine ${_MACHINE_RANK}] Unknown classified task status for ${task}: ${task_status}" >&2
@@ -422,7 +521,7 @@ run_lmms_eval() {
         cp "${CONFIG}" "${OUTPUT_PATH}/config.json"
     fi
 
-    echo "[INFO][Machine ${MACHINE_RANK}] Persistent vLLM lmms-eval mode: ${#TASK_ARRAY[@]} task(s), output=${OUTPUT_PATH}"
+    echo "[INFO][Machine ${MACHINE_RANK}] lmms-eval ${MODEL_BACKEND} mode: ${#TASK_ARRAY[@]} task(s), output=${OUTPUT_PATH}"
 
     local failed_tasks=()
     local index=0
@@ -442,24 +541,42 @@ run_lmms_eval() {
     echo "[INFO][Machine ${MACHINE_RANK}] Evaluation completed successfully for all tasks."
 }
 
-compute_resources
-setup_logging
-ensure_venv
-ensure_timeout_command
-prepend_pythonpath_bins
-setup_native_libs
-check_runtime_deps
-setup_cleanup_trap
+if [[ "${MODEL_BACKEND}" == "openai" ]]; then
+    compute_api_resources
+    setup_logging
+    ensure_venv
+    ensure_timeout_command
+    prepend_pythonpath_bins
+    setup_native_libs
+    check_api_runtime_deps
 
-launch_vllm_backends
+    stage_datasets &
+    DATASET_STAGE_PID=$!
+    if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
+        wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+    fi
 
-stage_datasets &
-DATASET_STAGE_PID=$!
+    run_lmms_eval
+else
+    compute_resources
+    setup_logging
+    ensure_venv
+    ensure_timeout_command
+    prepend_pythonpath_bins
+    setup_native_libs
+    check_runtime_deps
+    setup_cleanup_trap
 
-wait_for_backends
+    launch_vllm_backends
 
-if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
-    wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+    stage_datasets &
+    DATASET_STAGE_PID=$!
+
+    wait_for_backends
+
+    if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
+        wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+    fi
+
+    run_lmms_eval
 fi
-
-run_lmms_eval

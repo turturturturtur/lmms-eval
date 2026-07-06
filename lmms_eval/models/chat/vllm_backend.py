@@ -58,6 +58,10 @@ cpu, _ = optional_import("decord", "cpu")
 load_dotenv(verbose=True)
 
 
+class VLLMBackendRequestError(RuntimeError):
+    pass
+
+
 @register_model("vllm_backend")
 class VLLMBackend(lmms):
     """
@@ -77,6 +81,7 @@ class VLLMBackend(lmms):
         timeout: Request timeout in seconds
         retry_backoff_s: Backoff time between retries
         max_retries: Maximum number of retries per request
+        fail_fast_on_request_error: Raise after one request exhausts retries
         num_concurrent: Number of concurrent requests
         adaptive_concurrency: Whether to use adaptive concurrency control
         adaptive_max_concurrency: Maximum concurrency for adaptive mode
@@ -99,9 +104,10 @@ class VLLMBackend(lmms):
         base_url: str = "http://localhost:8000/v1",
         model: str = "",
         api_key: Optional[str] = "EMPTY",
-        timeout: int = 3600,  # 1 hour for long generations
+        timeout: int = 300,
         retry_backoff_s: float = 1.0,
         max_retries: int = 5,
+        fail_fast_on_request_error: bool = True,
         num_concurrent: int = 32,
         adaptive_concurrency: bool = False,
         adaptive_min_concurrency: int = 1,
@@ -140,9 +146,14 @@ class VLLMBackend(lmms):
         
         self.model_name = model
         self.api_key = api_key or "EMPTY"
-        self.timeout = timeout
+        self.timeout = float(timeout)
         self.retry_backoff_s = max(0.0, float(retry_backoff_s))
-        self.max_retries = max_retries
+        self.max_retries = int(max_retries)
+        if self.timeout <= 0:
+            raise ValueError(f"timeout must be > 0, got {timeout!r}")
+        if self.max_retries <= 0:
+            raise ValueError(f"max_retries must be > 0, got {max_retries!r}")
+        self.fail_fast_on_request_error = parse_bool(fail_fast_on_request_error)
         self.num_concurrent = max(1, int(num_concurrent))
         self.adaptive_concurrency = parse_bool(adaptive_concurrency)
         self.adaptive_config = AdaptiveConcurrencyConfig.from_raw(
@@ -378,6 +389,10 @@ class VLLMBackend(lmms):
 
             elapsed = time.time() - started_at
             error_preview = last_error_msg.replace("\n", " ")[:200]
+            if self.fail_fast_on_request_error:
+                raise VLLMBackendRequestError(
+                    f"vLLM request failed after {self.max_retries} retries: {error_preview}"
+                )
             failure_content = f"[LMMS_EVAL_REQUEST_FAILED after {self.max_retries} retries] {error_preview}"
             return failure_content, local_index, False, rate_limited, elapsed, 0, 0, 0
 
@@ -512,6 +527,8 @@ class VLLMBackend(lmms):
                 if payload is None:
                     return None, local_index, False, False, 0.0, 0, 0, 0
                 return process_single_request(local_index, payload, pre_time)
+            except VLLMBackendRequestError:
+                raise
             except Exception as e:
                 import traceback
                 eval_logger.error(f"Error in preprocessing request {local_index}: {e}")

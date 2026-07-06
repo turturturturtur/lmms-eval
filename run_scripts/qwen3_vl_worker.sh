@@ -221,7 +221,7 @@ task_slug() {
 
 build_vllm_backend_model_args() {
     local args
-    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True"
+    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True"
     if [[ -n "${MODEL_ENABLE_THINKING}" ]]; then
         args="${args},enable_thinking=${MODEL_ENABLE_THINKING}"
     fi
@@ -385,9 +385,11 @@ run_lmms_eval_task() {
         write_task_manifest_row "${task}" "${task_status}" "${started_at}" "${ended_at}" "${rc}" "${task_output_path}" "${status_reason}" "${eval_log}"
     elif [[ "${task_status}" == "timeout" ]]; then
         echo "[ERROR][Machine ${_MACHINE_RANK}] lmms-eval task timed out: ${task}  timeout=${TASK_TIMEOUT_SECONDS}s  kill_after=${TASK_TIMEOUT_KILL_AFTER_SECONDS}s  exit_code=${rc}  log=${eval_log}" >&2
+        clean_failed_task_output "${task}" "${task_output_path}"
         write_task_manifest_row "${task}" "${task_status}" "${started_at}" "${ended_at}" "${rc}" "${task_output_path}" "${status_reason}" "${eval_log}"
     elif [[ "${task_status}" == "failed" ]]; then
         echo "[ERROR][Machine ${_MACHINE_RANK}] lmms-eval task failed: ${task}  exit_code=${rc}  log=${eval_log}" >&2
+        clean_failed_task_output "${task}" "${task_output_path}"
         write_task_manifest_row "${task}" "${task_status}" "${started_at}" "${ended_at}" "${rc}" "${task_output_path}" "${status_reason}" "${eval_log}"
     else
         echo "[ERROR][Machine ${_MACHINE_RANK}] Unknown classified task status for ${task}: ${task_status}" >&2

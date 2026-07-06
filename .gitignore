@@ -49,6 +49,10 @@ wandb/
 zk.log
 span.log
 
+# Local experiment/run artifacts
+experiments/
+local/screenshots/
+
 # Data and models (large / local-only)
 data/
 pretrained/

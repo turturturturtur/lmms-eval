@@ -8,6 +8,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -22,6 +23,36 @@ except ImportError:
 
 
 pytestmark = pytest.mark.skipif(not JUDGE_AVAILABLE, reason="Judge dependencies not available")
+
+
+def _slow_process_results(doc, results):
+    import time
+
+    time.sleep(float(doc.get("sleep_seconds", 1.0)))
+    return {"acc_score": 1.0}
+
+
+def _timeout_once_process_results(doc, results):
+    import time
+    from pathlib import Path
+
+    counter_path = Path(doc["counter_path"])
+    count = int(counter_path.read_text(encoding="utf-8")) if counter_path.exists() else 0
+    counter_path.write_text(str(count + 1), encoding="utf-8")
+    if count == 0:
+        time.sleep(float(doc.get("sleep_seconds", 1.0)))
+    return {"acc_score": 1.0}
+
+
+def _make_task(process_results_fn):
+    return SimpleNamespace(
+        config=SimpleNamespace(
+            process_results=process_results_fn,
+            dataset_path="unit-test",
+            num_fewshot=0,
+            metric_list=[],
+        )
+    )
 
 
 @pytest.fixture
@@ -80,8 +111,11 @@ def mock_task():
 class TestJudgeRunner:
     """Tests for the JudgeRunner class."""
     
-    def test_init(self):
+    def test_init(self, monkeypatch):
         """Test JudgeRunner initialization."""
+        monkeypatch.delenv("JUDGE_DATAPOINT_TIMEOUT", raising=False)
+        monkeypatch.delenv("JUDGE_DATAPOINT_MAX_ATTEMPTS", raising=False)
+        monkeypatch.delenv("JUDGE_DATAPOINT_MAX_RETRIES", raising=False)
         runner = JudgeRunner(
             judge_mode="auto",
             judge_model="gpt-4o-mini",
@@ -91,6 +125,8 @@ class TestJudgeRunner:
         assert runner.judge_mode == "auto"
         assert runner.judge_model == "gpt-4o-mini"
         assert runner.parallel == 4
+        assert runner.datapoint_timeout == 30.0
+        assert runner.datapoint_max_attempts == 5
         assert runner._judge_provider is None
     
     def test_init_with_env_vars(self, monkeypatch):
@@ -234,6 +270,66 @@ class TestJudgeRunner:
         
         with pytest.raises(ValueError):
             runner._load_task("invalid_task")
+
+    def test_datapoint_timeout_marks_sample_failed(self):
+        """A hung datapoint should be killed and marked failed after max attempts."""
+        runner = JudgeRunner(
+            judge_mode="rule",
+            parallel=1,
+            datapoint_timeout=0.2,
+            datapoint_max_attempts=2,
+        )
+        task = _make_task(_slow_process_results)
+        sample = {
+            "doc_id": 7,
+            "doc": {"question": "Q", "answer": "A", "sleep_seconds": 2.0},
+            "filtered_resps": "A",
+        }
+
+        results = runner._judge_samples_with_datapoint_timeout(
+            [sample],
+            task,
+            task.config.process_results,
+            "timeout_unit_test",
+        )
+
+        assert len(results) == 1
+        assert results[0]["judge_mode"] == "timeout"
+        assert results[0]["metrics"]["judge_timeout"] is True
+        assert results[0]["metrics"]["judge_attempts"] == 2
+
+    def test_datapoint_timeout_retries_until_success(self, tmp_path):
+        """A datapoint can time out once and still succeed on a later attempt."""
+        counter_path = tmp_path / "attempts.txt"
+        runner = JudgeRunner(
+            judge_mode="rule",
+            parallel=1,
+            datapoint_timeout=0.2,
+            datapoint_max_attempts=2,
+        )
+        task = _make_task(_timeout_once_process_results)
+        sample = {
+            "doc_id": 8,
+            "doc": {
+                "question": "Q",
+                "answer": "A",
+                "counter_path": str(counter_path),
+                "sleep_seconds": 2.0,
+            },
+            "filtered_resps": "A",
+        }
+
+        results = runner._judge_samples_with_datapoint_timeout(
+            [sample],
+            task,
+            task.config.process_results,
+            "retry_unit_test",
+        )
+
+        assert results[0]["judge_mode"] == "rule"
+        assert results[0]["metrics"]["acc_score"] == 1.0
+        assert results[0]["judge_attempts"] == 2
+        assert counter_path.read_text(encoding="utf-8") == "2"
 
 
 class TestJudgeSample:

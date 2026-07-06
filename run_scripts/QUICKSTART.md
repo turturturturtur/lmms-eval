@@ -12,7 +12,7 @@
 {
   "env": {
     "hf_home": "/path/to/huggingface/cache",
-    "venv_path": "/mnt/cpfs/<USER>/lmms-eval/.venv",
+    "venv_path": "/mnt/cpfsB/<USER>/lmms-eval/.venv",
     "api_type": "openai",
     "openai_api_key": "sk-...",
     "openai_api_url": "https://yunwu.ai/v1/chat/completions"
@@ -26,7 +26,7 @@
   },
   "eval": {
     "tasks": "mme,mmmu_val",
-    "output_path": "/mnt/cpfs/<USER>/lmms-eval/eval_result",
+    "output_path": "/mnt/cpfsB/<USER>/lmms-eval/eval_result",
     "concurrency": 128,
     "gen_kwargs": "max_new_tokens=32768,temperature=1.0",
     "limit": -1,
@@ -48,7 +48,7 @@
 ```json
 {
   "dlc": {
-    "binary": "/mnt/cpfs/<USER>/dlc",
+    "binary": "/mnt/cpfsB/<USER>/dlc",
     "job_name": "eval_qwen3vl_tp1",
     "workers": 2,
     "worker_gpu": 8,
@@ -56,8 +56,8 @@
     "worker_memory": "1500Gi",
     "worker_shared_memory": "1500Gi",
     "worker_image": "your-registry/python:3.13.9-gpu-...",
-    "data_source_uris": "cpfs://...::/mnt/cpfs",
-    "resource_id": "your-quota-id",
+    "data_source_uris": "cpfs://...::/mnt/cpfsB,nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB,oss://...::/mnt/oss",
+    "resource_id": "quotaev2tl4w6aw0",
     "workspace_id": "your-workspace-id",
     "vpc_id": "vpc-...",
     "switch_id": "vsw-...",
@@ -69,7 +69,8 @@
 
 - **`dlc.binary`**：DLC CLI 可执行文件路径。
 - **`dlc.workers`** / **`worker_gpu`**：集群节点数和每节点 GPU 数。
-- **`resource_id`** / **`workspace_id`** / **`vpc_id`** 等：找你所在平台的管理员要。
+- **`dlc.data_source_uris`**：必须包含 `nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB`，否则 submitter 会拒绝提交。
+- **`resource_id`**：固定使用 `quotaev2tl4w6aw0`；**`workspace_id`** / **`vpc_id`** 等网络字段找你所在平台的管理员要。
 
 ### 3. `config_judge.json` — Judge 配置（对答案进行打分/评判）
 
@@ -87,9 +88,9 @@
     }
   },
   "eval": {
-    "input_result_path": "/mnt/cpfs/<USER>/lmms-eval/eval_result/<timestamp>/Qwen3-VL-8B-Instruct",
+    "input_result_path": "/mnt/cpfsB/<USER>/lmms-eval/eval_result/<timestamp>/Qwen3-VL-8B-Instruct",
     "tasks": "mmbench_en_dev,mmmu_val",
-    "output_path": "/mnt/cpfs/<USER>/judge_results"
+    "output_path": "/mnt/cpfsB/<USER>/judge_results"
   }
 }
 ```
@@ -107,7 +108,7 @@
 ### 运行评测
 
 ```bash
-cd /mnt/cpfs/<USER>/lmms-eval
+cd /mnt/cpfsB/<USER>/lmms-eval
 bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json
 ```
 
@@ -120,24 +121,24 @@ bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json /path/to/anothe
 ```
 
 **本地日志在哪：**
-默认在 `/mnt/cpfs/<USER>/vllm_logs/<timestamp>/`，包含 `vllm_*.log` 和 `lmms_eval_*.log`。
+默认在 `/mnt/cpfsB/<USER>/vllm_logs/<timestamp>/`，包含 `vllm_*.log` 和 `lmms_eval_*.log`。
 
 ### 运行 Judge
 
 ```bash
-cd /mnt/cpfs/<USER>/lmms-eval
+cd /mnt/cpfsB/<USER>/lmms-eval
 bash run_scripts/run_judge.sh run_scripts/config_judge.json
 ```
 
 **Judge 日志在哪：**
-默认在 `/mnt/cpfs/<USER>/judge_logs/judge_<timestamp>/`，包含 `judge.log` 和（若使用 vLLM 后端）`vllm_judge_backend.log`。
+默认在 `/mnt/cpfsB/<USER>/judge_logs/judge_<timestamp>/`，包含 `judge.log` 和（若使用 vLLM 后端）`vllm_judge_backend.log`。
 
 ---
 
 ## 提交到 DLC 集群
 
 ```bash
-cd /mnt/cpfs/<USER>/lmms-eval
+cd /mnt/cpfsB/<USER>/lmms-eval
 bash run_scripts/qwen3_vl_submit.sh run_scripts/config_dlc.json run_scripts/config_eval.json
 ```
 

@@ -73,6 +73,31 @@ classify_lmms_eval_task_status() {
     esac
 }
 
+clean_failed_task_output() {
+    local task="$1"
+    local task_output_path="$2"
+
+    if [[ "${MACHINE_RANK}" != "0" ]]; then
+        return
+    fi
+    if [[ "${task_output_path}" == "${OUTPUT_PATH}/tasks" || "${task_output_path}" == "${OUTPUT_PATH}/tasks/" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Refusing to clean task root path: ${task_output_path}" >&2
+        return 2
+    fi
+    case "${task_output_path}" in
+        "${OUTPUT_PATH}/tasks/"*)
+            ;;
+        *)
+            echo "[ERROR][Machine ${MACHINE_RANK}] Refusing to clean unexpected task output path: ${task_output_path}" >&2
+            return 2
+            ;;
+    esac
+
+    rm -rf -- "${task_output_path}"
+    mkdir -p "${task_output_path}"
+    jq --arg task "${task}" '.eval.tasks = $task' "${CONFIG}" > "${task_output_path}/config.json"
+}
+
 # ── parse gen_kwargs ──────────────────────────────────────────────────────────
 parse_gen_kwarg() {
     local key=$1
@@ -109,6 +134,12 @@ load_config() {
 
     OPENAI_API_URL=$(cfg '.env.openai_api_url // ""')
     [[ -n "${OPENAI_API_URL}" && "${OPENAI_API_URL}" != "null" ]] && export OPENAI_API_URL="${OPENAI_API_URL}"
+
+    JUDGE_API_KEY=$(cfg '.env.judge_api_key // ""')
+    [[ -n "${JUDGE_API_KEY}" && "${JUDGE_API_KEY}" != "null" ]] && export JUDGE_API_KEY="${JUDGE_API_KEY}"
+
+    JUDGE_BASE_URL=$(cfg '.env.judge_base_url // ""')
+    [[ -n "${JUDGE_BASE_URL}" && "${JUDGE_BASE_URL}" != "null" ]] && export JUDGE_BASE_URL="${JUDGE_BASE_URL}"
 
     export HF_HOME=$(cfg '.env.hf_home')
     export HF_TOKEN=$(cfg '.env.hf_token')
@@ -169,6 +200,7 @@ load_config() {
     GEN_KWARGS=$(cfg '.eval.gen_kwargs // "max_new_tokens=32768"')
     MAX_NEW_TOKENS=$(parse_gen_kwarg "max_new_tokens" "32768")
     MAX_PIXELS=$(parse_gen_kwarg "max_pixels" "4014080")
+    VLLM_REQUEST_TIMEOUT_SECONDS=$(cfg_required_positive_int '.eval.vllm_request_timeout_seconds // 300' 'eval.vllm_request_timeout_seconds')
     TASK_TIMEOUT_SECONDS=$(cfg_required_positive_int '.eval.task_timeout_seconds' 'eval.task_timeout_seconds')
     TASK_TIMEOUT_KILL_AFTER_SECONDS=$(cfg_required_positive_int '.eval.task_timeout_kill_after_seconds' 'eval.task_timeout_kill_after_seconds')
 }
@@ -351,7 +383,7 @@ run_lmms_eval() {
         --master_port="${MASTER_PORT}" \
         -m lmms_eval \
         --model       vllm_backend \
-        --model_args  "base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=True,shuffle_requests=True" \
+        --model_args  "base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=True,shuffle_requests=True" \
         --gen_kwargs  "${GEN_KWARGS}" \
         --tasks       "${TASKS}" \
         --batch_size  1 \

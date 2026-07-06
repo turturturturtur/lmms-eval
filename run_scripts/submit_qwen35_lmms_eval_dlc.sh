@@ -3,9 +3,9 @@
 #
 # Usage:
 #   bash lmms-eval/run_scripts/submit_qwen35_lmms_eval_dlc.sh \
-#     /mnt/cpfs/<USER>/models/Qwen3.5-9B \
+#     /mnt/cpfsB/<USER>/models/Qwen3.5-9B \
 #     EMVista \
-#     /mnt/cpfs/<USER>/lmms-eval/eval_result/qwen35_emvista \
+#     /mnt/cpfsB/<USER>/lmms-eval/eval_result/qwen35_emvista \
 #     -1 \
 #     off
 #

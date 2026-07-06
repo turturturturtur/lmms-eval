@@ -4,9 +4,14 @@ import LogViewer from './LogViewer'
 import TaskBuilder from './TaskBuilder'
 
 const API_BASE = ''
-const USER_PLACEHOLDER = '<USER>'
-const DEFAULT_DLC_PATH_TEMPLATE = '/mnt/cpfsB/<USER>/dlc'
-const DEFAULT_JUDGE_API_URL = ''
+const USER_PLACEHOLDER = '<USERNAME>'
+const LEGACY_USER_PLACEHOLDER = '<USER>'
+const USER_PLACEHOLDERS = [USER_PLACEHOLDER, LEGACY_USER_PLACEHOLDER]
+const DEFAULT_DLC_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/dlc`
+const DEFAULT_MODEL_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/Innovator-Tune/models/Qwen3.5-9B`
+const DEFAULT_OUTPUT_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/eval_result/qwen35_9b_feishu20`
+const DEFAULT_JUDGE_API_URL = 'http://8.130.30.251:8801/v1'
+const DEFAULT_API_EVAL_URL = 'http://gw-k6isjixc1ij25ms7q4.cn-shanghai.pai-eas.aliyuncs.com/api/predict/router_fs_eval/v1'
 const PAGES = ['evaluate', 'logs', 'tasks'] as const
 
 type Page = typeof PAGES[number]
@@ -295,11 +300,50 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+function normalizeUserPlaceholderText(text: string) {
+  return text.split(LEGACY_USER_PLACEHOLDER).join(USER_PLACEHOLDER)
+}
+
+function normalizeUserPlaceholders<T>(value: T): T {
+  if (typeof value === 'string') {
+    return normalizeUserPlaceholderText(value) as T
+  }
+  if (Array.isArray(value)) {
+    return value.map(item => normalizeUserPlaceholders(item)) as T
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, normalizeUserPlaceholders(item)])
+    ) as T
+  }
+  return value
+}
+
+function replaceUserPlaceholders(text: string, user: string) {
+  let updated = text
+  for (const placeholder of USER_PLACEHOLDERS) {
+    updated = updated.split(placeholder).join(user)
+  }
+  return updated
+}
+
+function restoreUserPlaceholder(text: string, previousUser: string) {
+  let updated = normalizeUserPlaceholderText(text)
+  const previous = previousUser.trim()
+  if (!previous) return updated
+
+  for (const root of ['/mnt/cpfs/', '/mnt/cpfsB/']) {
+    const previousPathSegment = new RegExp(`(${escapeRegExp(root)})${escapeRegExp(previous)}(/)`, 'g')
+    updated = updated.replace(previousPathSegment, `$1${USER_PLACEHOLDER}$2`)
+  }
+  return updated
+}
+
 function applyUserToText(text: string, nextUser: string, previousUser: string) {
   const user = nextUser.trim()
-  if (!user) return text
+  if (!user) return restoreUserPlaceholder(text, previousUser)
 
-  let updated = text.split(USER_PLACEHOLDER).join(user)
+  let updated = replaceUserPlaceholders(text, user)
   const previous = previousUser.trim()
   if (previous && previous !== user) {
     for (const root of ['/mnt/cpfs/', '/mnt/cpfsB/']) {
@@ -414,7 +458,10 @@ interface YamlPreview {
 interface Config {
   user: string
   job_name: string
+  eval_inference_mode: string
   model: string
+  api_url: string
+  api_key: string
   dlc_path: string
   model_args: string
   tasks: string[]
@@ -681,7 +728,10 @@ export default function App() {
   const [sysInfo, setSysInfo] = useState<SysInfo>({ hostname: '', cwd: '' })
   const [tasks, setTasks] = useState<TaskInfo[]>([])
 
-  const [model, setModel] = useState('/mnt/cpfsB/<USER>/Innovator-Tune/models/Qwen3.5-9B')
+  const [evalInferenceMode, setEvalInferenceMode] = useState('ckpt')
+  const [model, setModel] = useState(DEFAULT_MODEL_PATH_TEMPLATE)
+  const [apiUrl, setApiUrl] = useState(DEFAULT_API_EVAL_URL)
+  const [apiKey, setApiKey] = useState('')
   const [dlcPath, setDlcPath] = useState(DEFAULT_DLC_PATH_TEMPLATE)
   const [modelArgs, setModelArgs] = useState('')
   const [envVars, setEnvVars] = useState('')
@@ -692,7 +742,7 @@ export default function App() {
   const [batchSize, setBatchSize] = useState('1')
   const [limit, setLimit] = useState('-1')
   const [device, setDevice] = useState('')
-  const [outputPath, setOutputPath] = useState('/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/eval_result/qwen35_9b_feishu20')
+  const [outputPath, setOutputPath] = useState(DEFAULT_OUTPUT_PATH_TEMPLATE)
   const [verbosity, setVerbosity] = useState('INFO')
   const [envSetup, setEnvSetup] = useState('')
   const [runMode, setRunMode] = useState('dlc')
@@ -769,7 +819,10 @@ export default function App() {
     return {
       user: userName.trim(),
       job_name: jobName.trim(),
+      eval_inference_mode: evalInferenceMode,
       model,
+      api_url: apiUrl,
+      api_key: apiKey,
       dlc_path: dlcPath,
       model_args: modelArgs,
       tasks: Array.from(selectedTasks),
@@ -800,7 +853,6 @@ export default function App() {
   const updateUserName = (value: string) => {
     setUserName(value)
     const nextUser = value.trim()
-    if (!nextUser) return
 
     const nextDlcPath = applyUserToText(dlcPath, nextUser, appliedUserName)
     setModel(prev => applyUserToText(prev, nextUser, appliedUserName))
@@ -865,28 +917,34 @@ export default function App() {
         if (!r.ok) {
           throw new Error(data.detail || r.statusText)
         }
-        return data as DefaultConfig
+        return normalizeUserPlaceholders(data) as DefaultConfig
       })
       .then((d: DefaultConfig | null) => {
         if (!d) return
-        const nextJobName = d.job_name || extractDlcJobName(d.dlc_config) || 'eval_qwen35_9b_feishu20'
-        setUserName(d.user || '')
+        const normalizedDlcConfig = normalizeUserPlaceholders(d.dlc_config || {})
+        const nextJobName = d.job_name || extractDlcJobName(normalizedDlcConfig) || 'eval_qwen35_9b_feishu20'
+        const nextUser = (d.user || '').trim()
+        setUserName(nextUser)
+        setAppliedUserName(nextUser)
         setJobName(nextJobName)
-        setModel(d.model)
-        setDlcPath(d.dlc_path || extractDlcPath(d.dlc_config) || DEFAULT_DLC_PATH_TEMPLATE)
+        setEvalInferenceMode(d.eval_inference_mode || 'ckpt')
+        setModel(normalizeUserPlaceholderText(d.model || DEFAULT_MODEL_PATH_TEMPLATE))
+        setApiUrl(d.api_url || DEFAULT_API_EVAL_URL)
+        setApiKey(d.api_key || '')
+        setDlcPath(normalizeUserPlaceholderText(d.dlc_path || extractDlcPath(normalizedDlcConfig) || DEFAULT_DLC_PATH_TEMPLATE))
         setModelArgs(d.model_args || '')
         setSelectedTasks(new Set(d.tasks || []))
         setJudgeApiUrl(d.judge_api_url || DEFAULT_JUDGE_API_URL)
         setJudgeApiKey(d.judge_api_key || '')
-        setEnvVars(d.env_vars || '')
+        setEnvVars(normalizeUserPlaceholderText(d.env_vars || ''))
         setBatchSize(String(d.batch_size || 1))
         setLimit(d.limit == null ? '' : String(d.limit))
-        setOutputPath(d.output_path || '')
+        setOutputPath(normalizeUserPlaceholderText(d.output_path || DEFAULT_OUTPUT_PATH_TEMPLATE))
         setVerbosity(d.verbosity || 'INFO')
         setDevice(d.device || '')
         setEnvSetup(d.env_setup || '')
         setRunMode(d.run_mode || 'dlc')
-        setDlcConfigJson(JSON.stringify(withDlcJobName(d.dlc_config || {}, nextJobName), null, 2))
+        setDlcConfigJson(JSON.stringify(withDlcJobName(normalizedDlcConfig, nextJobName), null, 2))
         setModelTp(String(d.model_tp || 1))
         setMaxModelLen(String(d.max_model_len || 65536))
         setGpuMemoryUtilization(String(d.gpu_memory_utilization || 0.9))
@@ -940,7 +998,7 @@ export default function App() {
       })
       .then(d => setCommand(d.command))
       .catch((e) => setCommand(`# Error generating command: ${e.message || e}`))
-  }, [defaultsLoaded, defaultsError, userName, jobName, model, dlcPath, modelArgs, selectedTasks, judgeApiUrl, judgeApiKey, envVars, batchSize, limit, device, outputPath, verbosity, envSetup, runMode, dlcConfigJson, modelTp, maxModelLen, gpuMemoryUtilization, maxNumSeqs, basePort, concurrency, genKwargs, enableThinking, debugMode])
+  }, [defaultsLoaded, defaultsError, userName, jobName, evalInferenceMode, model, apiUrl, apiKey, dlcPath, modelArgs, selectedTasks, judgeApiUrl, judgeApiKey, envVars, batchSize, limit, device, outputPath, verbosity, envSetup, runMode, dlcConfigJson, modelTp, maxModelLen, gpuMemoryUtilization, maxNumSeqs, basePort, concurrency, genKwargs, enableThinking, debugMode])
 
   useEffect(() => {
     if (!defaultsLoaded || !userName.trim()) return
@@ -1026,8 +1084,17 @@ export default function App() {
     return Array.from(selectedTasks).filter(taskId => taskMap.get(taskId)?.requires_llm_judge)
   }, [tasks, selectedTasks])
 
+  const isApiEval = evalInferenceMode === 'api'
   const requiresJudgeConfig = selectedJudgeTasks.length > 0
   const startDisabled = status === 'running' || !defaultsLoaded
+
+  const updateEvalInferenceMode = (nextMode: string) => {
+    if (nextMode !== 'ckpt' && nextMode !== 'api') return
+    setEvalInferenceMode(nextMode)
+    if (nextMode === 'api' && !apiUrl.trim()) {
+      setApiUrl(DEFAULT_API_EVAL_URL)
+    }
+  }
 
   const toggleTask = (taskId: string) => {
     const newSet = new Set(selectedTasks)
@@ -1210,22 +1277,26 @@ export default function App() {
 
         if (data.user != null) setUserName(data.user)
         if (importedJobName) setJobName(importedJobName)
-        if (data.model) setModel(data.model)
-        if (data.dlc_path != null) setDlcPath(data.dlc_path)
+        if (data.eval_inference_mode) setEvalInferenceMode(data.eval_inference_mode)
+        if (data.model) setModel(normalizeUserPlaceholderText(data.model))
+        if (data.api_url != null) setApiUrl(data.api_url || DEFAULT_API_EVAL_URL)
+        if (data.api_key != null) setApiKey(data.api_key)
+        if (data.dlc_path != null) setDlcPath(normalizeUserPlaceholderText(data.dlc_path))
         if (data.model_args) setModelArgs(data.model_args)
         if (data.tasks && data.tasks.length > 0) setSelectedTasks(new Set(data.tasks))
         if (data.judge_api_url != null) setJudgeApiUrl(data.judge_api_url || DEFAULT_JUDGE_API_URL)
         if (data.judge_api_key != null) setJudgeApiKey(data.judge_api_key)
-        if (data.env_vars) setEnvVars(data.env_vars)
+        if (data.env_vars) setEnvVars(normalizeUserPlaceholderText(data.env_vars))
         if (data.batch_size) setBatchSize(String(data.batch_size))
         if (data.limit != null) setLimit(String(data.limit))
-        if (data.output_path) setOutputPath(data.output_path)
+        if (data.output_path) setOutputPath(normalizeUserPlaceholderText(data.output_path))
         if (data.verbosity) setVerbosity(data.verbosity)
         if (data.device) setDevice(data.device)
         if (data.run_mode) setRunMode(data.run_mode)
         if (data.dlc_config) {
-          const importedDlcPath = data.dlc_path || extractDlcPath(data.dlc_config)
-          const importedDlcConfig = importedDlcPath ? withDlcBinary(data.dlc_config, importedDlcPath) : data.dlc_config
+          const normalizedDlcConfig = normalizeUserPlaceholders(data.dlc_config)
+          const importedDlcPath = normalizeUserPlaceholderText(data.dlc_path || extractDlcPath(normalizedDlcConfig))
+          const importedDlcConfig = importedDlcPath ? withDlcBinary(normalizedDlcConfig, importedDlcPath) : normalizedDlcConfig
           setDlcConfigJson(JSON.stringify(importedJobName ? withDlcJobName(importedDlcConfig, importedJobName) : importedDlcConfig, null, 2))
           if (importedDlcPath) setDlcPath(importedDlcPath)
         }
@@ -1393,7 +1464,9 @@ export default function App() {
               <span className="max-w-[140px] truncate" title={authUser.display_name || authUser.username}>
                 {authUser.display_name || authUser.username}
               </span>
-              <span className="rounded-sm border border-neutral-200 px-1.5 py-0.5 uppercase tracking-wider text-neutral-400">{authUser.role}</span>
+              <span className="rounded-sm border border-neutral-200 px-1.5 py-0.5 tracking-wider text-neutral-400">
+                {authUser.role === 'admin' ? 'Admin' : 'USER'}
+              </span>
               <button
                 type="button"
                 onClick={() => void logout()}
@@ -1426,7 +1499,7 @@ export default function App() {
           className="flex h-full transition-transform duration-300 ease-out"
           style={{ transform: `translateX(-${activePageIndex * 100}%)` }}
         >
-          <section className="flex h-full min-w-full overflow-hidden">
+          <section className="flex h-full w-full shrink-0 overflow-hidden">
         <div className="flex flex-1 overflow-hidden">
         <div className="w-full md:w-[400px] lg:w-[450px] xl:w-[500px] 2xl:w-[550px] min-w-[320px] max-w-[600px] bg-white border-r border-neutral-200 flex flex-col overflow-y-auto scrollbar-thin flex-shrink-0">
           <div className="flex-shrink-0 border-b border-neutral-100">
@@ -1478,30 +1551,77 @@ export default function App() {
                   <input
                     value={userName}
                     onChange={e => updateUserName(e.target.value)}
-                    placeholder="username"
+                    placeholder={USER_PLACEHOLDER}
                     className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
                   />
                 </div>
 
-                <div className="group">
-                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Job Name</label>
-                  <input
-                    value={jobName}
+	                <div className="group">
+	                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Job Name</label>
+	                  <input
+	                    value={jobName}
                     onChange={e => updateJobName(e.target.value)}
                     placeholder="eval_qwen3vl_tp1"
                     className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
-                  />
-                </div>
+	                  />
+	                </div>
 
-                <div className="group">
-                  <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Checkpoint Path</label>
-                  <input
-                    value={model}
-                    onChange={e => setModel(e.target.value)}
-                    placeholder="/mnt/cpfsB/<USER>/Innovator-Tune/models/Qwen3.5-9B"
-                    className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
-                  />
-                </div>
+	                <div className="flex items-center justify-between gap-3 border border-neutral-200 bg-white px-3 py-2">
+	                  <span className={`text-[10px] font-bold uppercase tracking-wider ${!isApiEval ? 'text-neutral-900' : 'text-neutral-400'}`}>Ckpt Eval</span>
+	                  <button
+	                    type="button"
+	                    role="switch"
+	                    aria-label="Evaluation inference mode"
+	                    aria-checked={isApiEval}
+	                    onClick={() => updateEvalInferenceMode(isApiEval ? 'ckpt' : 'api')}
+	                    className={`relative flex h-6 w-14 shrink-0 items-center rounded-full border px-0.5 transition-colors focus:outline-none ${
+	                      isApiEval
+	                        ? 'border-neutral-900 bg-neutral-900'
+	                        : 'border-neutral-300 bg-neutral-100'
+	                    }`}
+	                  >
+	                    <span
+	                      className={`relative z-10 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+	                        isApiEval ? 'translate-x-8' : 'translate-x-0'
+	                      }`}
+	                    />
+	                  </button>
+	                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isApiEval ? 'text-neutral-900' : 'text-neutral-400'}`}>API Eval</span>
+	                </div>
+
+	                {!isApiEval ? (
+	                  <div className="group">
+	                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Checkpoint Path</label>
+	                    <input
+	                      value={model}
+	                      onChange={e => setModel(e.target.value)}
+	                      placeholder={DEFAULT_MODEL_PATH_TEMPLATE}
+	                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
+	                    />
+	                  </div>
+	                ) : (
+	                  <div className="space-y-4">
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">API Address</label>
+	                      <input
+	                        value={apiUrl}
+	                        onChange={e => setApiUrl(e.target.value)}
+	                        placeholder={DEFAULT_API_EVAL_URL}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
+	                      />
+	                    </div>
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">API Token</label>
+	                      <input
+	                        type="password"
+	                        value={apiKey}
+	                        onChange={e => setApiKey(e.target.value)}
+	                        placeholder="sk-..."
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
+	                      />
+	                    </div>
+	                  </div>
+	                )}
 
                 <div className="group">
                   <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">DLC Config</label>
@@ -1705,15 +1825,17 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="group">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Device</label>
-                    <input
-                      value={device}
-                      onChange={e => setDevice(e.target.value)}
-                      placeholder="cuda:0"
-                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
-                    />
-                </div>
+	                {!isApiEval && (
+	                  <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Device</label>
+	                      <input
+	                        value={device}
+	                        onChange={e => setDevice(e.target.value)}
+	                        placeholder="cuda:0"
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
+	                      />
+	                  </div>
+	                )}
 
                 <div className="group">
                     <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Output Path</label>
@@ -1725,63 +1847,65 @@ export default function App() {
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="group">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Tensor Parallel</label>
-                    <input
-                      type="number"
-                      value={modelTp}
-                      onChange={e => setModelTp(e.target.value)}
-                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
-                    />
-                  </div>
-                  <div className="group">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Max Model Len</label>
-                    <input
-                      type="number"
-                      value={maxModelLen}
-                      onChange={e => setMaxModelLen(e.target.value)}
-                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
-                    />
-                  </div>
-                  <div className="group">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">GPU Memory</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={gpuMemoryUtilization}
-                      onChange={e => setGpuMemoryUtilization(e.target.value)}
-                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
-                    />
-                  </div>
-                  <div className="group">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Max Seqs</label>
-                    <input
-                      type="number"
-                      value={maxNumSeqs}
-                      onChange={e => setMaxNumSeqs(e.target.value)}
-                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
-                    />
-                  </div>
-                  <div className="group">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Base Port</label>
-                    <input
-                      type="number"
-                      value={basePort}
-                      onChange={e => setBasePort(e.target.value)}
-                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
-                    />
-                  </div>
-                  <div className="group">
-                    <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Concurrency</label>
-                    <input
-                      type="number"
-                      value={concurrency}
-                      onChange={e => setConcurrency(e.target.value)}
-                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
-                    />
-                  </div>
-                </div>
+	                {!isApiEval && (
+	                  <div className="grid grid-cols-2 gap-4">
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Tensor Parallel</label>
+	                      <input
+	                        type="number"
+	                        value={modelTp}
+	                        onChange={e => setModelTp(e.target.value)}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
+	                      />
+	                    </div>
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Max Model Len</label>
+	                      <input
+	                        type="number"
+	                        value={maxModelLen}
+	                        onChange={e => setMaxModelLen(e.target.value)}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
+	                      />
+	                    </div>
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">GPU Memory</label>
+	                      <input
+	                        type="number"
+	                        step="0.01"
+	                        value={gpuMemoryUtilization}
+	                        onChange={e => setGpuMemoryUtilization(e.target.value)}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
+	                      />
+	                    </div>
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Max Seqs</label>
+	                      <input
+	                        type="number"
+	                        value={maxNumSeqs}
+	                        onChange={e => setMaxNumSeqs(e.target.value)}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
+	                      />
+	                    </div>
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Base Port</label>
+	                      <input
+	                        type="number"
+	                        value={basePort}
+	                        onChange={e => setBasePort(e.target.value)}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
+	                      />
+	                    </div>
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Concurrency</label>
+	                      <input
+	                        type="number"
+	                        value={concurrency}
+	                        onChange={e => setConcurrency(e.target.value)}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors text-neutral-600"
+	                      />
+	                    </div>
+	                  </div>
+	                )}
 
                 <div className="group">
                   <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">Generation Kwargs</label>
@@ -1793,33 +1917,35 @@ export default function App() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between gap-3 border border-neutral-200 bg-white px-3 py-2">
-                  <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Thinking</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={enableThinking}
-                    onClick={() => setEnableThinking(value => !value)}
-                    className={`relative flex h-6 w-14 shrink-0 items-center rounded-full border px-0.5 transition-colors focus:outline-none ${
-                      enableThinking
-                        ? 'border-neutral-900 bg-neutral-900'
-                        : 'border-neutral-300 bg-neutral-100'
-                    }`}
-                  >
-                    <span
-                      className={`absolute text-[9px] font-bold uppercase leading-none transition-colors ${
-                        enableThinking ? 'left-2 text-white' : 'right-2 text-neutral-500'
-                      }`}
-                    >
-                      {enableThinking ? 'On' : 'Off'}
-                    </span>
-                    <span
-                      className={`relative z-10 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                        enableThinking ? 'translate-x-8' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
+	                {!isApiEval && (
+	                  <div className="flex items-center justify-between gap-3 border border-neutral-200 bg-white px-3 py-2">
+	                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Thinking</span>
+	                    <button
+	                      type="button"
+	                      role="switch"
+	                      aria-checked={enableThinking}
+	                      onClick={() => setEnableThinking(value => !value)}
+	                      className={`relative flex h-6 w-14 shrink-0 items-center rounded-full border px-0.5 transition-colors focus:outline-none ${
+	                        enableThinking
+	                          ? 'border-neutral-900 bg-neutral-900'
+	                          : 'border-neutral-300 bg-neutral-100'
+	                      }`}
+	                    >
+	                      <span
+	                        className={`absolute text-[9px] font-bold uppercase leading-none transition-colors ${
+	                          enableThinking ? 'left-2 text-white' : 'right-2 text-neutral-500'
+	                        }`}
+	                      >
+	                        {enableThinking ? 'On' : 'Off'}
+	                      </span>
+	                      <span
+	                        className={`relative z-10 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+	                          enableThinking ? 'translate-x-8' : 'translate-x-0'
+	                        }`}
+	                      />
+	                    </button>
+	                  </div>
+	                )}
 
                 <label className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
                   <input
@@ -1945,10 +2071,10 @@ export default function App() {
         </div>
       </div>
           </section>
-          <section className="flex h-full min-w-full overflow-hidden">
+          <section className="flex h-full w-full shrink-0 overflow-hidden">
             <LogViewer />
           </section>
-          <section className="flex h-full min-w-full overflow-hidden">
+          <section className="flex h-full w-full shrink-0 overflow-hidden">
             <TaskBuilder onTaskCreated={loadTasks} />
           </section>
         </div>

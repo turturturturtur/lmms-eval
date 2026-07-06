@@ -11,6 +11,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+DEFAULT_DLC_RESOURCE_ID="quotaev2tl4w6aw0"
+REQUIRED_NAS_MOUNT_URI="nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
 
 DLC_CONFIG="${1:-$(dirname "$0")/config_dlc.json}"
 EVAL_CONFIG="${2:-$(dirname "$0")/config_eval.json}"
@@ -37,10 +39,44 @@ fi
 # ── helpers for reading the two configs ───────────────────────────────────────
 dlc_cfg()     { jq -r "$1"       "${DLC_CONFIG}"; }
 dlc_cfg_int() { jq -r "$1 // 0" "${DLC_CONFIG}"; }
+dlc_judge_cfg() { jq -er "$1" "${DLC_CONFIG}"; }
+dlc_judge_cfg_int() { jq -er "$1 | tonumber" "${DLC_CONFIG}"; }
 eval_cfg()     { jq -r "$1"       "${EVAL_CONFIG}"; }
 eval_cfg_int() { jq -r "$1 // 0" "${EVAL_CONFIG}"; }
 judge_cfg()     { jq -r "$1"       "${JUDGE_CONFIG}"; }
 judge_cfg_int() { jq -r "$1 // 0" "${JUDGE_CONFIG}"; }
+
+require_non_empty() {
+    local value="$1"
+    local field="$2"
+    if [[ -z "${value}" || "${value}" == "null" ]]; then
+        echo "[ERROR] Missing ${field} in ${DLC_CONFIG}" >&2
+        exit 2
+    fi
+}
+
+require_single_resource_id() {
+    local value="$1"
+    local field="$2"
+    require_non_empty "${value}" "${field}"
+    if [[ "${value}" != "${DEFAULT_DLC_RESOURCE_ID}" ]]; then
+        echo "[ERROR] ${field} must be ${DEFAULT_DLC_RESOURCE_ID}, got: ${value}" >&2
+        exit 8
+    fi
+}
+
+require_required_nas_mount() {
+    local value="$1"
+    local field="$2"
+    require_non_empty "${value}" "${field}"
+    case ",${value}," in
+        *",${REQUIRED_NAS_MOUNT_URI},"*) ;;
+        *)
+            echo "[ERROR] ${field} must include ${REQUIRED_NAS_MOUNT_URI}, got: ${value}" >&2
+            exit 9
+            ;;
+    esac
+}
 
 # ── resolve job name (needs model info from eval config) ──────────────────────
 MODEL=$(eval_cfg '.model.path')
@@ -77,8 +113,47 @@ mkdir -p "${FIXED_LOG_DIR}"
 # ── generate runtime config for workers ───────────────────────────────────────
 # Workers should never submit again, and cluster runs are always non-debug.
 # 同时将统一时间戳写入 runtime config，worker 会用它作为 output_path
+JUDGE_RUNTIME_API_KEY=""
+JUDGE_RUNTIME_BASE_URL=""
+if [[ -n "${JUDGE_CONFIG}" ]]; then
+    JUDGE_RUNTIME_API_KEY="$(judge_cfg '.judge.api.key // ""')"
+    JUDGE_RUNTIME_BASE_URL="$(judge_cfg '.judge.api.base_url // ""')"
+fi
 RUNTIME_CONFIG="${FIXED_LOG_DIR}/runtime_config.json"
-jq --arg ts "${TIMESTAMP}" '.dlc.submit = false | .eval.debug = false | .eval.timestamp = $ts' "${EVAL_CONFIG}" > "${RUNTIME_CONFIG}"
+jq \
+  --arg ts "${TIMESTAMP}" \
+  --arg judge_api_key "${JUDGE_RUNTIME_API_KEY}" \
+  --arg judge_base_url "${JUDGE_RUNTIME_BASE_URL}" \
+  '
+  if (.env | type) != "object" then
+    error("config.env must be an object")
+  else
+    .
+  end
+  | .dlc.submit = false
+  | .eval.debug = false
+  | .eval.timestamp = $ts
+  | if ($judge_api_key | length) > 0 then
+      .env.judge_api_key = $judge_api_key
+    else
+      .
+    end
+  | if ($judge_base_url | length) > 0 then
+      .env.judge_base_url = $judge_base_url
+    else
+      .
+    end
+  | if (($judge_api_key | length) > 0) and (((.env.openai_api_key // "") | tostring | length) == 0) then
+      .env.openai_api_key = $judge_api_key
+    else
+      .
+    end
+  | if (($judge_base_url | length) > 0) and (((.env.openai_api_url // "") | tostring | length) == 0) then
+      .env.openai_api_url = $judge_base_url
+    else
+      .
+    end
+  ' "${EVAL_CONFIG}" > "${RUNTIME_CONFIG}"
 
 # ── resolve absolute paths for worker script and runtime config ───────────────
 WORKER_SCRIPT_FROM_CFG=$(dlc_cfg '.dlc.run_script // ""')
@@ -113,6 +188,9 @@ EXTENDED_CIDRS=$(dlc_cfg '.dlc.extended_cidrs')
 REGION=$(dlc_cfg '.dlc.region // ""')
 ENDPOINT=$(dlc_cfg '.dlc.endpoint // ""')
 
+require_single_resource_id "${RESOURCE_ID}" "dlc.resource_id"
+require_required_nas_mount "${DATA_SOURCE_URIS}" "dlc.data_source_uris"
+
 if ! [[ "${PRIORITY}" =~ ^[0-9]+$ ]]; then
     echo "[ERROR] DLC priority must be an integer, got: ${PRIORITY}"
     exit 2
@@ -133,12 +211,14 @@ parse_job_id_from_text() {
 
 resolve_job_id_by_name() {
     local job_name="$1"
+    local resource_id="$2"
+    local workspace_id="$3"
     local job_id=""
     for _ in {1..24}; do
         job_id="$("${DLC_BINARY}" get job \
             -n "${job_name}" \
-            -w "${WORKSPACE_ID}" \
-            --resource_id="${RESOURCE_ID}" \
+            -w "${workspace_id}" \
+            --resource_id="${resource_id}" \
             "${OPTIONAL_DLC_ARGS[@]}" \
             | parse_job_id_from_text)"
         if [[ -n "${job_id}" ]]; then
@@ -185,6 +265,8 @@ wait_for_job_success() {
     local job_id="$1"
     local stage="$2"
     local timeout_seconds="$3"
+    local resource_id="$4"
+    local workspace_id="$5"
     local poll_interval="${DLC_POLL_INTERVAL_SECONDS:-60}"
     local detail_dir="${FIXED_LOG_DIR}/job_details"
     mkdir -p "${detail_dir}"
@@ -196,8 +278,8 @@ wait_for_job_success() {
     while (( SECONDS < deadline )); do
         detail_file="${detail_dir}/${stage}_${job_id}_$(date +%Y%m%d_%H%M%S).json"
         "${DLC_BINARY}" get job "${job_id}" \
-            -w "${WORKSPACE_ID}" \
-            --resource_id="${RESOURCE_ID}" \
+            -w "${workspace_id}" \
+            --resource_id="${resource_id}" \
             --show_detail \
             "${OPTIONAL_DLC_ARGS[@]}" \
             > "${detail_file}"
@@ -263,22 +345,68 @@ build_judge_submit_args() {
     local judge_worker_shared_memory
     local judge_priority
     local judge_job_max_running_time_minutes
+    local judge_worker_image
+    local judge_data_source_uris
+    local judge_resource_id
+    local judge_workspace_id
+    local judge_vpc_id
+    local judge_switch_id
+    local judge_security_group_id
+    local judge_extended_cidrs
 
-    judge_workers=$(dlc_cfg_int '.dlc.judge_workers // 1')
-    judge_worker_gpu=$(dlc_cfg_int '.dlc.judge_worker_gpu // 0')
-    judge_worker_cpu=$(dlc_cfg_int '.dlc.judge_worker_cpu // 8')
-    judge_worker_memory=$(dlc_cfg '.dlc.judge_worker_memory // "64Gi"')
-    judge_worker_shared_memory=$(dlc_cfg '.dlc.judge_worker_shared_memory // "16Gi"')
-    judge_priority=$(dlc_cfg_int '.dlc.judge_priority // .dlc.priority')
-    judge_job_max_running_time_minutes=$(dlc_cfg_int '.dlc.judge_job_max_running_time_minutes // 1440')
+    if ! jq -e '(.dlc.judge | type) == "object"' "${DLC_CONFIG}" >/dev/null; then
+        echo "[ERROR] Judge DLC requires a complete dlc.judge CPU-only template in ${DLC_CONFIG}" >&2
+        exit 8
+    fi
+
+    judge_workers=$(dlc_judge_cfg_int '.dlc.judge.workers')
+    judge_worker_gpu=$(dlc_judge_cfg_int '.dlc.judge.worker_gpu')
+    judge_worker_cpu=$(dlc_judge_cfg_int '.dlc.judge.worker_cpu')
+    judge_worker_memory=$(dlc_judge_cfg '.dlc.judge.worker_memory')
+    judge_worker_shared_memory=$(dlc_judge_cfg '.dlc.judge.worker_shared_memory')
+    judge_priority=$(dlc_judge_cfg_int '.dlc.judge.priority')
+    judge_job_max_running_time_minutes=$(dlc_judge_cfg_int '.dlc.judge.job_max_running_time_minutes')
+    judge_worker_image=$(dlc_judge_cfg '.dlc.judge.worker_image')
+    judge_data_source_uris=$(dlc_judge_cfg '.dlc.judge.data_source_uris')
+    judge_resource_id=$(dlc_judge_cfg '.dlc.judge.resource_id')
+    judge_workspace_id=$(dlc_judge_cfg '.dlc.judge.workspace_id')
+    judge_vpc_id=$(dlc_judge_cfg '.dlc.judge.vpc_id')
+    judge_switch_id=$(dlc_judge_cfg '.dlc.judge.switch_id')
+    judge_security_group_id=$(dlc_judge_cfg '.dlc.judge.security_group_id')
+    judge_extended_cidrs=$(dlc_judge_cfg '.dlc.judge.extended_cidrs')
+
+    require_non_empty "${judge_worker_memory}" "dlc.judge.worker_memory"
+    require_non_empty "${judge_worker_shared_memory}" "dlc.judge.worker_shared_memory"
+    require_non_empty "${judge_worker_image}" "dlc.judge.worker_image"
+    require_non_empty "${judge_data_source_uris}" "dlc.judge.data_source_uris"
+    require_non_empty "${judge_resource_id}" "dlc.judge.resource_id"
+    require_non_empty "${judge_workspace_id}" "dlc.judge.workspace_id"
+    require_non_empty "${judge_vpc_id}" "dlc.judge.vpc_id"
+    require_non_empty "${judge_switch_id}" "dlc.judge.switch_id"
+    require_non_empty "${judge_security_group_id}" "dlc.judge.security_group_id"
+    require_non_empty "${judge_extended_cidrs}" "dlc.judge.extended_cidrs"
+    require_single_resource_id "${judge_resource_id}" "dlc.judge.resource_id"
+    require_required_nas_mount "${judge_data_source_uris}" "dlc.judge.data_source_uris"
 
     if [[ "${judge_worker_gpu}" != "0" ]]; then
         echo "[ERROR] Judge DLC must be CPU-only; expected worker_gpu=0, got ${judge_worker_gpu}" >&2
         exit 8
     fi
+    if (( judge_workers < 1 )); then
+        echo "[ERROR] Judge DLC workers must be positive, got ${judge_workers}" >&2
+        exit 8
+    fi
+    if (( judge_worker_cpu < 1 )); then
+        echo "[ERROR] Judge DLC worker_cpu must be positive, got ${judge_worker_cpu}" >&2
+        exit 8
+    fi
     if (( judge_priority > 6 )); then
         echo "[ERROR] Refusing to submit judge DLC job with priority=${judge_priority}; maximum allowed is 6." >&2
         exit 6
+    fi
+    if (( judge_job_max_running_time_minutes < 1 )); then
+        echo "[ERROR] Judge DLC job_max_running_time_minutes must be positive, got ${judge_job_max_running_time_minutes}" >&2
+        exit 8
     fi
 
     local judge_inner_command
@@ -295,18 +423,20 @@ build_judge_submit_args() {
         --worker_gpu="${judge_worker_gpu}"
         --worker_memory="${judge_worker_memory}"
         --worker_shared_memory="${judge_worker_shared_memory}"
-        --worker_image="${WORKER_IMAGE}"
+        --worker_image="${judge_worker_image}"
         --job_max_running_time_minutes="${judge_job_max_running_time_minutes}"
-        --data_source_uris="${DATA_SOURCE_URIS}"
-        --resource_id="${RESOURCE_ID}"
-        --workspace_id="${WORKSPACE_ID}"
-        --vpc_id="${VPC_ID}"
-        --switch_id="${SWITCH_ID}"
-        --security_group_id="${SECURITY_GROUP_ID}"
-        --extended_cidrs="${EXTENDED_CIDRS}"
+        --data_source_uris="${judge_data_source_uris}"
+        --resource_id="${judge_resource_id}"
+        --workspace_id="${judge_workspace_id}"
+        --vpc_id="${judge_vpc_id}"
+        --switch_id="${judge_switch_id}"
+        --security_group_id="${judge_security_group_id}"
+        --extended_cidrs="${judge_extended_cidrs}"
         "${OPTIONAL_DLC_ARGS[@]}"
         --command="${judge_command}"
     )
+    JUDGE_RESOURCE_ID="${judge_resource_id}"
+    JUDGE_WORKSPACE_ID="${judge_workspace_id}"
 }
 
 prepare_judge_runtime_config() {
@@ -329,7 +459,9 @@ prepare_judge_runtime_config() {
 submit_and_resolve_job_id() {
     local job_name="$1"
     local stage="$2"
-    shift 2
+    local resource_id="$3"
+    local workspace_id="$4"
+    shift 4
     local submit_log="${FIXED_LOG_DIR}/${stage}_submit.log"
     local submit_output
     local rc
@@ -347,7 +479,7 @@ submit_and_resolve_job_id() {
     local job_id
     job_id="$(printf "%s\n" "${submit_output}" | parse_job_id_from_text)"
     if [[ -z "${job_id}" ]]; then
-        job_id="$(resolve_job_id_by_name "${job_name}")" || {
+        job_id="$(resolve_job_id_by_name "${job_name}" "${resource_id}" "${workspace_id}")" || {
             echo "[ERROR] Could not resolve ${stage} DLC JobId for ${job_name}" >&2
             exit 67
         }
@@ -375,6 +507,8 @@ JUDGE_JOB_NAME=""
 JUDGE_RUNTIME_CONFIG=""
 JUDGE_LOG_DIR=""
 JUDGE_SCRIPT=""
+JUDGE_RESOURCE_ID=""
+JUDGE_WORKSPACE_ID=""
 if [[ "${HAS_JUDGE_CONFIG}" == "1" ]]; then
     JUDGE_JOB_NAME_FROM_CFG=$(dlc_cfg '.dlc.judge_job_name // ""')
     if [[ -n "${JUDGE_JOB_NAME_FROM_CFG}" && "${JUDGE_JOB_NAME_FROM_CFG}" != "null" ]]; then
@@ -420,7 +554,7 @@ if [[ "${DRY_RUN:-0}" == "1" ]]; then
     exit 0
 fi
 
-EVAL_JOB_ID="$(submit_and_resolve_job_id "${JOB_NAME}" "eval" "${DLC_SUBMIT_ARGS[@]}")"
+EVAL_JOB_ID="$(submit_and_resolve_job_id "${JOB_NAME}" "eval" "${RESOURCE_ID}" "${WORKSPACE_ID}" "${DLC_SUBMIT_ARGS[@]}")"
 
 echo "[INFO] Job submitted successfully."
 echo "[INFO] Eval JobId: ${EVAL_JOB_ID}"
@@ -433,14 +567,14 @@ if [[ "${HAS_JUDGE_CONFIG}" != "1" ]]; then
     exit 0
 fi
 
-wait_for_job_success "${EVAL_JOB_ID}" "eval" "${RUNNING_TIMEOUT}"
+wait_for_job_success "${EVAL_JOB_ID}" "eval" "${RUNNING_TIMEOUT}" "${RESOURCE_ID}" "${WORKSPACE_ID}"
 
 echo "[INFO] Eval completed; submitting CPU-only judge DLC job: ${JUDGE_JOB_NAME}"
-JUDGE_JOB_ID="$(submit_and_resolve_job_id "${JUDGE_JOB_NAME}" "judge" "${JUDGE_SUBMIT_ARGS[@]}")"
+JUDGE_JOB_ID="$(submit_and_resolve_job_id "${JUDGE_JOB_NAME}" "judge" "${JUDGE_RESOURCE_ID}" "${JUDGE_WORKSPACE_ID}" "${JUDGE_SUBMIT_ARGS[@]}")"
 echo "[INFO] Judge JobId: ${JUDGE_JOB_ID}"
 
-JUDGE_RUNNING_TIMEOUT=$(dlc_cfg_int '.dlc.judge_running_timeout // 86400')
-wait_for_job_success "${JUDGE_JOB_ID}" "judge" "${JUDGE_RUNNING_TIMEOUT}"
+JUDGE_RUNNING_TIMEOUT=$(dlc_judge_cfg_int '.dlc.judge.running_timeout')
+wait_for_job_success "${JUDGE_JOB_ID}" "judge" "${JUDGE_RUNNING_TIMEOUT}" "${JUDGE_RESOURCE_ID}" "${JUDGE_WORKSPACE_ID}"
 
 echo "[INFO] Eval + CPU judge DLC workflow completed successfully."
 echo "[INFO] Eval result path: ${EVAL_RESULT_PATH}"

@@ -12,15 +12,33 @@
     "priority": 6,
     "job_max_running_time_minutes": 10080,
     "running_timeout": 86400,
-    "worker_image": "dsw-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/pai/python:3.13.9-gpu-cu129-ubuntu22.04-9e1c8c7e-1764331625",
-    "data_source_uris": "cpfs://cpfs-298fffb575a502fe.cn-wulanchabu/ptc-29f47d9393ad2b16/exp-29f2869e7d984aa6/::/mnt/cpfsB,oss://pai-wlcb-ai-oss.oss-cn-wulanchabu-internal.aliyuncs.com/::/mnt/oss",
-    "resource_id": "quota1hdkwah70tk",
+    "worker_image": "pai-wl-acr-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/tianleniu/innovatorvl:innovator-vl-20260616_accelerated",
+    "data_source_uris": "cpfs://cpfs-298fffb575a502fe.cn-wulanchabu/ptc-29f47d9393ad2b16/exp-29f2869e7d984aa6/::/mnt/cpfsB,nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB,oss://pai-wlcb-ai-oss.oss-cn-wulanchabu-internal.aliyuncs.com/::/mnt/oss",
+    "resource_id": "quotaev2tl4w6aw0",
     "workspace_id": "240810",
     "vpc_id": "vpc-0jl5rpw5qokp6p2ettip6",
     "switch_id": "vsw-0jlmr9rjzed093yr9c0kz",
     "security_group_id": "sg-0jl0pd5qaerdj75wmred",
     "extended_cidrs": "10.1.255.0/29,10.1.255.8/29,10.1.16.0/20",
     "region": "cn-wulanchabu",
-    "endpoint": "pai-dlc.cn-wulanchabu.aliyuncs.com"
+    "endpoint": "pai-dlc.cn-wulanchabu.aliyuncs.com",
+    "judge": {
+      "workers": 1,
+      "worker_gpu": 0,
+      "worker_cpu": 8,
+      "worker_memory": "64Gi",
+      "worker_shared_memory": "16Gi",
+      "priority": 6,
+      "job_max_running_time_minutes": 1440,
+      "running_timeout": 86400,
+      "worker_image": "pai-wl-acr-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/tianleniu/innovatorvl:innovator-vl-20260616_accelerated",
+      "data_source_uris": "cpfs://cpfs-298fffb575a502fe.cn-wulanchabu/ptc-29f47d9393ad2b16/exp-29f2869e7d984aa6/::/mnt/cpfsB,nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB,oss://pai-wlcb-ai-oss.oss-cn-wulanchabu-internal.aliyuncs.com/::/mnt/oss",
+      "resource_id": "quotaev2tl4w6aw0",
+      "workspace_id": "240810",
+      "vpc_id": "vpc-0jl5rpw5qokp6p2ettip6",
+      "switch_id": "vsw-0jlmr9rjzed093yr9c0kz",
+      "security_group_id": "sg-0jl0pd5qaerdj75wmred",
+      "extended_cidrs": "10.1.255.0/29,10.1.255.8/29,10.1.16.0/20"
+    }
   }
 }

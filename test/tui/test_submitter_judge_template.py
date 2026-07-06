@@ -1,0 +1,310 @@
+import json
+import os
+import shutil
+import subprocess
+from pathlib import Path
+
+import pytest
+
+DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
+REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
+MOUNT_URIS = f"cpfs://example/::/mnt/cpfsB,{REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss"
+MOUNT_URIS_WITHOUT_NAS = "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss"
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+
+def _configs(tmp_path: Path, lmms_root: Path) -> tuple[Path, Path, Path]:
+    dlc_config = {
+        "dlc": {
+            "submit": True,
+            "job_name": "eval_submitter_judge_template",
+            "binary": "/bin/true",
+            "run_script": str(lmms_root / "run_scripts" / "qwen35_worker.sh"),
+            "workers": 1,
+            "worker_gpu": 8,
+            "worker_cpu": 110,
+            "worker_memory": "1500Gi",
+            "worker_shared_memory": "1500Gi",
+            "priority": 6,
+            "job_max_running_time_minutes": 10080,
+            "running_timeout": 86400,
+            "worker_image": "eval-image",
+            "data_source_uris": MOUNT_URIS,
+            "resource_id": DEFAULT_DLC_RESOURCE_ID,
+            "workspace_id": "workspace-eval",
+            "vpc_id": "vpc-eval",
+            "switch_id": "switch-eval",
+            "security_group_id": "sg-eval",
+            "extended_cidrs": "10.0.0.0/24",
+            "region": "cn-wulanchabu",
+            "endpoint": "pai-dlc.cn-wulanchabu.aliyuncs.com",
+            "judge": {
+                "workers": 1,
+                "worker_gpu": 0,
+                "worker_cpu": 4,
+                "worker_memory": "8Gi",
+                "worker_shared_memory": "2Gi",
+                "priority": 5,
+                "job_max_running_time_minutes": 60,
+                "running_timeout": 3600,
+                "worker_image": "judge-image",
+                "data_source_uris": MOUNT_URIS,
+                "resource_id": DEFAULT_DLC_RESOURCE_ID,
+                "workspace_id": "workspace-judge",
+                "vpc_id": "vpc-judge",
+                "switch_id": "switch-judge",
+                "security_group_id": "sg-judge",
+                "extended_cidrs": "10.1.0.0/24",
+            },
+        }
+    }
+    eval_config = {
+        "env": {},
+        "log": {"dir": str(tmp_path / "logs")},
+        "distributed": {},
+        "model": {"path": "/tmp/model", "tp": 1},
+        "eval": {
+            "tasks": "ocrbench",
+            "output_path": str(tmp_path / "results"),
+            "debug": False,
+        },
+    }
+    judge_config = {
+        "env": {},
+        "log": {"dir": str(tmp_path / "judge_logs")},
+        "judge": {
+            "backend": "api",
+            "parallel": 1,
+            "model": "judge-model",
+            "api": {"key": "dummy", "base_url": "https://judge.invalid/v1"},
+        },
+        "eval": {
+            "input_result_path": str(tmp_path / "results"),
+            "tasks": "ocrbench",
+            "output_path": str(tmp_path / "judge_results"),
+            "debug": False,
+        },
+    }
+
+    dlc_path = tmp_path / "config_dlc.json"
+    eval_path = tmp_path / "config_eval.json"
+    judge_path = tmp_path / "config_judge.json"
+    _write_json(dlc_path, dlc_config)
+    _write_json(eval_path, eval_config)
+    _write_json(judge_path, judge_config)
+    return dlc_path, eval_path, judge_path
+
+
+@pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
+def test_judge_dlc_uses_cpu_only_template_resource(script_name: str, tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / script_name),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=True,
+    )
+
+    lines = proc.stdout.splitlines()
+    eval_line = next(line for line in lines if line.startswith("[DRY_RUN][eval]"))
+    judge_line = next(line for line in lines if line.startswith("[DRY_RUN][judge]"))
+
+    assert f"--resource_id={DEFAULT_DLC_RESOURCE_ID}" in eval_line
+    assert "--workspace_id=workspace-eval" in eval_line
+    assert "--worker_gpu=8" in eval_line
+    assert "--worker_image=eval-image" in eval_line
+    assert REQUIRED_NAS_MOUNT_URI in eval_line
+
+    assert f"--resource_id={DEFAULT_DLC_RESOURCE_ID}" in judge_line
+    assert "--workspace_id=workspace-judge" in judge_line
+    assert "--worker_gpu=0" in judge_line
+    assert "--worker_cpu=4" in judge_line
+    assert "--worker_memory=8Gi" in judge_line
+    assert "--worker_shared_memory=2Gi" in judge_line
+    assert "--worker_image=judge-image" in judge_line
+    assert REQUIRED_NAS_MOUNT_URI in judge_line
+
+
+def test_qwen35_submitter_accepts_cpu_only_api_eval(tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, _judge_config = _configs(tmp_path, lmms_root)
+    dlc_payload = json.loads(dlc_config.read_text(encoding="utf-8"))
+    dlc_payload["dlc"]["worker_gpu"] = 0
+    dlc_payload["dlc"]["worker_cpu"] = 8
+    dlc_payload["dlc"]["worker_memory"] = "64Gi"
+    dlc_payload["dlc"]["worker_shared_memory"] = "16Gi"
+    _write_json(dlc_config, dlc_payload)
+
+    eval_payload = json.loads(eval_config.read_text(encoding="utf-8"))
+    eval_payload["env"] = {
+        "api_type": "openai",
+        "openai_api_key": "sk-test",
+        "openai_api_url": "https://api.example.invalid/v1",
+    }
+    eval_payload["model"]["backend"] = "openai"
+    eval_payload["model"]["path"] = "router_fs_eval"
+    eval_payload["eval"]["tasks"] = "ai2d"
+    eval_payload["eval"]["limit"] = 50
+    _write_json(eval_config, eval_payload)
+
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / "qwen35_submit.sh"),
+            str(dlc_config),
+            str(eval_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=True,
+    )
+
+    eval_line = next(line for line in proc.stdout.splitlines() if line.startswith("[DRY_RUN][eval]"))
+    assert "--worker_gpu=0" in eval_line
+    assert "--worker_cpu=8" in eval_line
+    assert "--worker_memory=64Gi" in eval_line
+
+
+@pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
+def test_submitter_backfills_judge_credentials_into_eval_runtime(script_name: str, tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    judge_payload = json.loads(judge_config.read_text(encoding="utf-8"))
+    judge_payload["judge"]["api"]["key"] = "sk-direct-judge"
+    judge_payload["judge"]["api"]["base_url"] = "https://judge.example.invalid/v1"
+    _write_json(judge_config, judge_payload)
+
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / script_name),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=True,
+    )
+
+    runtime_configs = sorted((tmp_path / "logs" / "eval_submitter_judge_template").glob("*/runtime_config.json"))
+    assert runtime_configs
+    runtime = json.loads(runtime_configs[-1].read_text(encoding="utf-8"))
+    assert runtime["env"]["judge_api_key"] == "sk-direct-judge"
+    assert runtime["env"]["judge_base_url"] == "https://judge.example.invalid/v1"
+    assert runtime["env"]["openai_api_key"] == "sk-direct-judge"
+
+
+@pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
+@pytest.mark.parametrize("field_path", [("dlc", "resource_id"), ("dlc", "judge", "resource_id")])
+def test_submitter_rejects_non_default_resource_id(script_name: str, field_path: tuple[str, ...], tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    payload = json.loads(dlc_config.read_text(encoding="utf-8"))
+    target = payload
+    for key in field_path[:-1]:
+        target = target[key]
+    target[field_path[-1]] = "bad-resource-id"
+    _write_json(dlc_config, payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / script_name),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    assert proc.returncode != 0
+    assert f"must be {DEFAULT_DLC_RESOURCE_ID}" in proc.stdout
+
+
+@pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
+@pytest.mark.parametrize("field_path", [("dlc", "data_source_uris"), ("dlc", "judge", "data_source_uris")])
+def test_submitter_rejects_missing_required_nas_mount(
+    script_name: str,
+    field_path: tuple[str, ...],
+    tmp_path: Path,
+):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    payload = json.loads(dlc_config.read_text(encoding="utf-8"))
+    target = payload
+    for key in field_path[:-1]:
+        target = target[key]
+    target[field_path[-1]] = MOUNT_URIS_WITHOUT_NAS
+    _write_json(dlc_config, payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / script_name),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    assert proc.returncode != 0
+    assert f"must include {REQUIRED_NAS_MOUNT_URI}" in proc.stdout

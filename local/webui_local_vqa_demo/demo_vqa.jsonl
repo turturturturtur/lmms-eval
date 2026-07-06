@@ -1,0 +1,2 @@
+{"id":"red_square_color","image_path":"/mnt/cpfsB/tianleniu/Innovator-Tune/lmms-eval/local/webui_local_vqa_demo/images/red_square.png","question":"What color is the square in the image?","answer":"red","accepted_answers":["red","the square is red"],"category":"color"}
+{"id":"blue_circle_shape","image_path":"/mnt/cpfsB/tianleniu/Innovator-Tune/lmms-eval/local/webui_local_vqa_demo/images/blue_circle.png","question":"What shape is the blue object in the image?","answer":"circle","accepted_answers":["circle","a circle","round"],"category":"shape"}

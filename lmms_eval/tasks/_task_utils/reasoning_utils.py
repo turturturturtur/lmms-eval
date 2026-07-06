@@ -4,12 +4,32 @@ import re
 from math_verify import parse, verify
 from openai import OpenAI
 
-API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("JUDGE_API_KEY") or ""
-BASE_URL = os.getenv("OPENAI_API_URL") or os.getenv("JUDGE_BASE_URL") or ""
+API_KEY = os.getenv("JUDGE_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
+BASE_URL = os.getenv("JUDGE_BASE_URL") or os.getenv("OPENAI_API_URL") or ""
 MODEL_NAME = os.getenv("JUDGE_MODEL_NAME", "gpt-4o-mini")
 USE_LLM_JUDGE = os.getenv("USE_LLM_JUDGE", "False")
 
-client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+_CLIENT = None
+
+
+def _openai_client():
+    global _CLIENT
+    if _CLIENT is not None:
+        return _CLIENT
+
+    api_key = os.getenv("JUDGE_API_KEY") or os.getenv("OPENAI_API_KEY") or API_KEY
+    base_url = os.getenv("JUDGE_BASE_URL") or os.getenv("OPENAI_API_URL") or BASE_URL
+    if not api_key:
+        raise RuntimeError(
+            "LLM judge requires OPENAI_API_KEY or JUDGE_API_KEY. "
+            "Set env.openai_api_key for eval-time reasoning tasks or judge.api.key for judge jobs."
+        )
+
+    kwargs = {"api_key": api_key}
+    if base_url:
+        kwargs["base_url"] = base_url
+    _CLIENT = OpenAI(**kwargs)
+    return _CLIENT
 
 JUDGE_PROMPT = """You are a strict evaluator assessing answer correctness. You must output 1 for fully correct answers and 0 for any other case.
 
@@ -367,7 +387,7 @@ def llm_as_judge_sync(predict_str, ground_truth, extra_info):
         "max_tokens": 5,
         "model": MODEL_NAME,
     }
-    response = client.chat.completions.create(**payload)
+    response = _openai_client().chat.completions.create(**payload)
     try:
         score = int(response.choices[0].message.content)
     except Exception:

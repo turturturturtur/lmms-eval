@@ -48,6 +48,8 @@ DEFAULT_RUN_MODE = "dlc"
 DEFAULT_DLC_WORKERS = 1
 DEFAULT_DLC_WORKER_GPU = 8
 DEFAULT_DLC_WORKSPACE_ID = "240810"
+DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
+REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
 DEFAULT_DLC_POOL_TOTAL_GPU = 256
 DEFAULT_DLC_POOL_GPU_PER_NODE = 8
 DEFAULT_DLC_POOL_CPU_PER_NODE = 124
@@ -60,10 +62,17 @@ DEFAULT_CONCURRENCY = 32
 DEFAULT_GEN_KWARGS = ""
 DEFAULT_REASONING_PARSER = "qwen3"
 DEFAULT_ENABLE_THINKING = False
+DEFAULT_EVAL_INFERENCE_MODE = "ckpt"
+DEFAULT_API_EVAL_TYPE = "openai"
+DEFAULT_API_EVAL_URL = "http://gw-k6isjixc1ij25ms7q4.cn-shanghai.pai-eas.aliyuncs.com/api/predict/router_fs_eval/v1"
+DEFAULT_API_EVAL_MODEL = "/mnt/data/jingyichai/sft/checkpoints/qwen36_kimi_e2b_3tool_6k_0629_4nodes/iter_0000206_hf"
+DEFAULT_JUDGE_API_URL = "http://8.130.30.251:8801/v1"
+DEFAULT_JUDGE_MODEL = "deepseek-v4-flash"
 DEFAULT_AUTH_SESSION_TTL_SECONDS = 15 * 24 * 60 * 60
 AUTH_VALIDATION_TIMEOUT_SECONDS = 20
 AUTH_IDENTITY_TIMEOUT_SECONDS = 20
 USER_PLACEHOLDER = "<USER>"
+USER_PLACEHOLDER_ALIASES = (USER_PLACEHOLDER, "<USERNAME>")
 DEFAULT_DLC_BINARY = "/mnt/cpfsB/<USER>/dlc"
 DEFAULT_DLC_PATH_TEMPLATE = DEFAULT_DLC_BINARY
 QWEN35_WORKER_BASENAME = "qwen35_worker.sh"
@@ -75,6 +84,8 @@ AUTH_COOKIE_NAME = "lmms_eval_webui_session"
 AUTH_ADMIN_ROLE = "admin"
 AUTH_USER_ROLE = "user"
 AUTH_VALID_ROLES = {AUTH_USER_ROLE, AUTH_ADMIN_ROLE}
+DLC_SAMPLE_MEDIA_MAX_TOKENS = 4096
+DLC_SAMPLE_MEDIA_TOKENS: dict[str, Path] = {}
 AUTH_PROTECTED_PREFIXES = (
     "/auth/me",
     "/auth/logout",
@@ -108,8 +119,10 @@ LLM_AS_JUDGE_TASK_PATTERNS = (
     r"^mmmu_pro.*qwen3.*official$",
     r"^sfe(?:-|_).*$",
     r"^scivqr_(?:open|reasoning)$",
-    r"^mathverse.*qwen3.*$",
-    r"^mathvista.*qwen3.*$",
+    r"^mathverse.*(?:reasoning|qwen3).*$",
+    r"^mathvista.*(?:reasoning|qwen3).*$",
+    r"^mathvision.*(?:reasoning|qwen3).*$",
+    r"^wemath.*(?:reasoning|qwen3).*$",
 )
 DLC_REGION = "cn-wulanchabu"
 DLC_ENDPOINT = "pai-dlc.cn-wulanchabu.aliyuncs.com"
@@ -236,7 +249,7 @@ def _load_auth_admins() -> dict[str, dict[str, str]]:
 
 
 def _validate_auth_credentials(access_key_id: str, secret_access_key: str) -> bool:
-    dlc_binary = DEFAULT_DLC_BINARY
+    dlc_binary = _resolve_dlc_binary()
     args = [
         dlc_binary,
         "get",
@@ -677,6 +690,16 @@ def _default_dlc_config() -> dict[str, Any]:
     dlc = config.get("dlc")
     if not isinstance(dlc, dict):
         raise RuntimeError(f"Missing dlc object in {DEFAULT_DLC_CONFIG_PATH}")
+    dlc["resource_id"] = _require_default_config_resource_id(dlc.get("resource_id"), field="dlc.resource_id")
+    dlc["data_source_uris"] = _require_default_config_nas_mount(
+        dlc.get("data_source_uris"), field="dlc.data_source_uris"
+    )
+    judge = dlc.get("judge")
+    if isinstance(judge, dict):
+        judge["resource_id"] = _require_default_config_resource_id(judge.get("resource_id"), field="dlc.judge.resource_id")
+        judge["data_source_uris"] = _require_default_config_nas_mount(
+            judge.get("data_source_uris"), field="dlc.judge.data_source_uris"
+        )
     dlc["submit"] = True
     dlc["job_name"] = DEFAULT_EVAL_JOB_NAME
     dlc["run_script"] = f"/mnt/cpfsB/{USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/run_scripts/{QWEN35_WORKER_BASENAME}"
@@ -684,6 +707,24 @@ def _default_dlc_config() -> dict[str, Any]:
     dlc["worker_gpu"] = DEFAULT_DLC_WORKER_GPU
     dlc["workspace_id"] = DEFAULT_DLC_WORKSPACE_ID
     return config
+
+
+def _require_default_config_resource_id(resource_id: Any, *, field: str) -> str:
+    if not isinstance(resource_id, str) or not resource_id.strip():
+        raise RuntimeError(f"Missing {field} in {DEFAULT_DLC_CONFIG_PATH}")
+    normalized = resource_id.strip()
+    if normalized != DEFAULT_DLC_RESOURCE_ID:
+        raise RuntimeError(f"{field} in {DEFAULT_DLC_CONFIG_PATH} must be {DEFAULT_DLC_RESOURCE_ID}, got: {normalized}")
+    return normalized
+
+
+def _require_default_config_nas_mount(data_source_uris: Any, *, field: str) -> str:
+    if not isinstance(data_source_uris, str) or not data_source_uris.strip():
+        raise RuntimeError(f"Missing {field} in {DEFAULT_DLC_CONFIG_PATH}")
+    normalized = data_source_uris.strip()
+    if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
+        raise RuntimeError(f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include {REQUIRED_NAS_MOUNT_URI}")
+    return normalized
 
 
 def _default_eval_config() -> dict[str, Any]:
@@ -702,6 +743,15 @@ def _default_judge_config() -> dict[str, Any]:
     judge = config["judge"]
     if not isinstance(judge.get("api"), dict):
         raise RuntimeError(f"Missing judge.api object in {DEFAULT_JUDGE_CONFIG_PATH}")
+    api = judge["api"]
+    model = judge.get("model", DEFAULT_JUDGE_MODEL)
+    if not isinstance(model, str) or not model.strip():
+        raise RuntimeError(f"Missing judge.model in {DEFAULT_JUDGE_CONFIG_PATH}")
+    base_url = api.get("base_url", DEFAULT_JUDGE_API_URL)
+    if not isinstance(base_url, str) or not base_url.strip():
+        raise RuntimeError(f"Missing judge.api.base_url in {DEFAULT_JUDGE_CONFIG_PATH}")
+    judge["model"] = model.strip()
+    api["base_url"] = base_url.strip()
     return config
 
 
@@ -726,7 +776,9 @@ def _replace_user_placeholder(value: Any, user: str) -> Any:
     if not user:
         return value
     if isinstance(value, str):
-        return value.replace(USER_PLACEHOLDER, user)
+        for placeholder in USER_PLACEHOLDER_ALIASES:
+            value = value.replace(placeholder, user)
+        return value
     if isinstance(value, list):
         return [_replace_user_placeholder(item, user) for item in value]
     if isinstance(value, dict):
@@ -736,7 +788,7 @@ def _replace_user_placeholder(value: Any, user: str) -> Any:
 
 def _contains_user_placeholder(value: Any) -> bool:
     if isinstance(value, str):
-        return USER_PLACEHOLDER in value
+        return any(placeholder in value for placeholder in USER_PLACEHOLDER_ALIASES)
     if isinstance(value, list):
         return any(_contains_user_placeholder(item) for item in value)
     if isinstance(value, dict):
@@ -755,6 +807,30 @@ def _task_requires_llm_judge(task: str) -> bool:
 
 def _llm_as_judge_tasks(tasks: list[str]) -> list[str]:
     return [task for task in tasks if _task_requires_llm_judge(task)]
+
+
+def _sync_judge_api_to_eval_env(
+    config: dict[str, Any],
+    request: EvalRequest | PreviewRequest | ExportYamlRequest,
+) -> None:
+    """Expose judge credentials to eval-time scorers that import OpenAI clients."""
+    api_key = request.judge_api_key.strip()
+    api_url = request.judge_api_url.strip()
+    if not api_key:
+        return
+
+    env = config.setdefault("env", {})
+    if not isinstance(env, dict):
+        raise HTTPException(status_code=400, detail="eval config env must be an object")
+    env["judge_api_key"] = api_key
+    if api_url:
+        env["judge_base_url"] = api_url
+    if not str(env.get("openai_api_key") or "").strip():
+        env["openai_api_key"] = api_key
+    if api_url and not str(env.get("openai_api_url") or "").strip():
+        env["openai_api_url"] = api_url
+    if not str(env.get("api_type") or "").strip():
+        env["api_type"] = DEFAULT_API_EVAL_TYPE
 
 
 def get_system_info() -> dict[str, str]:
@@ -813,7 +889,10 @@ class TaskCreateResponse(BaseModel):
 class EvalRequest(BaseModel):
     user: str = ""
     job_name: str = DEFAULT_EVAL_JOB_NAME
+    eval_inference_mode: str = DEFAULT_EVAL_INFERENCE_MODE
     model: str
+    api_url: str = DEFAULT_API_EVAL_URL
+    api_key: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -848,7 +927,10 @@ class EvalStartResponse(BaseModel):
 class PreviewRequest(BaseModel):
     user: str = ""
     job_name: str = DEFAULT_EVAL_JOB_NAME
+    eval_inference_mode: str = DEFAULT_EVAL_INFERENCE_MODE
     model: str
+    api_url: str = DEFAULT_API_EVAL_URL
+    api_key: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -882,7 +964,10 @@ class PreviewResponse(BaseModel):
 class ExportYamlRequest(BaseModel):
     user: str = ""
     job_name: str = DEFAULT_EVAL_JOB_NAME
+    eval_inference_mode: str = DEFAULT_EVAL_INFERENCE_MODE
     model: str
+    api_url: str = DEFAULT_API_EVAL_URL
+    api_key: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -920,7 +1005,10 @@ class ImportYamlRequest(BaseModel):
 class ImportYamlResponse(BaseModel):
     user: str = ""
     job_name: str = DEFAULT_EVAL_JOB_NAME
+    eval_inference_mode: str = DEFAULT_EVAL_INFERENCE_MODE
     model: str = ""
+    api_url: str = DEFAULT_API_EVAL_URL
+    api_key: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str] = []
@@ -949,7 +1037,10 @@ class ImportYamlResponse(BaseModel):
 class DefaultsResponse(BaseModel):
     user: str = ""
     job_name: str
+    eval_inference_mode: str = DEFAULT_EVAL_INFERENCE_MODE
     model: str
+    api_url: str = DEFAULT_API_EVAL_URL
+    api_key: str = ""
     dlc_path: str
     model_args: str = ""
     tasks: list[str]
@@ -1114,6 +1205,13 @@ class ChoiceAnswerStats(BaseModel):
     unknown_correctness_total: int = 0
     correct_answer_total: int = 0
     target_answer_total: int = 0
+
+
+class DlcSampleMedia(BaseModel):
+    url: str
+    label: str
+    source: str
+    media_type: str
 
 
 class DlcMetricSamplesResponse(BaseModel):
@@ -1310,7 +1408,13 @@ def _parse_dlc_table(output: str) -> list[dict[str, str]]:
             continue
         if len(values) != len(headers):
             continue
-        rows.append({headers[idx]: values[idx] for idx in range(len(headers))})
+        row = {headers[idx]: values[idx] for idx in range(len(headers))}
+        if rows and "JobId" in row and not row.get("JobId") and any(row.values()):
+            for key, value in row.items():
+                if value:
+                    rows[-1][key] = f"{rows[-1].get(key, '')}{value}"
+            continue
+        rows.append(row)
 
     return rows
 
@@ -1452,14 +1556,8 @@ def _clear_dlc_runtime_caches() -> None:
 
 
 def _default_dlc_resource_id() -> str:
-    config = _replace_default_user(_default_dlc_config())
-    dlc = config.get("dlc")
-    if not isinstance(dlc, dict):
-        raise RuntimeError(f"Missing dlc object in {DEFAULT_DLC_CONFIG_PATH}")
-    resource_id = dlc.get("resource_id")
-    if not isinstance(resource_id, str) or not resource_id.strip():
-        raise RuntimeError(f"Missing dlc.resource_id in {DEFAULT_DLC_CONFIG_PATH}")
-    return resource_id.strip()
+    _default_dlc_config()
+    return DEFAULT_DLC_RESOURCE_ID
 
 
 def _positive_int_env(name: str) -> int | None:
@@ -1581,7 +1679,7 @@ def _paistudio_user_name_map() -> dict[str, str]:
     if _paistudio_user_name_cache and now - _paistudio_user_name_cache[0] < PAISTUDIO_USER_USAGE_CACHE_TTL_SECONDS:
         return copy.deepcopy(_paistudio_user_name_cache[1])
 
-    quota_id = os.environ.get("LMMS_EVAL_DLC_POOL_RESOURCE_ID", "").strip() or _default_dlc_resource_id()
+    quota_id = _default_dlc_resource_id()
     page_size = 100
     user_names: dict[str, str] = {}
     for page_number in range(1, 21):
@@ -1670,7 +1768,7 @@ def _workload_resource_int(workload: dict[str, Any], key: str, *, scheduled: boo
 
 
 def _build_dlc_pool_usage_from_quota() -> dict[str, Any]:
-    quota_id = os.environ.get("LMMS_EVAL_DLC_POOL_RESOURCE_ID", "").strip() or _default_dlc_resource_id()
+    quota_id = _default_dlc_resource_id()
     data = _load_paistudio_json(["GetQuota", "--QuotaId", quota_id], timeout=30)
     quota_details = data.get("QuotaDetails")
     if not isinstance(quota_details, dict):
@@ -1817,7 +1915,7 @@ def _build_dlc_pool_usage() -> dict[str, Any]:
 
 
 def _build_dlc_pool_usage_from_active_jobs() -> dict[str, Any]:
-    resource_id = os.environ.get("LMMS_EVAL_DLC_POOL_RESOURCE_ID", "").strip() or _default_dlc_resource_id()
+    resource_id = _default_dlc_resource_id()
     total_gpu_capacity, total_cpu_capacity, gpu_capacity_source, cpu_capacity_source = _dlc_pool_capacity()
     rows = _list_dlc_pool_job_rows(
         page_size=100,
@@ -2394,6 +2492,161 @@ def _stringify_sample_value(value: Any) -> Any:
         return str(value)
 
 
+def _is_svg_image_header(header: bytes) -> bool:
+    stripped = header.lstrip().lower()
+    return stripped.startswith(b"<svg") or (stripped.startswith(b"<?xml") and b"<svg" in stripped)
+
+
+def _image_file_media_type(path: Path) -> str | None:
+    guessed, _ = mimetypes.guess_type(str(path))
+    if not guessed or not guessed.startswith("image/"):
+        return None
+    try:
+        with path.open("rb") as f:
+            header = f.read(512)
+    except OSError:
+        return None
+
+    if guessed == "image/svg+xml":
+        return guessed if _is_svg_image_header(header) else None
+    if header.startswith(b"\x89PNG\r\n\x1a\n"):
+        return guessed
+    if header.startswith(b"\xff\xd8\xff"):
+        return guessed
+    if header.startswith((b"GIF87a", b"GIF89a")):
+        return guessed
+    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+        return guessed
+    if header.startswith(b"BM"):
+        return guessed
+    if header.startswith((b"II*\x00", b"MM\x00*")):
+        return guessed
+    return None
+
+
+def _iter_sample_strings(value: Any, depth: int = 0):
+    if depth > 8:
+        return
+    if isinstance(value, str):
+        text = value.strip()
+        if text:
+            yield text
+        return
+    if isinstance(value, dict):
+        for nested in value.values():
+            yield from _iter_sample_strings(nested, depth + 1)
+        return
+    if isinstance(value, (list, tuple)):
+        for nested in value:
+            yield from _iter_sample_strings(nested, depth + 1)
+
+
+def _data_image_media_type(value: str) -> str | None:
+    match = re.match(r"^data:(image/[A-Za-z0-9.+-]+)[;,]", value, re.IGNORECASE)
+    return match.group(1).lower() if match else None
+
+
+def _url_image_media_type(value: str) -> str | None:
+    if not value.startswith(("http://", "https://")):
+        return None
+    without_fragment = value.split("#", 1)[0]
+    without_query = without_fragment.split("?", 1)[0]
+    guessed, _ = mimetypes.guess_type(without_query)
+    return guessed if guessed and guessed.startswith("image/") else None
+
+
+def _looks_like_local_image_reference(value: str) -> bool:
+    if len(value) > 1024 or re.search(r"\s", value):
+        return False
+    stripped = value.strip()
+    if not stripped:
+        return False
+    if stripped.startswith("file://"):
+        stripped = stripped.removeprefix("file://")
+    guessed, _ = mimetypes.guess_type(unquote(stripped))
+    return bool(guessed and guessed.startswith("image/"))
+
+
+def _local_image_path(value: str, sample_dir: Path) -> tuple[Path, str] | None:
+    raw_path = unquote(value.removeprefix("file://")) if value.startswith("file://") else value
+    try:
+        path = Path(raw_path).expanduser()
+        if not path.is_absolute():
+            path = sample_dir / path
+        path = path.resolve()
+    except (OSError, RuntimeError, ValueError):
+        return None
+    try:
+        if not path.is_file():
+            return None
+    except OSError:
+        return None
+    media_type = _image_file_media_type(path)
+    if media_type is None:
+        return None
+    return path, media_type
+
+
+def _register_dlc_sample_media_path(path: Path) -> str:
+    if len(DLC_SAMPLE_MEDIA_TOKENS) >= DLC_SAMPLE_MEDIA_MAX_TOKENS:
+        DLC_SAMPLE_MEDIA_TOKENS.clear()
+    token = secrets.token_urlsafe(18)
+    DLC_SAMPLE_MEDIA_TOKENS[token] = path
+    return token
+
+
+def _dlc_sample_media_url(job_id: str, metric_id: str, token: str) -> str:
+    return (
+        f"/dlc/jobs/{quote(job_id, safe='')}"
+        f"/metrics/{quote(metric_id, safe='')}"
+        f"/samples/media/{quote(token, safe='')}"
+    )
+
+
+def _extract_dlc_sample_media(
+    item: dict[str, Any], *, sample_file: Path, job_id: str, metric_id: str
+) -> list[dict[str, str]]:
+    media: list[dict[str, str]] = []
+    seen: set[str] = set()
+    sample_dir = sample_file.parent
+    for text in _iter_sample_strings(item):
+        data_media_type = _data_image_media_type(text)
+        if data_media_type is not None:
+            if text not in seen:
+                seen.add(text)
+                media.append({"url": text, "label": "data image", "source": "data-url", "media_type": data_media_type})
+            continue
+
+        url_media_type = _url_image_media_type(text)
+        if url_media_type is not None:
+            if text not in seen:
+                seen.add(text)
+                label = Path(text.split("#", 1)[0].split("?", 1)[0]).name or "image"
+                media.append({"url": text, "label": label, "source": text, "media_type": url_media_type})
+            continue
+
+        if not _looks_like_local_image_reference(text):
+            continue
+        local = _local_image_path(text, sample_dir)
+        if local is None:
+            continue
+        path, media_type = local
+        source = str(path)
+        if source in seen:
+            continue
+        seen.add(source)
+        token = _register_dlc_sample_media_path(path)
+        media.append(
+            {
+                "url": _dlc_sample_media_url(job_id, metric_id, token),
+                "label": path.name,
+                "source": source,
+                "media_type": media_type,
+            }
+        )
+    return media
+
+
 _CHOICE_ANSWER_PATTERN = re.compile(r"^\s*\(?([A-Z])\)?[.)]?\s*$", re.IGNORECASE)
 
 
@@ -2573,7 +2826,7 @@ def _preferred_sample_columns(rows: list[dict[str, Any]]) -> list[str]:
     ordered: list[str] = []
     all_keys: set[str] = set()
     for row in rows:
-        all_keys.update(row.keys())
+        all_keys.update(key for key in row.keys() if key != "_media")
     for key in preferred:
         if key in all_keys:
             ordered.append(key)
@@ -2585,7 +2838,7 @@ def _preferred_sample_columns(rows: list[dict[str, Any]]) -> list[str]:
 
 
 def _read_sample_jsonls(
-    sample_files: list[str], *, offset: int, limit: int, only_wrong: bool
+    sample_files: list[str], *, job_id: str, metric_id: str, offset: int, limit: int, only_wrong: bool
 ) -> tuple[list[dict[str, Any]], int, ChoiceAnswerStats]:
     rows: list[dict[str, Any]] = []
     total = 0
@@ -2629,6 +2882,9 @@ def _read_sample_jsonls(
                     if filtered_total >= offset and len(rows) < limit:
                         row = {str(key): _stringify_sample_value(value) for key, value in item.items()}
                         row["_sample_file"] = path.name
+                        media = _extract_dlc_sample_media(item, sample_file=path, job_id=job_id, metric_id=metric_id)
+                        if media:
+                            row["_media"] = media
                         rows.append(row)
                     filtered_total += 1
         except OSError:
@@ -2750,12 +3006,13 @@ async def logout(request: Request, response: Response) -> dict[str, str]:
 @app.get("/defaults", response_model=DefaultsResponse)
 async def get_defaults() -> DefaultsResponse:
     """Get the production DLC + vLLM defaults used by the Web UI."""
-    default_user = _default_user()
-    eval_config = _replace_user_placeholder(_default_eval_config(), default_user)
+    eval_config = _default_eval_config()
+    judge_config = _default_judge_config()
     model_config = eval_config["model"]
     eval_section = eval_config["eval"]
-    dlc_path = str(_replace_user_placeholder(DEFAULT_DLC_PATH_TEMPLATE, default_user))
-    dlc_config = _replace_user_placeholder(_default_dlc_config(), default_user)
+    judge_api = judge_config["judge"]["api"]
+    dlc_path = DEFAULT_DLC_PATH_TEMPLATE
+    dlc_config = _default_dlc_config()
     dlc_section = dlc_config.get("dlc")
     if not isinstance(dlc_section, dict):
         raise HTTPException(status_code=500, detail="Default DLC config must contain a dlc object")
@@ -2766,14 +3023,17 @@ async def get_defaults() -> DefaultsResponse:
     eval_section["output_path"] = _path_with_leaf(eval_section["output_path"], job_name, field_name="eval.output_path")
 
     return DefaultsResponse(
-        user=default_user,
+        user="",
         job_name=job_name,
+        eval_inference_mode=DEFAULT_EVAL_INFERENCE_MODE,
         model=str(model_config["path"]),
+        api_url=DEFAULT_API_EVAL_URL,
+        api_key="",
         dlc_path=dlc_path,
         model_args="",
         tasks=_split_tasks(eval_section["tasks"]),
-        judge_api_url=str(eval_config["env"].get("openai_api_url") or ""),
-        judge_api_key=str(eval_config["env"].get("openai_api_key") or ""),
+        judge_api_url=str(judge_api["base_url"]),
+        judge_api_key=str(judge_api.get("key") or ""),
         env_vars=_dict_to_env_vars({str(key): value for key, value in eval_config["env"].items()}),
         batch_size=1,
         limit=int(eval_section.get("limit", -1)),
@@ -2987,6 +3247,13 @@ def _validate_run_mode(run_mode: str) -> None:
         raise HTTPException(status_code=400, detail=f"Unsupported run_mode: {run_mode}")
 
 
+def _validate_eval_inference_mode(eval_inference_mode: str) -> str:
+    normalized = eval_inference_mode.strip().lower()
+    if normalized not in {"ckpt", "api"}:
+        raise HTTPException(status_code=400, detail=f"Unsupported eval_inference_mode: {eval_inference_mode}")
+    return normalized
+
+
 def _validate_eval_job_name(job_name: str) -> str:
     normalized = job_name.strip()
     if not normalized:
@@ -3009,12 +3276,68 @@ def _path_with_leaf(path_value: Any, leaf: str, *, field_name: str) -> str:
     return f"{parent}/{leaf}"
 
 
+def _require_dlc_resource_id(resource_id: Any, *, field: str) -> str:
+    if not isinstance(resource_id, str) or not resource_id.strip():
+        raise HTTPException(status_code=400, detail=f"Missing {field} in dlc_config")
+    normalized = resource_id.strip()
+    if normalized != DEFAULT_DLC_RESOURCE_ID:
+        raise HTTPException(status_code=400, detail=f"{field} must be {DEFAULT_DLC_RESOURCE_ID}")
+    return normalized
+
+
+def _require_dlc_nas_mount(data_source_uris: Any, *, field: str) -> str:
+    if not isinstance(data_source_uris, str) or not data_source_uris.strip():
+        raise HTTPException(status_code=400, detail=f"Missing {field} in dlc_config")
+    normalized = data_source_uris.strip()
+    if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
+        raise HTTPException(status_code=400, detail=f"{field} must include {REQUIRED_NAS_MOUNT_URI}")
+    return normalized
+
+
+def _apply_api_eval_dlc_resources(dlc: dict[str, Any]) -> None:
+    judge = dlc.get("judge")
+    if isinstance(judge, dict):
+        for key in (
+            "worker_cpu",
+            "worker_memory",
+            "worker_shared_memory",
+            "worker_image",
+            "data_source_uris",
+            "resource_id",
+            "workspace_id",
+            "vpc_id",
+            "switch_id",
+            "security_group_id",
+            "extended_cidrs",
+        ):
+            if judge.get(key) not in ("", None):
+                dlc[key] = judge[key]
+        if judge.get("job_max_running_time_minutes") not in ("", None):
+            dlc["job_max_running_time_minutes"] = judge["job_max_running_time_minutes"]
+        if judge.get("running_timeout") not in ("", None):
+            dlc["running_timeout"] = judge["running_timeout"]
+        if judge.get("priority") not in ("", None):
+            dlc["priority"] = judge["priority"]
+
+    dlc["workers"] = 1
+    dlc["worker_gpu"] = 0
+    if dlc.get("worker_cpu") in ("", None):
+        dlc["worker_cpu"] = 8
+    if dlc.get("worker_memory") in ("", None):
+        dlc["worker_memory"] = "64Gi"
+    if dlc.get("worker_shared_memory") in ("", None):
+        dlc["worker_shared_memory"] = "16Gi"
+
+
 def _request_dlc_config(request: EvalRequest | PreviewRequest | ExportYamlRequest) -> dict[str, Any]:
     config = copy.deepcopy(request.dlc_config) if request.dlc_config else _default_dlc_config()
     config = _replace_user_placeholder(config, request.user)
     dlc = config.get("dlc")
     if not isinstance(dlc, dict):
         raise HTTPException(status_code=400, detail="dlc_config must contain a dlc object")
+    eval_inference_mode = _validate_eval_inference_mode(request.eval_inference_mode)
+    if eval_inference_mode == "api":
+        _apply_api_eval_dlc_resources(dlc)
     dlc_path = str(request.dlc_path or "").strip()
     if not dlc_path:
         raise HTTPException(status_code=400, detail="DLC path is required")
@@ -3040,6 +3363,14 @@ def _request_dlc_config(request: EvalRequest | PreviewRequest | ExportYamlReques
             raise HTTPException(status_code=400, detail=f"Missing dlc.{key} in dlc_config")
     if str(dlc["workspace_id"]) != DEFAULT_DLC_WORKSPACE_ID:
         raise HTTPException(status_code=400, detail=f"DLC workspace_id must be {DEFAULT_DLC_WORKSPACE_ID}")
+    dlc["resource_id"] = _require_dlc_resource_id(dlc["resource_id"], field="dlc.resource_id")
+    dlc["data_source_uris"] = _require_dlc_nas_mount(dlc["data_source_uris"], field="dlc.data_source_uris")
+    judge = dlc.get("judge")
+    if isinstance(judge, dict):
+        judge["resource_id"] = _require_dlc_resource_id(judge.get("resource_id"), field="dlc.judge.resource_id")
+        judge["data_source_uris"] = _require_dlc_nas_mount(
+            judge.get("data_source_uris"), field="dlc.judge.data_source_uris"
+        )
     run_script = str(dlc["run_script"])
     if Path(run_script).name != QWEN35_WORKER_BASENAME:
         raise HTTPException(
@@ -3089,6 +3420,7 @@ def _build_vllm_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRe
     env_dict = _env_vars_to_dict(request.env_vars)
     if env_dict:
         config["env"].update(_replace_user_placeholder(env_dict, request.user))
+    _sync_judge_api_to_eval_env(config, request)
 
     config["model"]["path"] = request.model
     config["model"]["tp"] = request.model_tp
@@ -3109,6 +3441,50 @@ def _build_vllm_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRe
     config["eval"]["debug"] = request.debug
     config["eval"]["verbosity"] = request.verbosity
     return _replace_user_placeholder(config, request.user)
+
+
+def _build_api_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRequest) -> dict[str, Any]:
+    if not request.tasks:
+        raise HTTPException(status_code=400, detail="No tasks specified")
+    if request.model_args:
+        raise HTTPException(status_code=400, detail="model_args is not used in DLC API mode; leave it empty")
+    api_url = request.api_url.strip()
+    api_key = request.api_key.strip()
+    if not api_url:
+        raise HTTPException(status_code=400, detail="API address is required for API evaluation")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="API token is required for API evaluation")
+
+    job_name = _validate_eval_job_name(request.job_name)
+    config = _replace_user_placeholder(_default_eval_config(), request.user)
+    env_dict = _env_vars_to_dict(request.env_vars)
+    if env_dict:
+        config["env"].update(_replace_user_placeholder(env_dict, request.user))
+
+    api_model = os.getenv("LMMS_EVAL_WEBUI_API_MODEL", DEFAULT_API_EVAL_MODEL).strip() or DEFAULT_API_EVAL_MODEL
+    config["env"]["api_type"] = DEFAULT_API_EVAL_TYPE
+    config["env"]["openai_api_url"] = api_url
+    config["env"]["openai_api_key"] = api_key
+    config["model"]["backend"] = "openai"
+    config["model"]["path"] = api_model
+    config["model"]["is_qwen3_vl"] = False
+    config["eval"]["tasks"] = ",".join(request.tasks)
+    config["log"]["dir"] = _path_with_leaf(config["log"]["dir"], job_name, field_name="log.dir")
+    config["eval"]["output_path"] = _path_with_leaf(request.output_path, job_name, field_name="eval.output_path")
+    config["eval"]["concurrency"] = request.concurrency
+    config["eval"]["batch_size"] = request.batch_size
+    config["eval"]["gen_kwargs"] = request.gen_kwargs
+    config["eval"]["limit"] = -1 if request.limit is None else request.limit
+    config["eval"]["debug"] = request.debug
+    config["eval"]["verbosity"] = request.verbosity
+    return _replace_user_placeholder(config, request.user)
+
+
+def _build_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRequest) -> dict[str, Any]:
+    eval_inference_mode = _validate_eval_inference_mode(request.eval_inference_mode)
+    if eval_inference_mode == "ckpt":
+        return _build_vllm_eval_config(request)
+    return _build_api_eval_config(request)
 
 
 def _build_judge_config(
@@ -3144,9 +3520,24 @@ def _build_judge_config(
 
 def _redact_judge_config(config: dict[str, Any]) -> dict[str, Any]:
     redacted = copy.deepcopy(config)
+    env = redacted.get("env")
+    if isinstance(env, dict) and env.get("openai_api_key"):
+        env["openai_api_key"] = MASKED_SECRET
+    if isinstance(env, dict) and env.get("judge_api_key"):
+        env["judge_api_key"] = MASKED_SECRET
     judge = redacted.get("judge")
     if isinstance(judge, dict) and isinstance(judge.get("api"), dict) and judge["api"].get("key"):
         judge["api"]["key"] = MASKED_SECRET
+    return redacted
+
+
+def _redact_eval_config(config: dict[str, Any]) -> dict[str, Any]:
+    redacted = copy.deepcopy(config)
+    env = redacted.get("env")
+    if isinstance(env, dict) and env.get("openai_api_key"):
+        env["openai_api_key"] = MASKED_SECRET
+    if isinstance(env, dict) and env.get("judge_api_key"):
+        env["judge_api_key"] = MASKED_SECRET
     return redacted
 
 
@@ -3163,13 +3554,13 @@ def _build_dlc_command(
 ) -> str:
     dlc_config = _request_dlc_config(request)
     credential_args = _build_dlc_credential_args(auth_user, mask_secrets=mask_secrets)
-    eval_config = _build_vllm_eval_config(request)
+    eval_config = _build_eval_config(request)
     judge_config = _build_judge_config(request, eval_config)
     unresolved_values = [dlc_config, eval_config]
     if judge_config is not None:
         unresolved_values.append(judge_config)
     if request.user.strip() and any(_contains_user_placeholder(value) for value in unresolved_values):
-        raise HTTPException(status_code=400, detail="USER replacement left unresolved <USER> placeholders")
+        raise HTTPException(status_code=400, detail="USER replacement left unresolved user placeholders")
     submit_script = str(DLC_SUBMIT_SCRIPT)
     if not DLC_SUBMIT_SCRIPT.exists():
         raise HTTPException(status_code=500, detail=f"DLC submit script not found: {submit_script}")
@@ -3179,10 +3570,12 @@ def _build_dlc_command(
         'RUN_DIR="${LMMS_EVAL_WEB_UI_RUN_DIR:-$(mktemp -d /tmp/lmms_eval_webui.XXXXXX)}"',
         'mkdir -p "${RUN_DIR}"',
         _json_heredoc('"${RUN_DIR}/config_dlc.json"', dlc_config),
-        _json_heredoc('"${RUN_DIR}/config_eval.json"', eval_config),
+        _json_heredoc('"${RUN_DIR}/config_eval.json"', _redact_eval_config(eval_config) if mask_secrets else eval_config),
     ]
     if mask_secrets:
         command_lines.append("# DLC Access Key values are redacted in preview; Start uses the unmasked in-memory values.")
+        if _validate_eval_inference_mode(request.eval_inference_mode) == "api":
+            command_lines.append("# API token is redacted in preview; Start uses the unmasked in-memory value.")
     submit_args = '"${RUN_DIR}/config_dlc.json" "${RUN_DIR}/config_eval.json"'
     if judge_config is not None:
         display_judge_config = _redact_judge_config(judge_config) if mask_secrets else judge_config
@@ -3278,11 +3671,14 @@ async def export_yaml(request: ExportYamlRequest) -> ExportYamlResponse:
     """Export current UI config as a YAML config file."""
     _validate_run_mode(request.run_mode)
     if request.run_mode == "dlc":
-        eval_config = _build_vllm_eval_config(request)
+        eval_config = _build_eval_config(request)
         config = {
             "run_mode": "dlc",
             "user": request.user.strip(),
             "job_name": _validate_eval_job_name(request.job_name),
+            "eval_inference_mode": _validate_eval_inference_mode(request.eval_inference_mode),
+            "api_url": request.api_url.strip(),
+            "api_key": request.api_key.strip(),
             "dlc_path": request.dlc_path.strip(),
             "judge_api_url": request.judge_api_url.strip(),
             "judge_api_key": request.judge_api_key.strip(),
@@ -3290,9 +3686,9 @@ async def export_yaml(request: ExportYamlRequest) -> ExportYamlResponse:
             **eval_config,
         }
         header = (
-            "# LMMs-Eval DLC + vLLM config exported from Web UI\n"
+            "# LMMs-Eval DLC config exported from Web UI\n"
             "# Usage: the Web UI preview writes this config to JSON and calls qwen35_submit.sh.\n"
-            "# Keep all fields unchanged when comparing checkpoints; only change model.path.\n\n"
+            "# In ckpt mode, keep all fields unchanged when comparing checkpoints; only change model.path.\n\n"
         )
         yaml_content = header + yaml.dump(config, default_flow_style=False, sort_keys=False, allow_unicode=True)
         return ExportYamlResponse(yaml_content=yaml_content)
@@ -3360,6 +3756,10 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
             raise HTTPException(status_code=400, detail="model must be a dict in DLC mode")
         if not isinstance(eval_config, dict):
             raise HTTPException(status_code=400, detail="eval must be a dict in DLC mode")
+        raw_eval_inference_mode = str(config.get("eval_inference_mode") or "")
+        if not raw_eval_inference_mode:
+            raw_eval_inference_mode = "api" if str(model_config.get("backend") or "").strip().lower() == "openai" else "ckpt"
+        eval_inference_mode = _validate_eval_inference_mode(raw_eval_inference_mode)
         dlc_config = {"dlc": config.get("dlc", {})}
         if not isinstance(dlc_config["dlc"], dict):
             raise HTTPException(status_code=400, detail="dlc must be a dict in DLC mode")
@@ -3369,7 +3769,10 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
         return ImportYamlResponse(
             user=str(config.get("user", "")),
             job_name=job_name,
+            eval_inference_mode=eval_inference_mode,
             model=str(model_config.get("path", "")),
+            api_url=str(config.get("api_url") or env_dict.get("openai_api_url") or DEFAULT_API_EVAL_URL),
+            api_key=str(config.get("api_key") or env_dict.get("openai_api_key") or ""),
             dlc_path=dlc_path,
             model_args="",
             tasks=_split_tasks(eval_config.get("tasks", "")),
@@ -3408,7 +3811,10 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
 
     return ImportYamlResponse(
         job_name=DEFAULT_EVAL_JOB_NAME,
+        eval_inference_mode=DEFAULT_EVAL_INFERENCE_MODE,
         model=config.get("model", ""),
+        api_url=str(config.get("api_url") or DEFAULT_API_EVAL_URL),
+        api_key=str(config.get("api_key") or ""),
         model_args=config.get("model_args", ""),
         tasks=tasks,
         judge_api_url=str(config.get("judge_api_url") or ""),
@@ -3650,6 +4056,8 @@ async def get_dlc_metric_samples(
     rows, total, answer_stats = await asyncio.to_thread(
         _read_sample_jsonls,
         selected.sample_jsonls,
+        job_id=job_id,
+        metric_id=metric_id,
         offset=offset,
         limit=limit,
         only_wrong=only_wrong,
@@ -3665,6 +4073,24 @@ async def get_dlc_metric_samples(
         limit=limit,
         sample_files=selected.sample_jsonls,
         answer_stats=answer_stats,
+    )
+
+
+@app.get("/dlc/jobs/{job_id}/metrics/{metric_id}/samples/media/{token}")
+async def get_dlc_metric_sample_media(job_id: str, metric_id: str, token: str):
+    _ = (job_id, metric_id)
+    path = DLC_SAMPLE_MEDIA_TOKENS.get(token)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Sample media token not found")
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Sample media file not found")
+    media_type = _image_file_media_type(path)
+    if media_type is None:
+        raise HTTPException(status_code=400, detail="Sample media is not a supported image")
+    return FileResponse(
+        path=str(path),
+        media_type=media_type,
+        headers={"Cache-Control": "private, max-age=3600"},
     )
 
 

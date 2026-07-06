@@ -1,9 +1,9 @@
 {
   "env": {
-    "hf_home": "/mnt/cpfs/public_data/public_dataset/.cache/huggingface",
+    "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
     "venv_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv",
-    "lmms_eval_datasets_cache": "/tmp/lmms_eval_hf_datasets/root",
+    "lmms_eval_datasets_cache": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface/datasets",
     "hf_datasets_offline": true,
     "transformers_offline": true,
     "api_type": "openai",
@@ -36,7 +36,8 @@
     "concurrency": 32,
     "gen_kwargs": "",
     "limit": -1,
-    "task_timeout_seconds": 43200,
+    "vllm_request_timeout_seconds": 300,
+    "task_timeout_seconds": 7200,
     "task_timeout_kill_after_seconds": 300,
     "system_instruction": "",
     "debug": false

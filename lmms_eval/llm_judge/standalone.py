@@ -5,11 +5,14 @@ without regeneration, completely separating the generation and judging phases.
 """
 
 import asyncio
+import multiprocessing as mp
 import json
 import os
+import queue
 import re
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import time
+from collections import deque
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -20,6 +23,8 @@ from tqdm import tqdm
 ProviderFactory = None
 ServerConfig = None
 SCIVQR_SUBJECTS = {"math", "physics", "chemistry", "biology", "geography", "astronomy"}
+DEFAULT_DATAPOINT_TIMEOUT_SECONDS = 30.0
+DEFAULT_DATAPOINT_MAX_ATTEMPTS = 5
 
 def _env_int(name: str, default: int) -> int:
     raw = os.getenv(name)
@@ -32,6 +37,16 @@ def _env_float(name: str, default: float) -> float:
     if raw is None or raw == "":
         return default
     return float(raw)
+
+def _judge_sample_child_entry(runner, sample, task, process_results_fn, result_queue) -> None:
+    try:
+        result_queue.put({"ok": True, "result": runner._judge_sample(sample, task, process_results_fn)})
+    except BaseException as e:
+        result_queue.put({
+            "ok": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+        })
 
 def _get_provider_factory():
     global ProviderFactory
@@ -80,6 +95,8 @@ class JudgeRunner:
         judge_api_key: Optional[str] = None,
         judge_base_url: Optional[str] = None,
         parallel: int = 1,
+        datapoint_timeout: Optional[float] = None,
+        datapoint_max_attempts: Optional[int] = None,
     ):
         """Initialize the judge runner.
         
@@ -89,12 +106,33 @@ class JudgeRunner:
             judge_api_key: API key for the judge model
             judge_base_url: Base URL for the judge API
             parallel: Number of parallel workers (currently only for LLM judge)
+            datapoint_timeout: Hard timeout in seconds for a single sample attempt
+            datapoint_max_attempts: Maximum attempts for one sample before marking failed
         """
         self.judge_mode = judge_mode
         self.judge_model = judge_model
         self.judge_api_key = judge_api_key or os.getenv("JUDGE_API_KEY")
         self.judge_base_url = judge_base_url or os.getenv("JUDGE_BASE_URL") or os.getenv("OPENAI_API_URL") or ""
         self.parallel = parallel
+        self.datapoint_timeout = (
+            float(datapoint_timeout)
+            if datapoint_timeout is not None
+            else _env_float("JUDGE_DATAPOINT_TIMEOUT", DEFAULT_DATAPOINT_TIMEOUT_SECONDS)
+        )
+        self.datapoint_max_attempts = (
+            int(datapoint_max_attempts)
+            if datapoint_max_attempts is not None
+            else _env_int(
+                "JUDGE_DATAPOINT_MAX_ATTEMPTS",
+                _env_int("JUDGE_DATAPOINT_MAX_RETRIES", DEFAULT_DATAPOINT_MAX_ATTEMPTS),
+            )
+        )
+        if self.parallel <= 0:
+            raise ValueError(f"parallel must be positive, got: {self.parallel}")
+        if self.datapoint_timeout <= 0:
+            raise ValueError(f"datapoint_timeout must be positive, got: {self.datapoint_timeout}")
+        if self.datapoint_max_attempts <= 0:
+            raise ValueError(f"datapoint_max_attempts must be positive, got: {self.datapoint_max_attempts}")
         self._task_manager = None
         self._judge_provider = None
         self._provider_lock = threading.Lock()
@@ -103,7 +141,9 @@ class JudgeRunner:
         self._scivqr_doc_lookup_cache = {}
         logger.info(
             f"JudgeRunner initialized: mode={self.judge_mode}, model={self.judge_model}, "
-            f"base_url={self.judge_base_url}, parallel={self.parallel}"
+            f"base_url={self.judge_base_url}, parallel={self.parallel}, "
+            f"datapoint_timeout={self.datapoint_timeout}, "
+            f"datapoint_max_attempts={self.datapoint_max_attempts}"
         )
         
     def judge_file(self, input_path: Path, task_name: str) -> List[Dict[str, Any]]:
@@ -143,25 +183,209 @@ class JudgeRunner:
         samples = self._attach_scivqr_subject_from_path(samples, input_path)
         logger.info(f"Loaded {len(samples)} samples")
         
-        # Judge each sample concurrently
-        logger.info(f"Starting concurrent judging with max_workers={self.parallel}")
-        judged_samples = [None] * len(samples)
-        with ThreadPoolExecutor(max_workers=self.parallel) as executor:
-            futures = {
-                executor.submit(self._judge_sample, sample, task, process_results_fn): i
-                for i, sample in enumerate(samples)
-            }
-            for future in tqdm(
-                as_completed(futures),
-                desc=f"Judging {task_name}",
-                total=len(samples),
-                miniters=10,
-            ):
-                idx = futures[future]
-                judged_samples[idx] = future.result()
+        judged_samples = self._judge_samples_with_datapoint_timeout(samples, task, process_results_fn, task_name)
 
         logger.info(f"Finished judging {len(judged_samples)} samples")
         return judged_samples
+
+    def _judge_samples_with_datapoint_timeout(
+        self,
+        samples: List[Dict[str, Any]],
+        task: Any,
+        process_results_fn: Callable,
+        task_name: str,
+    ) -> List[Dict[str, Any]]:
+        """Judge samples with a hard timeout around each sample attempt."""
+        if not samples:
+            return []
+
+        ctx = mp.get_context(os.getenv("JUDGE_DATAPOINT_START_METHOD", "fork"))
+        judged_samples: List[Optional[Dict[str, Any]]] = [None] * len(samples)
+        attempts = [0] * len(samples)
+        pending = deque(range(len(samples)))
+        running: Dict[int, Dict[str, Any]] = {}
+
+        logger.info(
+            f"Starting concurrent judging with max_workers={self.parallel}, "
+            f"datapoint_timeout={self.datapoint_timeout}s, "
+            f"datapoint_max_attempts={self.datapoint_max_attempts}"
+        )
+
+        def launch(idx: int) -> None:
+            attempts[idx] += 1
+            result_queue = ctx.Queue(maxsize=1)
+            process = ctx.Process(
+                target=_judge_sample_child_entry,
+                args=(self, samples[idx], task, process_results_fn, result_queue),
+            )
+            process.start()
+            running[idx] = {
+                "process": process,
+                "queue": result_queue,
+                "started_at": time.monotonic(),
+                "attempt": attempts[idx],
+            }
+
+        def finish(idx: int, result: Dict[str, Any], pbar) -> None:
+            judged_samples[idx] = result
+            pbar.update(1)
+
+        try:
+            with tqdm(desc=f"Judging {task_name}", total=len(samples), miniters=10) as pbar:
+                while pending or running:
+                    while pending and len(running) < self.parallel:
+                        launch(pending.popleft())
+
+                    progressed = False
+                    now = time.monotonic()
+                    for idx, state in list(running.items()):
+                        process = state["process"]
+                        result_queue = state["queue"]
+                        payload = self._read_judge_attempt_payload(result_queue)
+
+                        if payload is not None:
+                            self._stop_judge_attempt_process(process, timed_out=False)
+                            running.pop(idx, None)
+                            finish(
+                                idx,
+                                self._sample_result_from_payload(samples[idx], payload, state["attempt"]),
+                                pbar,
+                            )
+                            progressed = True
+                            continue
+
+                        if not process.is_alive():
+                            self._stop_judge_attempt_process(process, timed_out=False)
+                            running.pop(idx, None)
+                            payload = self._read_judge_attempt_payload(result_queue, wait_seconds=0.1)
+                            if payload is not None:
+                                finish(
+                                    idx,
+                                    self._sample_result_from_payload(samples[idx], payload, state["attempt"]),
+                                    pbar,
+                                )
+                            elif attempts[idx] < self.datapoint_max_attempts:
+                                logger.warning(
+                                    f"Sample {samples[idx].get('doc_id', idx)} judge attempt "
+                                    f"{state['attempt']}/{self.datapoint_max_attempts} exited without result; retrying"
+                                )
+                                pending.append(idx)
+                            else:
+                                finish(
+                                    idx,
+                                    self._build_failed_sample(
+                                        samples[idx],
+                                        f"judge worker exited without result, exitcode={process.exitcode}",
+                                        attempts[idx],
+                                    ),
+                                    pbar,
+                                )
+                            progressed = True
+                            continue
+
+                        elapsed = now - state["started_at"]
+                        if elapsed >= self.datapoint_timeout:
+                            self._stop_judge_attempt_process(process, timed_out=True)
+                            running.pop(idx, None)
+                            if attempts[idx] < self.datapoint_max_attempts:
+                                logger.warning(
+                                    f"Sample {samples[idx].get('doc_id', idx)} judge attempt "
+                                    f"{state['attempt']}/{self.datapoint_max_attempts} timed out after "
+                                    f"{self.datapoint_timeout}s; retrying"
+                                )
+                                pending.append(idx)
+                            else:
+                                finish(
+                                    idx,
+                                    self._build_timeout_sample(samples[idx], attempts[idx]),
+                                    pbar,
+                                )
+                            progressed = True
+
+                    if not progressed:
+                        time.sleep(0.05)
+        finally:
+            for state in list(running.values()):
+                self._stop_judge_attempt_process(state["process"], timed_out=True)
+
+        return [
+            sample
+            if sample is not None
+            else self._build_failed_sample(samples[i], "judge did not produce a result", attempts[i])
+            for i, sample in enumerate(judged_samples)
+        ]
+
+    @staticmethod
+    def _read_judge_attempt_payload(result_queue, wait_seconds: float = 0.0) -> Optional[Dict[str, Any]]:
+        try:
+            if wait_seconds > 0:
+                return result_queue.get(timeout=wait_seconds)
+            return result_queue.get_nowait()
+        except queue.Empty:
+            return None
+
+    @staticmethod
+    def _stop_judge_attempt_process(process, timed_out: bool) -> None:
+        if process.is_alive() and timed_out:
+            process.terminate()
+            process.join(timeout=1)
+            if process.is_alive():
+                process.kill()
+                process.join(timeout=1)
+        else:
+            process.join(timeout=1)
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=1)
+                if process.is_alive():
+                    process.kill()
+                    process.join(timeout=1)
+
+    def _sample_result_from_payload(
+        self,
+        sample: Dict[str, Any],
+        payload: Dict[str, Any],
+        attempt: int,
+    ) -> Dict[str, Any]:
+        if payload.get("ok"):
+            result = payload["result"]
+            if attempt > 1:
+                result = dict(result)
+                result["judge_attempts"] = attempt
+            return result
+        return self._build_failed_sample(
+            sample,
+            f"{payload.get('error_type', 'Error')}: {payload.get('error', '')}",
+            attempt,
+        )
+
+    def _build_timeout_sample(self, sample: Dict[str, Any], attempts: int) -> Dict[str, Any]:
+        return self._build_failed_sample(
+            sample,
+            f"judge datapoint timed out after {self.datapoint_timeout}s",
+            attempts,
+            timed_out=True,
+        )
+
+    def _build_failed_sample(
+        self,
+        sample: Dict[str, Any],
+        error: str,
+        attempts: int,
+        timed_out: bool = False,
+    ) -> Dict[str, Any]:
+        result_sample = sample.copy()
+        metrics = {
+            "error": error,
+            "judge_failed": True,
+            "judge_attempts": attempts,
+        }
+        if timed_out:
+            metrics["judge_timeout"] = True
+            metrics["timeout_seconds"] = self.datapoint_timeout
+        result_sample["metrics"] = metrics
+        result_sample["judge_mode"] = "timeout" if timed_out else "error"
+        return result_sample
     
     def _judge_sample(
         self,
@@ -544,7 +768,7 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
                 model_name=self.judge_model,
                 temperature=_env_float("JUDGE_TEMPERATURE", 0.0),
                 max_tokens=_env_int("JUDGE_MAX_TOKENS", 16),
-                timeout=_env_int("JUDGE_TIMEOUT", 60),
+                timeout=_env_int("JUDGE_TIMEOUT", 30),
                 num_retries=_env_int("JUDGE_NUM_RETRIES", 5),
                 retry_delay=_env_float("JUDGE_RETRY_DELAY", 10.0),
                 max_concurrent=self.parallel,

@@ -112,7 +112,7 @@ cfg_bool() {
 }
 
 # ── 环境 ──────────────────────────────────────────────────────────────────────
-export HF_HOME=$(cfg '.env.hf_home // "/mnt/cpfs/public_data/public_dataset/.cache/huggingface"')
+export HF_HOME=$(cfg '.env.hf_home // "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface"')
 # Priority: existing env var (e.g. from ~/.bashrc) > config file
 export HF_TOKEN="${HF_TOKEN:-$(cfg '.env.hf_token // empty')}"
 export HF_DATASETS_CACHE="${HF_HOME}/datasets"
@@ -125,7 +125,7 @@ export FORCE_COLOR=0
 export LOGURU_NO_COLOR=1
 
 # 虚拟环境路径
-VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfs/<USER>/lmms-eval/.venv"')
+VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfsB/<USER>/lmms-eval/.venv"')
 
 # 数据集缓存与离线模式
 LMMS_EVAL_DATASETS_CACHE=$(cfg '.env.lmms_eval_datasets_cache // empty')
@@ -138,7 +138,7 @@ TRANSFORMERS_OFFLINE=$(cfg_bool '.env.transformers_offline')
 [[ "${TRANSFORMERS_OFFLINE}" == "true" ]] && export TRANSFORMERS_OFFLINE=1 || unset TRANSFORMERS_OFFLINE
 
 # ── 日志 ──────────────────────────────────────────────────────────────────────
-LOG_BASE=$(cfg '.log.dir // "/mnt/cpfs/<USER>/vllm_logs"')
+LOG_BASE=$(cfg '.log.dir // "/mnt/cpfsB/<USER>/vllm_logs"')
 LOG_DIR="${LOG_BASE}/judge_$(date +%Y-%m-%d_%H-%M-%S)"
 mkdir -p "${LOG_DIR}"
 
@@ -155,7 +155,7 @@ API_KEY=$(cfg '.judge.api.key // empty')
 API_BASE_URL=$(cfg '.judge.api.base_url // empty')
 
 # ── vLLM 后端配置 (当 backend=vllm 时使用) ─────────────────────────────────────
-VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/cpfs/<USER>/data/model/Qwen3-VL-8B-Instruct"')
+VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/cpfsB/<USER>/data/model/Qwen3-VL-8B-Instruct"')
 VLLM_TP=$(cfg_int '.judge.vllm.tp // 1')
 VLLM_MAX_MODEL_LEN=$(cfg_int '.judge.vllm.max_model_len // 32768')
 VLLM_GPU_MEM_UTIL=$(cfg '.judge.vllm.gpu_memory_utilization // "0.8"')
@@ -166,10 +166,10 @@ VLLM_PORT=$(cfg_int '.judge.vllm.port // 8002')
 # 优先从 input_result_path 读取，如果没有则尝试从旧的 output_path 读取
 INPUT_RESULT_PATH=$(cfg '.eval.input_result_path // empty')
 if [[ -z "${INPUT_RESULT_PATH}" || "${INPUT_RESULT_PATH}" == "null" ]]; then
-    INPUT_RESULT_PATH=$(cfg '.eval.output_path // "/mnt/cpfs/<USER>/eval_result"')
+    INPUT_RESULT_PATH=$(cfg '.eval.output_path // "/mnt/cpfsB/<USER>/eval_result"')
 fi
 TASKS=$(cfg '.eval.tasks // empty')
-OUTPUT_PATH=$(cfg '.eval.output_path // "/mnt/cpfs/<USER>/judge_results"')
+OUTPUT_PATH=$(cfg '.eval.output_path // "/mnt/cpfsB/<USER>/judge_results"')
 VERBOSITY=$(cfg '.eval.verbosity // "INFO"')
 SKIP_JUDGED=$(cfg_bool '.eval.skip_judged // false')
 
@@ -210,7 +210,7 @@ export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
 # 验证 lmms-eval 可用
 if ! python -c "import lmms_eval" 2>/dev/null; then
     echo "[ERROR] lmms-eval not found in virtual environment"
-    echo "[INFO] Please install: pip install -e /mnt/cpfs/<USER>/lmms-eval"
+    echo "[INFO] Please install: pip install -e /mnt/cpfsB/<USER>/lmms-eval"
     exit 1
 fi
 
@@ -302,11 +302,11 @@ load_api_keys() {
         if [[ "$-" == *u* ]]; then _saved_flags="${_saved_flags}u"; fi
         
         # 首先尝试 Qwen3-VL/evaluation 目录下的 setup_api_keys.sh
-        if [[ -f "/mnt/cpfs/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" ]]; then
-            echo "[INFO] Loading API keys from /mnt/cpfs/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh"
+        if [[ -f "/mnt/cpfsB/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" ]]; then
+            echo "[INFO] Loading API keys from /mnt/cpfsB/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh"
             set +eu
             set -a
-            source "/mnt/cpfs/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" 2>/dev/null || true
+            source "/mnt/cpfsB/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" 2>/dev/null || true
             set +a
             [[ "${_saved_flags}" == *e* ]] && set -e
             [[ "${_saved_flags}" == *u* ]] && set -u
