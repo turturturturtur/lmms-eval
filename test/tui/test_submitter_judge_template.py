@@ -144,6 +144,103 @@ def test_judge_dlc_uses_cpu_only_template_resource(script_name: str, tmp_path: P
     assert REQUIRED_NAS_MOUNT_URI in judge_line
 
 
+def test_qwen35_local_vllm_dry_run_uses_one_priority_nine_eval_job_with_inline_judge_config(tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    dlc_payload = json.loads(dlc_config.read_text(encoding="utf-8"))
+    dlc_payload["dlc"]["priority"] = 9
+    _write_json(dlc_config, dlc_payload)
+    judge_payload = json.loads(judge_config.read_text(encoding="utf-8"))
+    judge_payload["judge"]["backend"] = "vllm"
+    judge_payload["judge"]["model"] = "Qwen3.5-9B"
+    judge_payload["judge"]["api"] = {"key": "", "base_url": ""}
+    judge_payload["judge"]["vllm"] = {
+        "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+        "tp": 8,
+        "max_model_len": 40960,
+        "gpu_memory_utilization": "0.88",
+        "max_num_seqs": 192,
+        "port": 8002,
+    }
+    _write_json(judge_config, judge_payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / "qwen35_submit.sh"),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=True,
+    )
+
+    dry_run_lines = [line for line in proc.stdout.splitlines() if line.startswith("[DRY_RUN]")]
+    assert len(dry_run_lines) == 1
+    assert dry_run_lines[0].startswith("[DRY_RUN][eval]")
+    assert "--priority=9" in dry_run_lines[0]
+    assert "qwen35_worker.sh" in dry_run_lines[0]
+    assert "judge_runtime_config.json" in dry_run_lines[0]
+    assert "[DRY_RUN][judge]" not in proc.stdout
+
+    judge_runtime_configs = sorted(
+        (tmp_path / "logs" / "eval_submitter_judge_template").glob("*/judge_runtime_config.json")
+    )
+    assert judge_runtime_configs
+    judge_runtime = json.loads(judge_runtime_configs[-1].read_text(encoding="utf-8"))
+    assert judge_runtime["judge"]["backend"] == "vllm"
+    assert judge_runtime["eval"]["input_result_path"].startswith(str(tmp_path / "results"))
+    assert judge_runtime["eval"]["output_path"].endswith("/judge")
+
+
+def test_qwen35_api_judge_dry_run_keeps_two_priority_nine_jobs(tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    dlc_payload = json.loads(dlc_config.read_text(encoding="utf-8"))
+    dlc_payload["dlc"]["priority"] = 9
+    dlc_payload["dlc"]["judge"]["priority"] = 9
+    _write_json(dlc_config, dlc_payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / "qwen35_submit.sh"),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=True,
+    )
+
+    dry_run_lines = [line for line in proc.stdout.splitlines() if line.startswith("[DRY_RUN]")]
+    assert len(dry_run_lines) == 2
+    assert dry_run_lines[0].startswith("[DRY_RUN][eval]")
+    assert dry_run_lines[1].startswith("[DRY_RUN][judge]")
+    assert all("--priority=9" in line for line in dry_run_lines)
+    assert "--worker_gpu=8" in dry_run_lines[0]
+    assert "--worker_gpu=0" in dry_run_lines[1]
+
+
 def test_qwen35_submitter_accepts_cpu_only_api_eval(tmp_path: Path):
     if shutil.which("jq") is None:
         pytest.skip("submitter dry-run requires jq")

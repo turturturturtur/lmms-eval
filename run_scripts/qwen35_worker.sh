@@ -4,7 +4,7 @@
 # one by one. This is a standalone Qwen3.5 path with its own submitter/worker.
 #
 # Usage:
-#   bash run_scripts/qwen35_worker.sh [config.json] [optional_model_path]
+#   bash run_scripts/qwen35_worker.sh [config.json] [optional_model_path] [optional_judge_config.json]
 
 set -euo pipefail
 
@@ -16,6 +16,7 @@ source "${SCRIPT_DIR}/eval_common.sh"
 
 CONFIG="${1:-${SCRIPT_DIR}/config_eval.json}"
 CMD_MODEL_PATH="${2:-}"
+JUDGE_CONFIG="${3:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
@@ -24,6 +25,17 @@ MODEL_BACKEND="$(printf '%s' "${MODEL_BACKEND}" | tr '[:upper:]' '[:lower:]')"
 if [[ "${MODEL_BACKEND}" != "vllm" && "${MODEL_BACKEND}" != "openai" ]]; then
     echo "[ERROR] model.backend must be vllm or openai, got: ${MODEL_BACKEND}" >&2
     exit 2
+fi
+if [[ -n "${JUDGE_CONFIG}" ]]; then
+    if [[ ! -f "${JUDGE_CONFIG}" ]]; then
+        echo "[ERROR] Inline judge config not found: ${JUDGE_CONFIG}" >&2
+        exit 2
+    fi
+    INLINE_JUDGE_BACKEND="$(jq -r '.judge.backend // ""' "${JUDGE_CONFIG}")"
+    if [[ "${INLINE_JUDGE_BACKEND}" != "vllm" ]]; then
+        echo "[ERROR] qwen35_worker.sh only accepts an inline judge config with judge.backend=vllm, got: ${INLINE_JUDGE_BACKEND:-<empty>}" >&2
+        exit 2
+    fi
 fi
 BATCH_SIZE="$(cfg_int '.eval.batch_size // 1')"
 if (( BATCH_SIZE < 1 )); then
@@ -541,6 +553,48 @@ run_lmms_eval() {
     echo "[INFO][Machine ${MACHINE_RANK}] Evaluation completed successfully for all tasks."
 }
 
+wait_for_eval_gpu_release() {
+    local active_pids=""
+    local attempt
+    echo "[INFO][Machine ${MACHINE_RANK}] Waiting for all eval GPU processes to exit before local judge..."
+    for attempt in {1..60}; do
+        active_pids="$(nvidia-smi --query-compute-apps=pid --format=csv,noheader,nounits 2>/dev/null | sed '/^[[:space:]]*$/d' | sort -u | tr '\n' ' ')"
+        if [[ -z "${active_pids}" ]]; then
+            echo "[INFO][Machine ${MACHINE_RANK}] Eval GPU processes released; all 8 GPUs are available for local judge."
+            return 0
+        fi
+        sleep 2
+    done
+    echo "[ERROR][Machine ${MACHINE_RANK}] Eval GPU processes did not exit before local judge: ${active_pids}" >&2
+    return 1
+}
+
+run_inline_local_judge() {
+    if [[ -z "${JUDGE_CONFIG}" ]]; then
+        return 0
+    fi
+    if (( WORLD_SIZE != 1 || RANK != 0 )); then
+        echo "[ERROR] Inline local judge requires WORLD_SIZE=1 and RANK=0, got WORLD_SIZE=${WORLD_SIZE} RANK=${RANK}" >&2
+        return 2
+    fi
+    local gpu_count
+    gpu_count="$(nvidia-smi -L | wc -l)"
+    if (( gpu_count != 8 )); then
+        echo "[ERROR] Inline local judge requires exactly 8 visible GPUs, got: ${gpu_count}" >&2
+        return 2
+    fi
+
+    if [[ "${MODEL_BACKEND}" == "vllm" ]]; then
+        echo "[INFO][Machine ${MACHINE_RANK}] Eval succeeded; stopping eval vLLM backends before inline local judge."
+        cleanup_vllm
+    fi
+    wait_for_eval_gpu_release
+
+    echo "[INFO][Machine ${MACHINE_RANK}] Starting inline local vLLM judge in the current DLC worker."
+    bash "${SCRIPT_DIR}/run_judge.sh" "${JUDGE_CONFIG}"
+    echo "[INFO][Machine ${MACHINE_RANK}] Inline local vLLM judge completed successfully."
+}
+
 if [[ "${MODEL_BACKEND}" == "openai" ]]; then
     compute_api_resources
     setup_logging
@@ -580,3 +634,5 @@ else
 
     run_lmms_eval
 fi
+
+run_inline_local_judge
