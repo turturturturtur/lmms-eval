@@ -10,12 +10,14 @@ const USER_PLACEHOLDERS = [USER_PLACEHOLDER, LEGACY_USER_PLACEHOLDER]
 const DEFAULT_DLC_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/dlc`
 const DEFAULT_MODEL_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/Innovator-Tune/models/Qwen3.5-9B`
 const DEFAULT_OUTPUT_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/eval_result/qwen35_9b_feishu20`
+const DEFAULT_LOCAL_JUDGE_MODEL_PATH = '/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B'
 const DEFAULT_JUDGE_API_URL = 'http://8.130.30.251:8801/v1'
 const DEFAULT_API_EVAL_URL = 'http://gw-k6isjixc1ij25ms7q4.cn-shanghai.pai-eas.aliyuncs.com/api/predict/router_fs_eval/v1'
 const PAGES = ['evaluate', 'logs', 'tasks'] as const
 
 type Page = typeof PAGES[number]
 type AuthStatus = 'checking' | 'authenticated' | 'anonymous'
+type JudgeBackend = 'vllm' | 'api'
 
 const SHELL_KEYWORDS = new Set([
   'export', 'python', 'python3', 'uv', 'pip', 'node', 'npm', 'git',
@@ -465,6 +467,7 @@ interface Config {
   dlc_path: string
   model_args: string
   tasks: string[]
+  judge_backend: JudgeBackend
   judge_api_url: string
   judge_api_key: string
   env_vars: string
@@ -737,6 +740,7 @@ export default function App() {
   const [envVars, setEnvVars] = useState('')
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
   const [taskFilter, setTaskFilter] = useState('')
+  const [judgeBackend, setJudgeBackend] = useState<JudgeBackend>('vllm')
   const [judgeApiUrl, setJudgeApiUrl] = useState(DEFAULT_JUDGE_API_URL)
   const [judgeApiKey, setJudgeApiKey] = useState('')
   const [batchSize, setBatchSize] = useState('1')
@@ -826,8 +830,9 @@ export default function App() {
       dlc_path: dlcPath,
       model_args: modelArgs,
       tasks: Array.from(selectedTasks),
-      judge_api_url: judgeApiUrl,
-      judge_api_key: judgeApiKey,
+      judge_backend: judgeBackend,
+      judge_api_url: judgeBackend === 'api' ? judgeApiUrl : '',
+      judge_api_key: judgeBackend === 'api' ? judgeApiKey : '',
       env_vars: envVars,
       batch_size: parseInt(batchSize) || 1,
       limit: limit ? parseInt(limit) : null,
@@ -934,6 +939,7 @@ export default function App() {
         setDlcPath(normalizeUserPlaceholderText(d.dlc_path || extractDlcPath(normalizedDlcConfig) || DEFAULT_DLC_PATH_TEMPLATE))
         setModelArgs(d.model_args || '')
         setSelectedTasks(new Set(d.tasks || []))
+        setJudgeBackend(d.judge_backend === 'api' ? 'api' : 'vllm')
         setJudgeApiUrl(d.judge_api_url || DEFAULT_JUDGE_API_URL)
         setJudgeApiKey(d.judge_api_key || '')
         setEnvVars(normalizeUserPlaceholderText(d.env_vars || ''))
@@ -998,7 +1004,7 @@ export default function App() {
       })
       .then(d => setCommand(d.command))
       .catch((e) => setCommand(`# Error generating command: ${e.message || e}`))
-  }, [defaultsLoaded, defaultsError, userName, jobName, evalInferenceMode, model, apiUrl, apiKey, dlcPath, modelArgs, selectedTasks, judgeApiUrl, judgeApiKey, envVars, batchSize, limit, device, outputPath, verbosity, envSetup, runMode, dlcConfigJson, modelTp, maxModelLen, gpuMemoryUtilization, maxNumSeqs, basePort, concurrency, genKwargs, enableThinking, debugMode])
+  }, [defaultsLoaded, defaultsError, userName, jobName, evalInferenceMode, model, apiUrl, apiKey, dlcPath, modelArgs, selectedTasks, judgeBackend, judgeApiUrl, judgeApiKey, envVars, batchSize, limit, device, outputPath, verbosity, envSetup, runMode, dlcConfigJson, modelTp, maxModelLen, gpuMemoryUtilization, maxNumSeqs, basePort, concurrency, genKwargs, enableThinking, debugMode])
 
   useEffect(() => {
     if (!defaultsLoaded || !userName.trim()) return
@@ -1284,6 +1290,7 @@ export default function App() {
         if (data.dlc_path != null) setDlcPath(normalizeUserPlaceholderText(data.dlc_path))
         if (data.model_args) setModelArgs(data.model_args)
         if (data.tasks && data.tasks.length > 0) setSelectedTasks(new Set(data.tasks))
+        if (data.judge_backend != null) setJudgeBackend(data.judge_backend === 'api' ? 'api' : 'vllm')
         if (data.judge_api_url != null) setJudgeApiUrl(data.judge_api_url || DEFAULT_JUDGE_API_URL)
         if (data.judge_api_key != null) setJudgeApiKey(data.judge_api_key)
         if (data.env_vars) setEnvVars(normalizeUserPlaceholderText(data.env_vars))
@@ -1780,26 +1787,54 @@ export default function App() {
                 </div>
 
                 {requiresJudgeConfig && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="group">
-                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">LLM API URL</label>
-                      <input
-                        value={judgeApiUrl}
-                        onChange={e => setJudgeApiUrl(e.target.value)}
-                        placeholder={DEFAULT_JUDGE_API_URL}
-                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
-                      />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-4 border border-neutral-200 bg-white px-3 py-2.5">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">LLM Judge Backend</div>
+                        <div className="mt-1 text-[10px] font-mono text-neutral-400">
+                          {judgeBackend === 'vllm' ? `${DEFAULT_LOCAL_JUDGE_MODEL_PATH} · 8 GPUs · TP=8` : 'OpenAI-compatible API'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-label="LLM judge backend"
+                        aria-checked={judgeBackend === 'api'}
+                        onClick={() => setJudgeBackend(value => value === 'vllm' ? 'api' : 'vllm')}
+                        className="relative h-7 w-36 shrink-0 rounded-full border border-neutral-300 bg-neutral-100 p-0.5 focus:outline-none focus:ring-1 focus:ring-black"
+                      >
+                        <span className={`absolute inset-y-0 left-2 z-20 flex items-center text-[9px] font-bold uppercase ${judgeBackend === 'vllm' ? 'text-white' : 'text-neutral-600'}`}>Local vLLM</span>
+                        <span className={`absolute inset-y-0 right-3 z-20 flex items-center text-[9px] font-bold uppercase ${judgeBackend === 'api' ? 'text-white' : 'text-neutral-600'}`}>API</span>
+                        <span
+                          className={`relative z-10 block h-6 w-[72px] rounded-full bg-black shadow-sm transition-transform ${
+                            judgeBackend === 'api' ? 'translate-x-[58px]' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
                     </div>
-                    <div className="group">
-                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">LLM API Key</label>
-                      <input
-                        type="password"
-                        value={judgeApiKey}
-                        onChange={e => setJudgeApiKey(e.target.value)}
-                        placeholder="sk-..."
-                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
-                      />
-                    </div>
+                    {judgeBackend === 'api' && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="group">
+                          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">LLM API URL</label>
+                          <input
+                            value={judgeApiUrl}
+                            onChange={e => setJudgeApiUrl(e.target.value)}
+                            placeholder={DEFAULT_JUDGE_API_URL}
+                            className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
+                          />
+                        </div>
+                        <div className="group">
+                          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">LLM API Key</label>
+                          <input
+                            type="password"
+                            value={judgeApiKey}
+                            onChange={e => setJudgeApiKey(e.target.value)}
+                            placeholder="sk-..."
+                            className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

@@ -14,7 +14,7 @@
 #       --port <int> \
 #       --log <log_file>
 #
-# 成功启动后，最后一行输出：VLLM_PID=<pid>
+# 成功启动后输出机器可读元数据：VLLM_PID=<pid> 与 VLLM_OWNED=<0|1>
 
 set -euo pipefail
 
@@ -53,6 +53,35 @@ done
 
 [[ -z "${MODEL_PATH}" ]] && { echo "[ERROR] --model-path is required"; exit 1; }
 [[ -z "${LOG_FILE}" ]] && { echo "[ERROR] --log is required"; exit 1; }
+[[ ! -d "${MODEL_PATH}" ]] && { echo "[ERROR] Model directory not found: ${MODEL_PATH}"; exit 1; }
+for pair in "tp:${TP}" "max-model-len:${MAX_MODEL_LEN}" "max-num-seqs:${MAX_NUM_SEQS}" "port:${PORT}"; do
+    name="${pair%%:*}"
+    value="${pair#*:}"
+    if ! [[ "${value}" =~ ^[0-9]+$ ]] || (( value < 1 )); then
+        echo "[ERROR] --${name} must be a positive integer, got: ${value}"
+        exit 1
+    fi
+done
+if ! [[ "${GPU_MEM_UTIL}" =~ ^0(\.[0-9]+)?$|^1(\.0+)?$ ]] || [[ "${GPU_MEM_UTIL}" == "0" ]]; then
+    echo "[ERROR] --gpu-memory-utilization must be in (0, 1], got: ${GPU_MEM_UTIL}"
+    exit 1
+fi
+
+VISIBLE_GPU_TOKENS=()
+if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then
+    IFS=',' read -ra VISIBLE_GPU_TOKENS <<< "${CUDA_VISIBLE_DEVICES}"
+else
+    GPU_COUNT="$(nvidia-smi -L | wc -l)"
+    for (( gpu=0; gpu<GPU_COUNT; gpu++ )); do
+        VISIBLE_GPU_TOKENS+=("${gpu}")
+    done
+fi
+if (( ${#VISIBLE_GPU_TOKENS[@]} < TP )); then
+    echo "[ERROR] Not enough visible GPUs for TP=${TP}: ${#VISIBLE_GPU_TOKENS[@]} available"
+    exit 1
+fi
+SELECTED_GPU_TOKENS=("${VISIBLE_GPU_TOKENS[@]:0:TP}")
+JUDGE_CUDA_VISIBLE_DEVICES="$(IFS=,; printf '%s' "${SELECTED_GPU_TOKENS[*]}")"
 
 # 确保日志目录存在
 mkdir -p "$(dirname "${LOG_FILE}")"
@@ -93,6 +122,7 @@ if check_existing_vllm "${JUDGE_BASE_URL}" "${SERVED_MODEL_NAME}"; then
     # 尝试找到已有进程的 PID
     EXISTING_PID=$(lsof -ti :"${PORT}" 2>/dev/null | head -n1 || echo "")
     echo "VLLM_PID=${EXISTING_PID}"
+    echo "VLLM_OWNED=0"
     exit 0
 fi
 
@@ -101,11 +131,12 @@ echo "[INFO] Starting vLLM judge backend..."
 echo "[INFO] Model: ${MODEL_PATH}"
 echo "[INFO] Served model name: ${SERVED_MODEL_NAME}"
 echo "[INFO] TP: ${TP}, Port: ${PORT}"
+echo "[INFO] CUDA_VISIBLE_DEVICES: ${JUDGE_CUDA_VISIBLE_DEVICES}"
 echo "[INFO] Log file: ${LOG_FILE}"
 
 # 使用 setsid 让 vLLM 脱离当前终端进程组，避免前台按 Ctrl+C 误杀
 if command -v setsid &>/dev/null; then
-    CUDA_VISIBLE_DEVICES=0,1,2,3 setsid python -m vllm.entrypoints.openai.api_server \
+    CUDA_VISIBLE_DEVICES="${JUDGE_CUDA_VISIBLE_DEVICES}" setsid python -m vllm.entrypoints.openai.api_server \
         --model "${MODEL_PATH}" \
         --served-model-name "${SERVED_MODEL_NAME}" \
         --tensor-parallel-size "${TP}" \
@@ -113,10 +144,14 @@ if command -v setsid &>/dev/null; then
         --gpu-memory-utilization "${GPU_MEM_UTIL}" \
         --max-num-seqs "${MAX_NUM_SEQS}" \
         --port "${PORT}" \
+        --attention-backend FLASHINFER \
+        --mm-encoder-tp-mode data \
+        --enforce-eager \
+        --enable-prefix-caching \
         --trust-remote-code \
         > "${LOG_FILE}" 2>&1 &
 else
-    CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m vllm.entrypoints.openai.api_server \
+    CUDA_VISIBLE_DEVICES="${JUDGE_CUDA_VISIBLE_DEVICES}" nohup python -m vllm.entrypoints.openai.api_server \
         --model "${MODEL_PATH}" \
         --served-model-name "${SERVED_MODEL_NAME}" \
         --tensor-parallel-size "${TP}" \
@@ -124,17 +159,35 @@ else
         --gpu-memory-utilization "${GPU_MEM_UTIL}" \
         --max-num-seqs "${MAX_NUM_SEQS}" \
         --port "${PORT}" \
+        --attention-backend FLASHINFER \
+        --mm-encoder-tp-mode data \
+        --enforce-eager \
+        --enable-prefix-caching \
         --trust-remote-code \
         > "${LOG_FILE}" 2>&1 &
 fi
 
 VLLM_PID=$!
+cleanup_failed_start() {
+    trap - EXIT INT TERM
+    if [[ -n "${VLLM_PID:-}" ]]; then
+        kill -TERM -- "-${VLLM_PID}" 2>/dev/null || kill -TERM "${VLLM_PID}" 2>/dev/null || true
+        sleep 1
+        kill -KILL -- "-${VLLM_PID}" 2>/dev/null || kill -KILL "${VLLM_PID}" 2>/dev/null || true
+    fi
+}
+trap cleanup_failed_start EXIT INT TERM
 
 # 等待 vLLM 就绪
 echo "[INFO] Waiting for vLLM to be ready (timeout: 10min)..."
 check_http() { curl -s -o /dev/null -w "%{http_code}" "$1/models" 2>/dev/null; }
 retries=0
 while [[ "$(check_http "${JUDGE_BASE_URL}")" != "200" ]]; do
+    if ! kill -0 "${VLLM_PID}" 2>/dev/null; then
+        echo "[ERROR] vLLM judge backend exited before becoming ready. Tail of ${LOG_FILE}:"
+        tail -n 80 "${LOG_FILE}" 2>/dev/null || true
+        exit 1
+    fi
     sleep 5
     retries=$((retries + 1))
     if (( retries >= 120 )); then
@@ -144,5 +197,7 @@ while [[ "$(check_http "${JUDGE_BASE_URL}")" != "200" ]]; do
     echo "[INFO] Waiting... (${retries}/120)"
 done
 
+trap - EXIT INT TERM
 echo "[INFO] vLLM judge backend ready at ${JUDGE_BASE_URL}"
 echo "VLLM_PID=${VLLM_PID}"
+echo "VLLM_OWNED=1"

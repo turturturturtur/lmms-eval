@@ -4,26 +4,26 @@
   "env": {
     "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
-    "venv_path": "/mnt/cpfsB/<USER>/lmms-eval/.venv",
+    "venv_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv",
     "lmms_eval_datasets_cache": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface/datasets",
     "hf_datasets_offline": true,
     "transformers_offline": true
   },
   
   "log": {
-    "dir": "/mnt/cpfsB/<USER>/judge_logs"
+    "dir": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/judge_logs"
   },
   
   "judge": {
     "_comment_backend": "选择 judge 后端: 'api' 使用 OpenAI 兼容 API, 'vllm' 启动本地 vLLM",
-    "backend": "api",
+    "backend": "vllm",
     
     
     "_comment_parallel": "并行 judge 的 worker 数量",
-    "parallel": 128,
+    "parallel": 32,
     
     "_comment_model": "当使用 API 后端时的 judge 模型名称",
-    "model": "deepseek-v4-flash",
+    "model": "Qwen3.5-9B",
     
     "api": {
       "_comment": "API 后端配置 (backend=api 时生效). 建议通过环境变量 OPENAI_API_KEY / OPENAI_API_BASE 或 JUDGE_API_KEY / JUDGE_BASE_URL 注入，而不是写死在这里",
@@ -33,11 +33,11 @@
     
     "vllm": {
       "_comment": "vLLM 后端配置 (backend=vllm 时生效)",
-      "model_path": "/mnt/cpfsB/public_data/public_model/Qwen3.5/Qwen3.5-27B",
-      "tp": 4,
-      "max_model_len": 32768,
-      "gpu_memory_utilization": "0.9",
-      "max_num_seqs": 512,
+      "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+      "tp": 8,
+      "max_model_len": 40960,
+      "gpu_memory_utilization": "0.88",
+      "max_num_seqs": 192,
       "port": 8002
     }
   },
