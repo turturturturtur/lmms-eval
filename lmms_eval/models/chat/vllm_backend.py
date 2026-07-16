@@ -15,6 +15,7 @@ Usage:
     --gen_kwargs "temperature=0.7,top_p=0.8,top_k=20,repetition_penalty=1.1,max_new_tokens=49152"
 """
 
+import json
 import os
 import random
 import sys
@@ -62,6 +63,40 @@ class VLLMBackendRequestError(RuntimeError):
     pass
 
 
+def _normalize_until(until):
+    if until is None:
+        return None
+    if isinstance(until, str):
+        if not until:
+            raise ValueError("gen_kwargs['until'] must not be an empty string")
+        return until
+    if not isinstance(until, list):
+        raise ValueError(
+            "gen_kwargs['until'] must be None, a non-empty string, or a list of non-empty strings; "
+            f"got {type(until).__name__}"
+        )
+    if any(not isinstance(item, str) or not item for item in until):
+        raise ValueError("gen_kwargs['until'] must contain only non-empty strings")
+    return list(until)
+
+
+def _parse_stop_token_ids(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if not value:
+            raise ValueError("stop_token_ids must be a non-empty JSON array of non-negative integers")
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError("stop_token_ids must be valid JSON") from exc
+    if not isinstance(value, list) or not value:
+        raise ValueError("stop_token_ids must be a non-empty JSON array of non-negative integers")
+    if any(isinstance(token_id, bool) or not isinstance(token_id, int) or token_id < 0 for token_id in value):
+        raise ValueError("stop_token_ids must contain only non-negative integers")
+    return list(value)
+
+
 @register_model("vllm_backend")
 class VLLMBackend(lmms):
     """
@@ -95,6 +130,7 @@ class VLLMBackend(lmms):
         enable_thinking: Whether to pass Qwen chat_template_kwargs.enable_thinking
         prefix_aware_queue: Whether to use prefix-aware queue ordering
         shuffle_requests: Whether to randomly shuffle requests before dispatch
+        stop_token_ids: Optional JSON array of model-specific token IDs that stop generation
     """
     
     is_simple = False
@@ -128,6 +164,7 @@ class VLLMBackend(lmms):
         prefix_hash_chars: int = 256,
         chat_template: Optional[str] = None,
         shuffle_requests: bool = False,
+        stop_token_ids: Optional[Union[str, List[int]]] = None,
         **kwargs,
     ):
         super().__init__()
@@ -179,6 +216,7 @@ class VLLMBackend(lmms):
         self.prefix_hash_chars = max(32, int(prefix_hash_chars))
         self.chat_template = chat_template
         self.shuffle_requests = parse_bool(shuffle_requests)
+        self.stop_token_ids = _parse_stop_token_ids(stop_token_ids)
         
         # Initialize session for connection pooling
         from requests.adapters import HTTPAdapter
@@ -270,6 +308,12 @@ class VLLMBackend(lmms):
             return []
 
         reordered_requests = list(requests)
+        request_stops = []
+        for request in reordered_requests:
+            gen_kwargs = request.args[2]
+            if not isinstance(gen_kwargs, dict):
+                raise ValueError(f"generation kwargs must be a dict, got {type(gen_kwargs).__name__}")
+            request_stops.append(_normalize_until(gen_kwargs.get("until")))
         _gen_config_printed = False
         
         pbar = tqdm(
@@ -443,6 +487,7 @@ class VLLMBackend(lmms):
             chat_messages_raw = doc_to_messages(self.task_dict[task][split][doc_id])
             chat_messages: ChatMessages = ChatMessages(**{"messages": chat_messages_raw})
             request_gen_kwargs = dict(gen_kwargs)
+            stop = request_stops[global_index]
             
             # Extract video kwargs
             video_kwargs = {
@@ -502,6 +547,10 @@ class VLLMBackend(lmms):
                 payload["min_p"] = min_p
             if skip_special_tokens is not None:
                 payload["skip_special_tokens"] = skip_special_tokens
+            if stop is not None:
+                payload["stop"] = stop
+            if self.stop_token_ids is not None:
+                payload["stop_token_ids"] = list(self.stop_token_ids)
             if self.enable_thinking is not None:
                 payload["chat_template_kwargs"] = {"enable_thinking": self.enable_thinking}
             
@@ -512,6 +561,7 @@ class VLLMBackend(lmms):
                     f"temperature={temperature}, top_p={top_p}, top_k={top_k}, "
                     f"repetition_penalty={repetition_penalty}, min_p={min_p}, "
                     f"presence_penalty={presence_penalty}, frequency_penalty={frequency_penalty}, "
+                    f"stop={stop}, stop_token_ids={self.stop_token_ids}, "
                     f"enable_thinking={self.enable_thinking}, "
                     f"gen_kwargs={request_gen_kwargs}"
                 )

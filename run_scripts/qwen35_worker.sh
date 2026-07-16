@@ -247,6 +247,51 @@ print("[INFO] lmms-eval venv dependency check passed.")
 PY
 }
 
+resolve_qwen35_stop_token_ids() {
+    local _vllm_pythonpath
+    _vllm_pythonpath="$(innovator_vllm_pythonpath)"
+    MODEL_STOP_TOKEN_IDS_JSON="$(
+        INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 \
+        PYTHONPATH="${_vllm_pythonpath}" \
+        "${VENV_PATH}/bin/python" - "${MODEL}" <<'PY'
+import json
+import os
+import sys
+
+from transformers import AutoTokenizer
+
+
+model = sys.argv[1]
+stop_token = "<|im_end|>"
+tokenizer = AutoTokenizer.from_pretrained(
+    model,
+    trust_remote_code=True,
+    local_files_only=os.environ.get("TRANSFORMERS_OFFLINE") == "1",
+)
+token_ids = tokenizer.encode(stop_token, add_special_tokens=False)
+if len(token_ids) != 1:
+    raise ValueError(
+        f"Qwen3.5 stop token {stop_token!r} must encode to exactly one token, got {token_ids!r}"
+    )
+token_id = token_ids[0]
+if isinstance(token_id, bool) or not isinstance(token_id, int) or token_id < 0:
+    raise ValueError(f"Qwen3.5 stop token ID must be a non-negative integer, got {token_id!r}")
+decoded_token = tokenizer.convert_ids_to_tokens(token_id)
+if decoded_token != stop_token:
+    raise ValueError(
+        f"Qwen3.5 stop token round-trip mismatch: expected {stop_token!r}, got {decoded_token!r}"
+    )
+print(json.dumps([token_id], separators=(",", ":")))
+PY
+    )"
+    if ! jq -e 'type == "array" and length == 1 and all(.[]; type == "number" and floor == . and . >= 0)' \
+        <<< "${MODEL_STOP_TOKEN_IDS_JSON}" >/dev/null; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Invalid Qwen3.5 stop token ID payload: ${MODEL_STOP_TOKEN_IDS_JSON}" >&2
+        return 2
+    fi
+    echo "[INFO][Machine ${MACHINE_RANK}] Qwen3.5 model stop token IDs: ${MODEL_STOP_TOKEN_IDS_JSON}"
+}
+
 check_api_runtime_deps() {
     VENV_PATH="${VENV_PATH}" "${VENV_PATH}/bin/python" - <<'PY'
 import importlib.metadata as md
@@ -307,8 +352,12 @@ task_slug() {
 }
 
 build_vllm_backend_model_args() {
+    if [[ -z "${MODEL_STOP_TOKEN_IDS_JSON:-}" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Qwen3.5 stop token IDs were not resolved" >&2
+        return 2
+    fi
     local args
-    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True"
+    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True,stop_token_ids=${MODEL_STOP_TOKEN_IDS_JSON}"
     if [[ -n "${MODEL_ENABLE_THINKING}" ]]; then
         args="${args},enable_thinking=${MODEL_ENABLE_THINKING}"
     fi
@@ -619,6 +668,7 @@ else
     prepend_pythonpath_bins
     setup_native_libs
     check_runtime_deps
+    resolve_qwen35_stop_token_ids
     setup_cleanup_trap
 
     launch_vllm_backends
