@@ -2788,7 +2788,13 @@ def _correctness_from_metrics(value: Any) -> bool | None:
     return None
 
 
-def _sample_correctness(row: dict[str, Any], target_choice: str | None, prediction_choice: str | None) -> bool | None:
+def _sample_correctness(
+    row: dict[str, Any], metric_name: str, target_choice: str | None, prediction_choice: str | None
+) -> bool | None:
+    if metric_name in row:
+        result = _correctness_from_score_value(row[metric_name])
+        if result is not None:
+            return result
     for key in ("exact_match", "score", "judge_score", "llm_judge_score"):
         if key in row:
             result = _correctness_from_score_value(row[key])
@@ -2874,7 +2880,14 @@ def _preferred_sample_columns(rows: list[dict[str, Any]]) -> list[str]:
 
 
 def _read_sample_jsonls(
-    sample_files: list[str], *, job_id: str, metric_id: str, offset: int, limit: int, only_wrong: bool
+    sample_files: list[str],
+    *,
+    job_id: str,
+    metric_id: str,
+    metric_name: str,
+    offset: int,
+    limit: int,
+    only_wrong: bool,
 ) -> tuple[list[dict[str, Any]], int, ChoiceAnswerStats]:
     rows: list[dict[str, Any]] = []
     total = 0
@@ -2907,7 +2920,7 @@ def _read_sample_jsonls(
                     if prediction_choice is not None:
                         target_answers[prediction_choice] += 1
 
-                    correctness = _sample_correctness(item, target_choice, prediction_choice)
+                    correctness = _sample_correctness(item, metric_name, target_choice, prediction_choice)
                     if correctness is False:
                         wrong_total += 1
                     elif correctness is None:
@@ -4128,6 +4141,7 @@ async def get_dlc_metric_samples(
         selected.sample_jsonls,
         job_id=job_id,
         metric_id=metric_id,
+        metric_name=selected.metric_name,
         offset=offset,
         limit=limit,
         only_wrong=only_wrong,
