@@ -250,6 +250,23 @@ def test_defaults_leave_evaluate_user_empty_and_keep_placeholders(monkeypatch: p
     assert "configured-user" not in json.dumps(data)
 
 
+def test_defaults_use_generic_tasks_instead_of_qwen_specializations():
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.get("/defaults")
+
+    assert response.status_code == 200
+    tasks = response.json()["tasks"]
+    assert "mmmu_val" in tasks
+    assert "mmmu_pro_standard_cot_reasoning" in tasks
+    assert "mathvision_reason_test_reasoning" in tasks
+    assert not any("qwen3" in task.lower() for task in tasks)
+
+    judge_tasks = server._split_tasks(server._default_judge_config()["eval"]["tasks"])
+    assert not any("qwen3" in task.lower() for task in judge_tasks)
+
+
 def test_username_alias_placeholder_is_replaced_for_webui_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     submit_script = tmp_path / "submit.sh"
     submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
