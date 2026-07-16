@@ -2261,6 +2261,14 @@ def _load_summary_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _has_metric_value(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, (str, list, tuple, dict)):
+        return len(value) > 0
+    return True
+
+
 def _primary_metrics(result_data: dict[str, Any]) -> list[tuple[str, str, Any, Any | None]]:
     results = result_data.get("results")
     if not isinstance(results, dict):
@@ -2272,6 +2280,8 @@ def _primary_metrics(result_data: dict[str, Any]) -> list[tuple[str, str, Any, A
             continue
         for metric_name, metric_value in task_metrics.items():
             if metric_name == "alias" or "stderr" in metric_name:
+                continue
+            if not _has_metric_value(metric_value):
                 continue
             stderr_key = metric_name.replace(",none", "_stderr,none") if metric_name.endswith(",none") else f"{metric_name}_stderr"
             metrics.append((str(task_name), str(metric_name).replace(",none", ""), metric_value, task_metrics.get(stderr_key)))
