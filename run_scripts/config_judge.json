@@ -47,7 +47,7 @@
     "input_result_path": "/mnt/cpfsB/<USER>/lmms-eval/eval_result/2026-04-14_22-56-25/Qwen3-VL-8B-Instruct",
     
     "_comment_tasks": "要 judge 的 task 列表，逗号分隔。会从 input_result_path 中查找 *samples_<task>.jsonl 文件",
-    "tasks": "mmbench_en_dev,MolParse,OpenRxn,sfe-en,sfe-zh,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official",
+    "tasks": "mmbench_en_dev,MolParse,OpenRxn,sfe-en,sfe-zh",
     
     "_comment_output": "judge 结果输出目录",
     "output_path": "/mnt/cpfsB/<USER>/judge_results",
