@@ -269,6 +269,18 @@ def test_defaults_use_generic_tasks_instead_of_qwen_specializations():
     assert not any("qwen3" in task.lower() for task in judge_tasks)
 
 
+def test_defaults_include_simplevqa_once_and_require_judge():
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.get("/defaults")
+
+    assert response.status_code == 200
+    tasks = response.json()["tasks"]
+    assert tasks.count("simplevqa") == 1
+    assert server._task_requires_llm_judge("simplevqa") is True
+
+
 def test_username_alias_placeholder_is_replaced_for_webui_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     submit_script = tmp_path / "submit.sh"
     submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
