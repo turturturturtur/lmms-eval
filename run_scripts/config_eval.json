@@ -31,7 +31,7 @@
     "is_qwen3_vl": false
   },
   "eval": {
-    "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val,mmmu_pro_standard_cot_reasoning,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_reasoning,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite",
+    "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val,mmmu_pro_standard_cot_reasoning,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_reasoning,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,simplevqa,msearth_mcq,xlrs-lite",
     "output_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/eval_result/qwen35_9b_feishu20",
     "concurrency": 32,
     "gen_kwargs": "",
