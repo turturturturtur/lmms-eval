@@ -176,6 +176,11 @@ load_config() {
     MODEL_GPU_MEM_UTIL=$(cfg '.model.gpu_memory_utilization')
     MODEL_MAX_NUM_SEQS=$(cfg_int '.model.max_num_seqs')
     MODEL_BASE_PORT=$(cfg_int '.model.base_port')
+    MODEL_TASK_NATIVE_MAX_NEW_TOKENS=$(cfg '.model.task_native_max_new_tokens // false')
+    if [[ "${MODEL_TASK_NATIVE_MAX_NEW_TOKENS}" != "true" && "${MODEL_TASK_NATIVE_MAX_NEW_TOKENS}" != "false" ]]; then
+        echo "[ERROR] model.task_native_max_new_tokens must be true or false, got: ${MODEL_TASK_NATIVE_MAX_NEW_TOKENS}" >&2
+        exit 2
+    fi
     MODEL_NAME=$(basename "${MODEL}")
 
     # eval
@@ -197,7 +202,7 @@ load_config() {
         [[ "${VERBOSITY}" == "null" || -z "${VERBOSITY}" ]] && VERBOSITY="INFO"
     fi
 
-    GEN_KWARGS=$(cfg '.eval.gen_kwargs // "max_new_tokens=32768"')
+    GEN_KWARGS=$(cfg '.eval.gen_kwargs // ""')
     MAX_NEW_TOKENS=$(parse_gen_kwarg "max_new_tokens" "32768")
     MAX_PIXELS=$(parse_gen_kwarg "max_pixels" "4014080")
     VLLM_REQUEST_TIMEOUT_SECONDS=$(cfg_required_positive_int '.eval.vllm_request_timeout_seconds // 300' 'eval.vllm_request_timeout_seconds')

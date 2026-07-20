@@ -23,6 +23,7 @@
     "path": "/mnt/cpfsB/<USER>/Innovator-Tune/models/Qwen3.5-9B",
     "tp": 2,
     "max_model_len": 40960,
+    "task_native_max_new_tokens": false,
     "gpu_memory_utilization": 0.88,
     "max_num_seqs": 192,
     "base_port": 8941,

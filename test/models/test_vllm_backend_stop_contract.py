@@ -105,14 +105,50 @@ def test_generate_until_keeps_request_stop_conditions_isolated(monkeypatch):
     assert all(payload["stop_token_ids"] == [248046] for payload in payloads)
 
 
-def test_generate_until_omits_absent_stop_conditions(monkeypatch):
+@pytest.mark.parametrize("until", [None, []])
+def test_generate_until_omits_absent_stop_conditions(monkeypatch, until):
     backend = _backend(monkeypatch)
-    request, _ = _request(until=None)
+    request, _ = _request(until=until)
 
     payloads = _capture_payloads(backend, [request])
 
     assert "stop" not in payloads[0]
     assert "stop_token_ids" not in payloads[0]
+
+
+def test_generate_until_uses_task_native_max_new_tokens_when_enabled(monkeypatch):
+    backend = _backend(
+        monkeypatch,
+        max_new_tokens=8,
+        task_native_max_new_tokens=True,
+    )
+    request, _ = _request(max_new_tokens=16)
+
+    payloads = _capture_payloads(backend, [request])
+
+    assert payloads[0]["max_tokens"] == 16
+
+
+def test_generate_until_keeps_model_level_max_new_tokens_cap_by_default(monkeypatch):
+    backend = _backend(monkeypatch, max_new_tokens=8)
+    request, _ = _request(max_new_tokens=16)
+
+    payloads = _capture_payloads(backend, [request])
+
+    assert payloads[0]["max_tokens"] == 8
+
+
+@pytest.mark.parametrize("value", [None, True, 0, -1, 1.5, "16"])
+def test_task_native_max_new_tokens_rejects_missing_or_invalid_values(monkeypatch, value):
+    backend = _backend(monkeypatch, task_native_max_new_tokens=True)
+    request, generation_kwargs = _request()
+    if value is None:
+        generation_kwargs.pop("max_new_tokens")
+    else:
+        generation_kwargs["max_new_tokens"] = value
+
+    with pytest.raises(ValueError, match="max_new_tokens"):
+        backend.generate_until([request])
 
 
 def test_model_args_parser_preserves_json_stop_token_ids(monkeypatch):
@@ -121,6 +157,18 @@ def test_model_args_parser_preserves_json_stop_token_ids(monkeypatch):
     assert parsed["stop_token_ids"] == "[248046]"
     backend = _backend(monkeypatch, stop_token_ids=parsed["stop_token_ids"])
     assert backend.stop_token_ids == [248046]
+
+
+def test_model_args_parser_enables_task_native_max_new_tokens(monkeypatch):
+    parsed = simple_parse_args_string(
+        "model=model-under-test,task_native_max_new_tokens=true"
+    )
+
+    backend = _backend(
+        monkeypatch,
+        task_native_max_new_tokens=parsed["task_native_max_new_tokens"],
+    )
+    assert backend.task_native_max_new_tokens is True
 
 
 @pytest.mark.parametrize(

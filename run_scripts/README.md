@@ -137,6 +137,7 @@ run_scripts/
 | `model.path` | string | 模型路径或 HuggingFace model_id |
 | `model.tp` | int | Tensor Parallelism 大小（每张卡上的 GPU 数 / TP = backend 数量） |
 | `model.max_model_len` | int | vLLM `max-model-len` |
+| `model.task_native_max_new_tokens` | bool | 是否严格使用任务 YAML 的 `max_new_tokens`，不应用 model-level cap；开启后任务缺失或给出非法长度会直接报错 |
 | `model.gpu_memory_utilization` | float | vLLM GPU 内存利用率 |
 | `model.max_num_seqs` | int | vLLM 最大并发序列数 |
 | `model.base_port` | int | vLLM backend 起始端口 |
@@ -148,6 +149,8 @@ run_scripts/
 | `eval.task_timeout_seconds` | int | 单个 lmms-eval task 的硬超时时间，必填正整数 |
 | `eval.task_timeout_kill_after_seconds` | int | task 超时后 SIGTERM 到 SIGKILL 的等待时间，必填正整数 |
 | `eval.debug` | bool | 调试模式（`true` 时退出不杀死 vLLM 进程） |
+
+`eval.gen_kwargs` 默认不再注入全局 `max_new_tokens`，因此未显式覆盖时保留任务 YAML 的生成配置。需要完全采用任务原生长度时，可设置 `model.task_native_max_new_tokens=true`；启用前应确认 `model.max_model_len` 足以容纳任务长度和输入上下文。
 
 ### `config_dlc.json` — DLC 集群调度配置
 

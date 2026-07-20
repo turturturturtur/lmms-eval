@@ -75,6 +75,8 @@ def _normalize_until(until):
             "gen_kwargs['until'] must be None, a non-empty string, or a list of non-empty strings; "
             f"got {type(until).__name__}"
         )
+    if not until:
+        return None
     if any(not isinstance(item, str) or not item for item in until):
         raise ValueError("gen_kwargs['until'] must contain only non-empty strings")
     return list(until)
@@ -121,6 +123,7 @@ class VLLMBackend(lmms):
         adaptive_concurrency: Whether to use adaptive concurrency control
         adaptive_max_concurrency: Maximum concurrency for adaptive mode
         max_new_tokens: Maximum new tokens limit (default: 4096)
+        task_native_max_new_tokens: Use each task's explicit max_new_tokens without applying the model-level cap
         max_pixels: Maximum pixels for image processing
         min_pixels: Minimum pixels for image processing
         max_frames: Maximum frames for video processing
@@ -153,6 +156,7 @@ class VLLMBackend(lmms):
         adaptive_decrease_factor: float = 0.7,
         adaptive_failure_threshold: float = 0.05,
         max_new_tokens: int = 4096,
+        task_native_max_new_tokens: Union[bool, str] = False,
         max_pixels: int = 151200,
         min_pixels: int = 28 * 28,
         max_frames: int = 768,
@@ -202,6 +206,7 @@ class VLLMBackend(lmms):
             failure_threshold=adaptive_failure_threshold,
         )
         self.max_new_tokens = int(max_new_tokens)
+        self.task_native_max_new_tokens = parse_bool(task_native_max_new_tokens)
         self.max_pixels = int(max_pixels)
         self.min_pixels = int(min_pixels)
         self.max_frames = int(max_frames)
@@ -253,7 +258,24 @@ class VLLMBackend(lmms):
         self.device = self.accelerator.device
         
         eval_logger.info(f"VLLM Backend initialized with {len(self.base_urls)} endpoint(s): {self.base_urls}")
-        eval_logger.info(f"Model: {self.model_name}, Max new tokens: {self.max_new_tokens}")
+        eval_logger.info(
+            f"Model: {self.model_name}, Max new tokens: {self.max_new_tokens}, "
+            f"Task-native max new tokens: {self.task_native_max_new_tokens}"
+        )
+
+    def _resolve_max_tokens(self, generation_kwargs: dict) -> int:
+        if not self.task_native_max_new_tokens:
+            return min(generation_kwargs.get("max_new_tokens", 1024), self.max_new_tokens)
+
+        if "max_new_tokens" not in generation_kwargs:
+            raise ValueError("task-native length mode requires generation_kwargs.max_new_tokens")
+        max_tokens = generation_kwargs["max_new_tokens"]
+        if isinstance(max_tokens, bool) or not isinstance(max_tokens, int) or max_tokens <= 0:
+            raise ValueError(
+                "generation_kwargs.max_new_tokens must be a positive integer in task-native length mode, "
+                f"got {max_tokens!r}"
+            )
+        return max_tokens
 
     def _get_api_url(self, index: int) -> str:
         """Get API URL for given request index (round-robin)."""
@@ -309,11 +331,13 @@ class VLLMBackend(lmms):
 
         reordered_requests = list(requests)
         request_stops = []
+        request_max_tokens = []
         for request in reordered_requests:
             gen_kwargs = request.args[2]
             if not isinstance(gen_kwargs, dict):
                 raise ValueError(f"generation kwargs must be a dict, got {type(gen_kwargs).__name__}")
             request_stops.append(_normalize_until(gen_kwargs.get("until")))
+            request_max_tokens.append(self._resolve_max_tokens(gen_kwargs))
         _gen_config_printed = False
         
         pbar = tqdm(
@@ -510,7 +534,7 @@ class VLLMBackend(lmms):
 
             # Build payload with all vLLM-supported parameters
             # Standard OpenAI API parameters
-            max_tokens = min(request_gen_kwargs.get("max_new_tokens", 1024), self.max_new_tokens)
+            max_tokens = request_max_tokens[global_index]
             temperature = request_gen_kwargs.get("temperature", 0)
             top_p = request_gen_kwargs.get("top_p")
             presence_penalty = request_gen_kwargs.get("presence_penalty")

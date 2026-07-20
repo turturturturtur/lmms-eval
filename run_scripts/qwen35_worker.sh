@@ -357,7 +357,7 @@ build_vllm_backend_model_args() {
         return 2
     fi
     local args
-    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True,stop_token_ids=${MODEL_STOP_TOKEN_IDS_JSON}"
+    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},task_native_max_new_tokens=${MODEL_TASK_NATIVE_MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True,stop_token_ids=${MODEL_STOP_TOKEN_IDS_JSON}"
     if [[ -n "${MODEL_ENABLE_THINKING}" ]]; then
         args="${args},enable_thinking=${MODEL_ENABLE_THINKING}"
     fi

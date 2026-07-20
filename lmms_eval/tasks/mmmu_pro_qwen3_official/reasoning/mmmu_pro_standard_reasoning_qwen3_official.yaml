@@ -11,6 +11,7 @@ process_results: !function ../utils_qwen3_official.mmmu_pro_process_results_offi
 
 generation_kwargs:
   max_new_tokens: 49152
+  until: []
 
 metric_list:
   - metric: mmmu_pro_acc_official
