@@ -2,8 +2,8 @@
 # qwen35_submit.sh
 # Qwen3.5 submitter entrypoint: reads a DLC config + an eval config, then
 # submits a DLC PyTorchJob that runs qwen35_worker.sh directly.
-# Optionally accepts a judge config. When present, the submitter waits for eval
-# success and then submits a separate CPU-only DLC job that runs run_judge.sh.
+# Optionally accepts a judge config. API judge keeps the separate CPU-only DLC
+# workflow; local vLLM judge runs inline in the same 8-GPU eval DLC worker.
 #
 # Usage:
 #   bash run_scripts/qwen35_submit.sh <dlc_config.json> <eval_config.json> [judge_config.json] [-- <dlc auth flags>]
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+LMMS_EVAL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEFAULT_DLC_RESOURCE_ID="quotaev2tl4w6aw0"
 REQUIRED_NAS_MOUNT_URI="nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
 
@@ -86,6 +86,18 @@ eval_cfg()     { jq -r "$1"       "${EVAL_CONFIG}"; }
 eval_cfg_int() { jq -r "$1 // 0" "${EVAL_CONFIG}"; }
 judge_cfg()     { jq -r "$1"       "${JUDGE_CONFIG}"; }
 judge_cfg_int() { jq -r "$1 // 0" "${JUDGE_CONFIG}"; }
+
+JUDGE_BACKEND=""
+if [[ -n "${JUDGE_CONFIG}" ]]; then
+    JUDGE_BACKEND="$(judge_cfg '.judge.backend // ""')"
+    case "${JUDGE_BACKEND}" in
+        api|vllm) ;;
+        *)
+            echo "[ERROR] judge.backend must be api or vllm, got: ${JUDGE_BACKEND:-<empty>}" >&2
+            exit 2
+            ;;
+    esac
+fi
 
 require_non_empty() {
     local value="$1"
@@ -167,7 +179,7 @@ fi
 # Qwen3.5 链路在这里固定模型家族参数，避免走旧的 VL 专用处理分支。
 JUDGE_RUNTIME_API_KEY=""
 JUDGE_RUNTIME_BASE_URL=""
-if [[ -n "${JUDGE_CONFIG}" ]]; then
+if [[ "${JUDGE_BACKEND}" == "api" ]]; then
     JUDGE_RUNTIME_API_KEY="$(judge_cfg '.judge.api.key // ""')"
     JUDGE_RUNTIME_BASE_URL="$(judge_cfg '.judge.api.base_url // ""')"
 fi
@@ -266,6 +278,16 @@ fi
 if (( PRIORITY > 9 )); then
     echo "[ERROR] Refusing to submit Qwen3.5 eval DLC job with priority=${PRIORITY}; maximum allowed is 9."
     exit 6
+fi
+if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
+    if (( WORKERS != 1 )); then
+        echo "[ERROR] Inline local vLLM judge requires dlc.workers=1, got: ${WORKERS}" >&2
+        exit 2
+    fi
+    if (( WORKER_GPU != 8 )); then
+        echo "[ERROR] Inline local vLLM judge requires dlc.worker_gpu=8, got: ${WORKER_GPU}" >&2
+        exit 2
+    fi
 fi
 
 # ── build DLC command ─────────────────────────────────────────────────────────
@@ -368,8 +390,6 @@ wait_for_job_success() {
     return 1
 }
 
-INNER_COMMAND="set -euo pipefail; cd ${PROJECT_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=1;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}"
-COMMAND="/bin/bash -c '$(quote_for_single_quotes "${INNER_COMMAND}")'"
 OPTIONAL_DLC_ARGS=()
 if [[ -n "${REGION}" && "${REGION}" != "null" ]]; then
     OPTIONAL_DLC_ARGS+=(--region="${REGION}")
@@ -380,28 +400,6 @@ fi
 if (( ${#DLC_AUTH_ARGS[@]} > 0 )); then
     OPTIONAL_DLC_ARGS+=("${DLC_AUTH_ARGS[@]}")
 fi
-
-DLC_SUBMIT_ARGS=(
-    submit pytorchjob
-    --name="${JOB_NAME}"
-    --priority="${PRIORITY}"
-    --workers="${WORKERS}"
-    --worker_cpu="${WORKER_CPU}"
-    --worker_gpu="${WORKER_GPU}"
-    --worker_memory="${WORKER_MEMORY}"
-    --worker_shared_memory="${WORKER_SHARED_MEMORY}"
-    --worker_image="${WORKER_IMAGE}"
-    --job_max_running_time_minutes="${JOB_MAX_RUNNING_TIME_MINUTES}"
-    --data_source_uris="${DATA_SOURCE_URIS}"
-    --resource_id="${RESOURCE_ID}"
-    --workspace_id="${WORKSPACE_ID}"
-    --vpc_id="${VPC_ID}"
-    --switch_id="${SWITCH_ID}"
-    --security_group_id="${SECURITY_GROUP_ID}"
-    --extended_cidrs="${EXTENDED_CIDRS}"
-    "${OPTIONAL_DLC_ARGS[@]}"
-    --command="${COMMAND}"
-)
 
 build_judge_submit_args() {
     local judge_runtime_config="$1"
@@ -482,7 +480,7 @@ build_judge_submit_args() {
 
     local judge_inner_command
     local judge_command
-    judge_inner_command="set -euo pipefail; cd ${PROJECT_ROOT}; export LMMS_EVAL_LOG_DIR=${judge_log_dir}; bash ${judge_script} ${judge_runtime_config}"
+    judge_inner_command="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${judge_log_dir}; bash ${judge_script} ${judge_runtime_config}"
     judge_command="/bin/bash -c '$(quote_for_single_quotes "${judge_inner_command}")'"
 
     JUDGE_SUBMIT_ARGS=(
@@ -601,45 +599,77 @@ JUDGE_SCRIPT=""
 JUDGE_RESOURCE_ID=""
 JUDGE_WORKSPACE_ID=""
 if [[ "${HAS_JUDGE_CONFIG}" == "1" ]]; then
-    JUDGE_JOB_NAME_FROM_CFG=$(dlc_cfg '.dlc.judge_job_name // ""')
-    if [[ -n "${JUDGE_JOB_NAME_FROM_CFG}" && "${JUDGE_JOB_NAME_FROM_CFG}" != "null" ]]; then
-        JUDGE_JOB_NAME="${JUDGE_JOB_NAME_FROM_CFG}"
-    else
-        JUDGE_JOB_NAME="judge_${JOB_NAME}_${TIMESTAMP}"
-    fi
-    JUDGE_JOB_NAME="$(printf "%s" "${JUDGE_JOB_NAME}" | tr -c '[:alnum:]_-' '_' | cut -c1-120)"
-
-    JUDGE_SCRIPT_FROM_CFG=$(dlc_cfg '.dlc.judge_run_script // ""')
-    if [[ -n "${JUDGE_SCRIPT_FROM_CFG}" && "${JUDGE_SCRIPT_FROM_CFG}" != "null" ]]; then
-        JUDGE_SCRIPT="${JUDGE_SCRIPT_FROM_CFG}"
-    else
-        JUDGE_SCRIPT="${SCRIPT_DIR}/run_judge.sh"
-    fi
-    if [[ ! -f "${JUDGE_SCRIPT}" ]]; then
-        echo "[ERROR] Judge script not found: ${JUDGE_SCRIPT}" >&2
-        exit 1
-    fi
-
     JUDGE_LOG_DIR="${FIXED_LOG_DIR}/judge_logs"
     JUDGE_RUNTIME_CONFIG="${FIXED_LOG_DIR}/judge_runtime_config.json"
     prepare_judge_runtime_config "${EVAL_RESULT_PATH}" "${JUDGE_RUNTIME_CONFIG}" "${JUDGE_LOG_DIR}"
-    build_judge_submit_args "${JUDGE_RUNTIME_CONFIG}" "${JUDGE_JOB_NAME}" "${JUDGE_LOG_DIR}" "${JUDGE_SCRIPT}"
+    if [[ "${JUDGE_BACKEND}" == "api" ]]; then
+        JUDGE_JOB_NAME_FROM_CFG=$(dlc_cfg '.dlc.judge_job_name // ""')
+        if [[ -n "${JUDGE_JOB_NAME_FROM_CFG}" && "${JUDGE_JOB_NAME_FROM_CFG}" != "null" ]]; then
+            JUDGE_JOB_NAME="${JUDGE_JOB_NAME_FROM_CFG}"
+        else
+            JUDGE_JOB_NAME="judge_${JOB_NAME}_${TIMESTAMP}"
+        fi
+        JUDGE_JOB_NAME="$(printf "%s" "${JUDGE_JOB_NAME}" | tr -c '[:alnum:]_-' '_' | cut -c1-120)"
+
+        JUDGE_SCRIPT_FROM_CFG=$(dlc_cfg '.dlc.judge_run_script // ""')
+        if [[ -n "${JUDGE_SCRIPT_FROM_CFG}" && "${JUDGE_SCRIPT_FROM_CFG}" != "null" ]]; then
+            JUDGE_SCRIPT="${JUDGE_SCRIPT_FROM_CFG}"
+        else
+            JUDGE_SCRIPT="${SCRIPT_DIR}/run_judge.sh"
+        fi
+        if [[ ! -f "${JUDGE_SCRIPT}" ]]; then
+            echo "[ERROR] Judge script not found: ${JUDGE_SCRIPT}" >&2
+            exit 1
+        fi
+        build_judge_submit_args "${JUDGE_RUNTIME_CONFIG}" "${JUDGE_JOB_NAME}" "${JUDGE_LOG_DIR}" "${JUDGE_SCRIPT}"
+    fi
 fi
+
+INLINE_JUDGE_ARG=""
+if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
+    INLINE_JUDGE_ARG=" \"\" ${JUDGE_RUNTIME_CONFIG}"
+fi
+INNER_COMMAND="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=1;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}${INLINE_JUDGE_ARG}"
+COMMAND="/bin/bash -c '$(quote_for_single_quotes "${INNER_COMMAND}")'"
+DLC_SUBMIT_ARGS=(
+    submit pytorchjob
+    --name="${JOB_NAME}"
+    --priority="${PRIORITY}"
+    --workers="${WORKERS}"
+    --worker_cpu="${WORKER_CPU}"
+    --worker_gpu="${WORKER_GPU}"
+    --worker_memory="${WORKER_MEMORY}"
+    --worker_shared_memory="${WORKER_SHARED_MEMORY}"
+    --worker_image="${WORKER_IMAGE}"
+    --job_max_running_time_minutes="${JOB_MAX_RUNNING_TIME_MINUTES}"
+    --data_source_uris="${DATA_SOURCE_URIS}"
+    --resource_id="${RESOURCE_ID}"
+    --workspace_id="${WORKSPACE_ID}"
+    --vpc_id="${VPC_ID}"
+    --switch_id="${SWITCH_ID}"
+    --security_group_id="${SECURITY_GROUP_ID}"
+    --extended_cidrs="${EXTENDED_CIDRS}"
+    "${OPTIONAL_DLC_ARGS[@]}"
+    --command="${COMMAND}"
+)
 
 # ── submit ────────────────────────────────────────────────────────────────────
 echo "[INFO] Safety override for cluster run: debug=false"
 echo "[INFO] Submitting eval DLC job: ${JOB_NAME}"
 echo "[INFO] Worker script: ${WORKER_SCRIPT}"
 echo "[INFO] Job max running time: ${JOB_MAX_RUNNING_TIME_MINUTES} minutes"
-if [[ "${HAS_JUDGE_CONFIG}" == "1" ]]; then
-    echo "[INFO] Judge config enabled; judge DLC will be submitted after eval succeeds."
+if [[ "${JUDGE_BACKEND}" == "api" ]]; then
+    echo "[INFO] API judge enabled; a CPU-only judge DLC will be submitted after eval succeeds."
     echo "[INFO] Judge script: ${JUDGE_SCRIPT}"
     echo "[INFO] Judge runtime config: ${JUDGE_RUNTIME_CONFIG}"
+elif [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
+    echo "[INFO] Local vLLM judge enabled; eval and judge will run sequentially in the same 8-GPU DLC job."
+    echo "[INFO] Inline judge runtime config: ${JUDGE_RUNTIME_CONFIG}"
 fi
 
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
     print_dry_run_command "eval" "${DLC_BINARY}" "${DLC_SUBMIT_ARGS[@]}"
-    if [[ "${HAS_JUDGE_CONFIG}" == "1" ]]; then
+    if [[ "${JUDGE_BACKEND}" == "api" ]]; then
         print_dry_run_command "judge" "${DLC_BINARY}" "${JUDGE_SUBMIT_ARGS[@]}"
     fi
     exit 0
@@ -659,6 +689,13 @@ if [[ "${HAS_JUDGE_CONFIG}" != "1" ]]; then
 fi
 
 wait_for_job_success "${EVAL_JOB_ID}" "eval" "${RUNNING_TIMEOUT}" "${RESOURCE_ID}" "${WORKSPACE_ID}"
+
+if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
+    echo "[INFO] Eval + inline local vLLM judge workflow completed successfully in DLC job: ${EVAL_JOB_ID}"
+    echo "[INFO] Eval result path: ${EVAL_RESULT_PATH}"
+    echo "[INFO] Judge output path: ${EVAL_RESULT_PATH}/judge"
+    exit 0
+fi
 
 echo "[INFO] Eval completed; submitting CPU-only judge DLC job: ${JUDGE_JOB_NAME}"
 JUDGE_JOB_ID="$(submit_and_resolve_job_id "${JUDGE_JOB_NAME}" "judge" "${JUDGE_RESOURCE_ID}" "${JUDGE_WORKSPACE_ID}" "${JUDGE_SUBMIT_ARGS[@]}")"

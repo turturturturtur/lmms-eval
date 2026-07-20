@@ -66,8 +66,17 @@ DEFAULT_EVAL_INFERENCE_MODE = "ckpt"
 DEFAULT_API_EVAL_TYPE = "openai"
 DEFAULT_API_EVAL_URL = "http://gw-k6isjixc1ij25ms7q4.cn-shanghai.pai-eas.aliyuncs.com/api/predict/router_fs_eval/v1"
 DEFAULT_API_EVAL_MODEL = "/mnt/data/jingyichai/sft/checkpoints/qwen36_kimi_e2b_3tool_6k_0629_4nodes/iter_0000206_hf"
+DEFAULT_JUDGE_BACKEND = "vllm"
 DEFAULT_JUDGE_API_URL = "http://8.130.30.251:8801/v1"
 DEFAULT_JUDGE_MODEL = "deepseek-v4-flash"
+DEFAULT_LOCAL_JUDGE_MODEL_PATH = "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B"
+DEFAULT_LOCAL_JUDGE_MODEL = "Qwen3.5-9B"
+DEFAULT_LOCAL_JUDGE_TP = 8
+DEFAULT_LOCAL_JUDGE_MAX_MODEL_LEN = 40960
+DEFAULT_LOCAL_JUDGE_GPU_MEMORY_UTILIZATION = 0.88
+DEFAULT_LOCAL_JUDGE_MAX_NUM_SEQS = 192
+DEFAULT_LOCAL_JUDGE_PORT = 8002
+DEFAULT_LOCAL_JUDGE_PARALLEL = 32
 DEFAULT_AUTH_SESSION_TTL_SECONDS = 15 * 24 * 60 * 60
 AUTH_VALIDATION_TIMEOUT_SECONDS = 20
 AUTH_IDENTITY_TIMEOUT_SECONDS = 20
@@ -814,6 +823,8 @@ def _sync_judge_api_to_eval_env(
     request: EvalRequest | PreviewRequest | ExportYamlRequest,
 ) -> None:
     """Expose judge credentials to eval-time scorers that import OpenAI clients."""
+    if _validate_judge_backend(request.judge_backend) != "api":
+        return
     api_key = request.judge_api_key.strip()
     api_url = request.judge_api_url.strip()
     if not api_key:
@@ -896,6 +907,7 @@ class EvalRequest(BaseModel):
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
+    judge_backend: str = DEFAULT_JUDGE_BACKEND
     judge_api_url: str = ""
     judge_api_key: str = ""
     env_vars: str = ""
@@ -934,6 +946,7 @@ class PreviewRequest(BaseModel):
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
+    judge_backend: str = DEFAULT_JUDGE_BACKEND
     judge_api_url: str = ""
     judge_api_key: str = ""
     env_vars: str = ""
@@ -971,6 +984,7 @@ class ExportYamlRequest(BaseModel):
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
+    judge_backend: str = DEFAULT_JUDGE_BACKEND
     judge_api_url: str = ""
     judge_api_key: str = ""
     env_vars: str = ""
@@ -1012,6 +1026,7 @@ class ImportYamlResponse(BaseModel):
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str] = []
+    judge_backend: str = DEFAULT_JUDGE_BACKEND
     judge_api_url: str = ""
     judge_api_key: str = ""
     env_vars: str = ""
@@ -1044,6 +1059,7 @@ class DefaultsResponse(BaseModel):
     dlc_path: str
     model_args: str = ""
     tasks: list[str]
+    judge_backend: str = DEFAULT_JUDGE_BACKEND
     judge_api_url: str = ""
     judge_api_key: str = ""
     env_vars: str
@@ -2245,6 +2261,14 @@ def _load_summary_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _has_metric_value(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, (str, list, tuple, dict)):
+        return len(value) > 0
+    return True
+
+
 def _primary_metrics(result_data: dict[str, Any]) -> list[tuple[str, str, Any, Any | None]]:
     results = result_data.get("results")
     if not isinstance(results, dict):
@@ -2256,6 +2280,8 @@ def _primary_metrics(result_data: dict[str, Any]) -> list[tuple[str, str, Any, A
             continue
         for metric_name, metric_value in task_metrics.items():
             if metric_name == "alias" or "stderr" in metric_name:
+                continue
+            if not _has_metric_value(metric_value):
                 continue
             stderr_key = metric_name.replace(",none", "_stderr,none") if metric_name.endswith(",none") else f"{metric_name}_stderr"
             metrics.append((str(task_name), str(metric_name).replace(",none", ""), metric_value, task_metrics.get(stderr_key)))
@@ -2473,8 +2499,18 @@ def _build_metric_rows(result_root: Path) -> tuple[list[DlcMetricRow], list[str]
         for result_json in result_jsons:
             rows.extend(_result_json_metric_rows(idx_start=len(rows), result_json=result_json))
 
-    if not rows:
-        rows.extend(_judged_sample_metric_rows(idx_start=len(rows), result_root=result_root))
+    existing_sample_jsonls = {
+        str(Path(sample_jsonl).resolve())
+        for row in rows
+        for sample_jsonl in row.sample_jsonls
+    }
+    for judged_row in _judged_sample_metric_rows(idx_start=len(rows), result_root=result_root):
+        judged_paths = {str(Path(sample_jsonl).resolve()) for sample_jsonl in judged_row.sample_jsonls}
+        if judged_paths & existing_sample_jsonls:
+            continue
+        judged_row.metric_id = str(len(rows))
+        rows.append(judged_row)
+        existing_sample_jsonls.update(judged_paths)
 
     summary_json = result_root / "summary.json"
     if summary_json.is_file():
@@ -2752,7 +2788,13 @@ def _correctness_from_metrics(value: Any) -> bool | None:
     return None
 
 
-def _sample_correctness(row: dict[str, Any], target_choice: str | None, prediction_choice: str | None) -> bool | None:
+def _sample_correctness(
+    row: dict[str, Any], metric_name: str, target_choice: str | None, prediction_choice: str | None
+) -> bool | None:
+    if metric_name in row:
+        result = _correctness_from_score_value(row[metric_name])
+        if result is not None:
+            return result
     for key in ("exact_match", "score", "judge_score", "llm_judge_score"):
         if key in row:
             result = _correctness_from_score_value(row[key])
@@ -2838,7 +2880,14 @@ def _preferred_sample_columns(rows: list[dict[str, Any]]) -> list[str]:
 
 
 def _read_sample_jsonls(
-    sample_files: list[str], *, job_id: str, metric_id: str, offset: int, limit: int, only_wrong: bool
+    sample_files: list[str],
+    *,
+    job_id: str,
+    metric_id: str,
+    metric_name: str,
+    offset: int,
+    limit: int,
+    only_wrong: bool,
 ) -> tuple[list[dict[str, Any]], int, ChoiceAnswerStats]:
     rows: list[dict[str, Any]] = []
     total = 0
@@ -2871,7 +2920,7 @@ def _read_sample_jsonls(
                     if prediction_choice is not None:
                         target_answers[prediction_choice] += 1
 
-                    correctness = _sample_correctness(item, target_choice, prediction_choice)
+                    correctness = _sample_correctness(item, metric_name, target_choice, prediction_choice)
                     if correctness is False:
                         wrong_total += 1
                     elif correctness is None:
@@ -3032,6 +3081,7 @@ async def get_defaults() -> DefaultsResponse:
         dlc_path=dlc_path,
         model_args="",
         tasks=_split_tasks(eval_section["tasks"]),
+        judge_backend=DEFAULT_JUDGE_BACKEND,
         judge_api_url=str(judge_api["base_url"]),
         judge_api_key=str(judge_api.get("key") or ""),
         env_vars=_dict_to_env_vars({str(key): value for key, value in eval_config["env"].items()}),
@@ -3254,6 +3304,13 @@ def _validate_eval_inference_mode(eval_inference_mode: str) -> str:
     return normalized
 
 
+def _validate_judge_backend(judge_backend: str) -> str:
+    normalized = judge_backend.strip().lower()
+    if normalized not in {"vllm", "api"}:
+        raise HTTPException(status_code=400, detail=f"Unsupported judge_backend: {judge_backend}")
+    return normalized
+
+
 def _validate_eval_job_name(job_name: str) -> str:
     normalized = job_name.strip()
     if not normalized:
@@ -3336,7 +3393,9 @@ def _request_dlc_config(request: EvalRequest | PreviewRequest | ExportYamlReques
     if not isinstance(dlc, dict):
         raise HTTPException(status_code=400, detail="dlc_config must contain a dlc object")
     eval_inference_mode = _validate_eval_inference_mode(request.eval_inference_mode)
-    if eval_inference_mode == "api":
+    judge_backend = _validate_judge_backend(request.judge_backend)
+    inline_local_judge = judge_backend == "vllm" and bool(_llm_as_judge_tasks(request.tasks))
+    if eval_inference_mode == "api" and not inline_local_judge:
         _apply_api_eval_dlc_resources(dlc)
     dlc_path = str(request.dlc_path or "").strip()
     if not dlc_path:
@@ -3495,22 +3554,40 @@ def _build_judge_config(
     if not judge_tasks:
         return None
 
-    api_url = request.judge_api_url.strip()
-    api_key = request.judge_api_key.strip()
-    if not api_url:
-        raise HTTPException(status_code=400, detail="LLM API URL is required for selected LLM-as-judge tasks")
-    if not api_key:
-        raise HTTPException(status_code=400, detail="LLM API key is required for selected LLM-as-judge tasks")
-
+    backend = _validate_judge_backend(request.judge_backend)
     config = _replace_user_placeholder(_default_judge_config(), request.user)
     config["env"].update(copy.deepcopy(eval_config["env"]))
     config["log"]["dir"] = str(eval_config["log"]["dir"])
-    config["judge"]["backend"] = "api"
-    judge_model = os.getenv("LMMS_EVAL_WEBUI_JUDGE_MODEL") or os.getenv("JUDGE_MODEL")
-    if judge_model:
+    config["judge"]["backend"] = backend
+    if backend == "api":
+        api_url = request.judge_api_url.strip()
+        api_key = request.judge_api_key.strip()
+        if not api_url:
+            raise HTTPException(status_code=400, detail="LLM API URL is required for selected LLM-as-judge tasks")
+        if not api_key:
+            raise HTTPException(status_code=400, detail="LLM API key is required for selected LLM-as-judge tasks")
+        judge_model = os.getenv("LMMS_EVAL_WEBUI_JUDGE_MODEL") or os.getenv("JUDGE_MODEL") or DEFAULT_JUDGE_MODEL
         config["judge"]["model"] = judge_model
-    config["judge"]["api"]["key"] = api_key
-    config["judge"]["api"]["base_url"] = api_url
+        config["judge"]["api"]["key"] = api_key
+        config["judge"]["api"]["base_url"] = api_url
+    else:
+        vllm = config["judge"].get("vllm")
+        if not isinstance(vllm, dict):
+            raise HTTPException(status_code=500, detail="Default judge config must contain judge.vllm")
+        config["judge"]["parallel"] = DEFAULT_LOCAL_JUDGE_PARALLEL
+        config["judge"]["model"] = DEFAULT_LOCAL_JUDGE_MODEL
+        config["judge"]["api"]["key"] = ""
+        config["judge"]["api"]["base_url"] = ""
+        vllm.update(
+            {
+                "model_path": DEFAULT_LOCAL_JUDGE_MODEL_PATH,
+                "tp": DEFAULT_LOCAL_JUDGE_TP,
+                "max_model_len": DEFAULT_LOCAL_JUDGE_MAX_MODEL_LEN,
+                "gpu_memory_utilization": DEFAULT_LOCAL_JUDGE_GPU_MEMORY_UTILIZATION,
+                "max_num_seqs": DEFAULT_LOCAL_JUDGE_MAX_NUM_SEQS,
+                "port": DEFAULT_LOCAL_JUDGE_PORT,
+            }
+        )
     config["eval"]["input_result_path"] = JUDGE_INPUT_RESULT_PLACEHOLDER
     config["eval"]["tasks"] = ",".join(judge_tasks)
     config["eval"]["output_path"] = JUDGE_OUTPUT_PATH_PLACEHOLDER
@@ -3680,6 +3757,7 @@ async def export_yaml(request: ExportYamlRequest) -> ExportYamlResponse:
             "api_url": request.api_url.strip(),
             "api_key": request.api_key.strip(),
             "dlc_path": request.dlc_path.strip(),
+            "judge_backend": _validate_judge_backend(request.judge_backend),
             "judge_api_url": request.judge_api_url.strip(),
             "judge_api_key": request.judge_api_key.strip(),
             **_request_dlc_config(request),
@@ -3704,6 +3782,7 @@ async def export_yaml(request: ExportYamlRequest) -> ExportYamlResponse:
         config["model_args"] = request.model_args
     if request.tasks:
         config["tasks"] = ",".join(request.tasks)
+    config["judge_backend"] = _validate_judge_backend(request.judge_backend)
     if request.judge_api_url.strip():
         config["judge_api_url"] = request.judge_api_url.strip()
     if request.judge_api_key.strip():
@@ -3744,10 +3823,12 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
         eval_config = config.get("eval", {})
         judge_api_url = str(config.get("judge_api_url") or "")
         judge_api_key = str(config.get("judge_api_key") or "")
+        judge_backend = str(config.get("judge_backend") or DEFAULT_JUDGE_BACKEND)
         judge_config = config.get("judge_config", {})
         if isinstance(judge_config, dict):
             judge_section = judge_config.get("judge", {})
             if isinstance(judge_section, dict):
+                judge_backend = str(judge_section.get("backend") or judge_backend)
                 api_section = judge_section.get("api", {})
                 if isinstance(api_section, dict):
                     judge_api_url = judge_api_url or str(api_section.get("base_url") or "")
@@ -3776,6 +3857,7 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
             dlc_path=dlc_path,
             model_args="",
             tasks=_split_tasks(eval_config.get("tasks", "")),
+            judge_backend=_validate_judge_backend(judge_backend),
             judge_api_url=judge_api_url,
             judge_api_key=judge_api_key,
             env_vars=_dict_to_env_vars({str(key): value for key, value in env_dict.items()}),
@@ -3817,6 +3899,7 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
         api_key=str(config.get("api_key") or ""),
         model_args=config.get("model_args", ""),
         tasks=tasks,
+        judge_backend=_validate_judge_backend(str(config.get("judge_backend") or DEFAULT_JUDGE_BACKEND)),
         judge_api_url=str(config.get("judge_api_url") or ""),
         judge_api_key=str(config.get("judge_api_key") or ""),
         env_vars=env_vars,
@@ -4058,6 +4141,7 @@ async def get_dlc_metric_samples(
         selected.sample_jsonls,
         job_id=job_id,
         metric_id=metric_id,
+        metric_name=selected.metric_name,
         offset=offset,
         limit=limit,
         only_wrong=only_wrong,

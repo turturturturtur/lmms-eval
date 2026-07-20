@@ -86,6 +86,7 @@ def _eval_payload() -> dict:
         "dlc_path": "/tmp/dlc",
         "model_args": "",
         "tasks": ["ai2d"],
+        "judge_backend": server.DEFAULT_JUDGE_BACKEND,
         "judge_api_url": "",
         "judge_api_key": "",
         "env_vars": "",
@@ -243,11 +244,29 @@ def test_defaults_leave_evaluate_user_empty_and_keep_placeholders(monkeypatch: p
     assert server.USER_PLACEHOLDER in data["model"]
     assert server.USER_PLACEHOLDER in data["output_path"]
     assert server.USER_PLACEHOLDER in data["env_vars"]
+    assert data["judge_backend"] == "vllm"
     assert data["judge_api_url"] == server.DEFAULT_JUDGE_API_URL
     assert data["judge_api_key"] == ""
     assert data["dlc_config"]["dlc"]["binary"] == server.DEFAULT_DLC_PATH_TEMPLATE
     assert server.USER_PLACEHOLDER in data["dlc_config"]["dlc"]["run_script"]
     assert "configured-user" not in json.dumps(data)
+
+
+def test_defaults_use_generic_tasks_instead_of_qwen_specializations():
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.get("/defaults")
+
+    assert response.status_code == 200
+    tasks = response.json()["tasks"]
+    assert "mmmu_val" in tasks
+    assert "mmmu_pro_standard_cot_reasoning" in tasks
+    assert "mathvision_reason_test_reasoning" in tasks
+    assert not any("qwen3" in task.lower() for task in tasks)
+
+    judge_tasks = server._split_tasks(server._default_judge_config()["eval"]["tasks"])
+    assert not any("qwen3" in task.lower() for task in judge_tasks)
 
 
 def test_username_alias_placeholder_is_replaced_for_webui_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -375,7 +394,10 @@ def test_preview_rejects_legacy_qwen3_worker(tmp_path: Path, monkeypatch: pytest
     assert "qwen35_worker.sh" in response.json()["detail"]
 
 
-def test_judge_preview_uses_qwen35_submit_and_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_local_judge_preview_uses_qwen35_inline_defaults_without_api_credentials(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
     submit_script = tmp_path / "qwen35_submit.sh"
     submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
     monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
@@ -385,8 +407,6 @@ def test_judge_preview_uses_qwen35_submit_and_worker(tmp_path: Path, monkeypatch
 
     payload = _eval_payload()
     payload["tasks"] = ["ocrbench"]
-    payload["judge_api_url"] = "https://example.invalid/v1/chat/completions"
-    payload["judge_api_key"] = "sk-test"
 
     response = client.post("/eval/preview", json=payload)
 
@@ -395,15 +415,111 @@ def test_judge_preview_uses_qwen35_submit_and_worker(tmp_path: Path, monkeypatch
     assert "qwen35_submit.sh" in command
     assert '"run_script": "/tmp/qwen35_worker.sh"' in command
     assert "config_judge.json" in command
-    assert '"model": "deepseek-v4-flash"' in command
-    assert '"base_url": "https://example.invalid/v1/chat/completions"' in command
+    assert '"backend": "vllm"' in command
+    assert f'"model": "{server.DEFAULT_LOCAL_JUDGE_MODEL}"' in command
+    assert f'"model_path": "{server.DEFAULT_LOCAL_JUDGE_MODEL_PATH}"' in command
+    assert f'"tp": {server.DEFAULT_LOCAL_JUDGE_TP}' in command
+    assert f'"parallel": {server.DEFAULT_LOCAL_JUDGE_PARALLEL}' in command
+    assert '"key": ""' in command
     assert "qwen3_vl_worker" not in command
     assert "qwen3_vl_submit" not in command
+
+
+@pytest.mark.parametrize(
+    ("judge_api_url", "judge_api_key", "expected_detail"),
+    [
+        ("", "", "LLM API URL is required"),
+        ("https://judge.example.invalid/v1", "", "LLM API key is required"),
+    ],
+)
+def test_api_judge_still_requires_url_and_key(
+    judge_api_url: str,
+    judge_api_key: str,
+    expected_detail: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["tasks"] = ["ocrbench"]
+    payload["judge_backend"] = "api"
+    payload["judge_api_url"] = judge_api_url
+    payload["judge_api_key"] = judge_api_key
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert expected_detail in response.json()["detail"]
+
+
+def test_preview_rejects_unknown_judge_backend(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["tasks"] = ["ocrbench"]
+    payload["judge_backend"] = "unsupported"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Unsupported judge_backend: unsupported"
+
+
+@pytest.mark.parametrize("judge_backend", ["vllm", "api"])
+def test_dlc_yaml_roundtrip_preserves_judge_backend(
+    judge_backend: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["tasks"] = ["ocrbench"]
+    payload["judge_backend"] = judge_backend
+    if judge_backend == "api":
+        payload["judge_api_url"] = "https://judge.example.invalid/v1"
+        payload["judge_api_key"] = "sk-roundtrip"
+
+    export_response = client.post("/eval/export-yaml", json=payload)
+
+    assert export_response.status_code == 200
+    yaml_content = export_response.json()["yaml_content"]
+    assert f"judge_backend: {judge_backend}" in yaml_content
+
+    import_response = client.post("/eval/import-yaml", json={"yaml_content": yaml_content})
+
+    assert import_response.status_code == 200
+    imported = import_response.json()
+    assert imported["judge_backend"] == judge_backend
+    assert imported["tasks"] == ["ocrbench"]
+    if judge_backend == "api":
+        assert imported["judge_api_url"] == "https://judge.example.invalid/v1"
+        assert imported["judge_api_key"] == "sk-roundtrip"
+    else:
+        assert imported["judge_api_url"] == ""
+        assert imported["judge_api_key"] == ""
 
 
 def test_ckpt_reasoning_task_syncs_judge_key_into_eval_env():
     payload = _eval_payload()
     payload["tasks"] = ["mathverse_testmini_reasoning"]
+    payload["judge_backend"] = "api"
     payload["judge_api_url"] = "https://judge.example.invalid/v1"
     payload["judge_api_key"] = "sk-judge-secret"
 
@@ -459,6 +575,7 @@ def test_api_eval_judge_preview_redacts_eval_and_judge_tokens(tmp_path: Path, mo
     payload = _eval_payload()
     payload["eval_inference_mode"] = "api"
     payload["tasks"] = ["simplevqa"]
+    payload["judge_backend"] = "api"
     payload["api_url"] = "https://api.example.invalid/v1"
     payload["api_key"] = "eval-api-secret-for-judge-preview"
     payload["judge_api_url"] = "https://judge.example.invalid/v1"
@@ -472,6 +589,34 @@ def test_api_eval_judge_preview_redacts_eval_and_judge_tokens(tmp_path: Path, mo
     assert "eval-api-secret-for-judge-preview" not in command
     assert "judge-api-secret-for-preview" not in command
     assert command.count(server.MASKED_SECRET) >= 2
+
+
+def test_api_eval_with_local_judge_keeps_eight_gpu_dlc(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["tasks"] = ["simplevqa"]
+    payload["judge_backend"] = "vllm"
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "sk-api-secret"
+    payload["dlc_config"]["dlc"]["worker_gpu"] = 8
+
+    request = server.PreviewRequest(**payload)
+    dlc_config = server._request_dlc_config(request)
+    response = client.post("/eval/preview", json=payload)
+
+    assert dlc_config["dlc"]["worker_gpu"] == 8
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert '"backend": "openai"' in command
+    assert '"backend": "vllm"' in command
+    assert '"worker_gpu": 8' in command
 
 
 def test_dlc_job_list_marks_kill_permission_for_owner(monkeypatch: pytest.MonkeyPatch):

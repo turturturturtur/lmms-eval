@@ -137,6 +137,7 @@ run_scripts/
 | `model.path` | string | 模型路径或 HuggingFace model_id |
 | `model.tp` | int | Tensor Parallelism 大小（每张卡上的 GPU 数 / TP = backend 数量） |
 | `model.max_model_len` | int | vLLM `max-model-len` |
+| `model.task_native_max_new_tokens` | bool | 是否严格使用任务 YAML 的 `max_new_tokens`，不应用 model-level cap；开启后任务缺失或给出非法长度会直接报错 |
 | `model.gpu_memory_utilization` | float | vLLM GPU 内存利用率 |
 | `model.max_num_seqs` | int | vLLM 最大并发序列数 |
 | `model.base_port` | int | vLLM backend 起始端口 |
@@ -148,6 +149,8 @@ run_scripts/
 | `eval.task_timeout_seconds` | int | 单个 lmms-eval task 的硬超时时间，必填正整数 |
 | `eval.task_timeout_kill_after_seconds` | int | task 超时后 SIGTERM 到 SIGKILL 的等待时间，必填正整数 |
 | `eval.debug` | bool | 调试模式（`true` 时退出不杀死 vLLM 进程） |
+
+`eval.gen_kwargs` 默认不再注入全局 `max_new_tokens`，因此未显式覆盖时保留任务 YAML 的生成配置。需要完全采用任务原生长度时，可设置 `model.task_native_max_new_tokens=true`；启用前应确认 `model.max_model_len` 足以容纳任务长度和输入上下文。
 
 ### `config_dlc.json` — DLC 集群调度配置
 
@@ -204,25 +207,25 @@ run_scripts/
   "env": {
     "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
-    "venv_path": "/mnt/cpfsB/<USER>/lmms-eval/.venv"
+    "venv_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv"
   },
   "log": {
-    "dir": "/mnt/cpfsB/<USER>/judge_logs"
+    "dir": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/judge_logs"
   },
   "judge": {
-    "backend": "api",
-    "parallel": 128,
-    "model": "gpt-4o-mini",
+    "backend": "vllm",
+    "parallel": 32,
+    "model": "Qwen3.5-9B",
     "api": {
       "key": "",
       "base_url": ""
     },
     "vllm": {
-      "model_path": "/mnt/cpfsB/public_data/public_model/Qwen3.5/Qwen3.5-27B",
-      "tp": 4,
-      "max_model_len": 32768,
-      "gpu_memory_utilization": "0.9",
-      "max_num_seqs": 512,
+      "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+      "tp": 8,
+      "max_model_len": 40960,
+      "gpu_memory_utilization": "0.88",
+      "max_num_seqs": 192,
       "port": 8002
     }
   },
@@ -242,7 +245,7 @@ run_scripts/
 |---------|------|------|
 | `judge.backend` | string | Judge 后端类型：`api`（调用远程 API）或 `vllm`（本地启动 vLLM） |
 | `judge.parallel` | int | 并行 judge 的 worker 数量 |
-| `judge.model` | string | Judge 模型名称（API 后端时使用） |
+| `judge.model` | string | Judge 请求使用的模型名称；API 模式是远端模型名，本地模式必须与 vLLM served model name 一致 |
 | `judge.api.key` | string | API Key（可选，优先从环境变量读取） |
 | `judge.api.base_url` | string | API Base URL（可选，优先从环境变量读取） |
 | `judge.vllm.model_path` | string | vLLM 后端模型路径（`backend=vllm` 时生效） |
@@ -360,7 +363,12 @@ dlc submit pytorchjob --command="..."
 
 ## Judge 评测
 
-部分任务（如 `mmbench_en_dev`、`mmmu_val` 等）在模型生成答案后，还需要一个 **Judge 模型** 对答案进行打分或评判。`run_judge.sh` + `config_judge.json` 提供了独立的 judge 流程。
+部分任务（如 `ocrbench`、`mmbench_en_dev`、`mmmu_val` 等）在模型生成答案后，还需要一个 **Judge 模型** 对答案进行打分或评判。`run_judge.sh` + `config_judge.json` 提供 Judge 流程；WebUI 默认选择本地 vLLM，也可以切换到兼容 OpenAI 的 API。
+
+WebUI / `qwen35_submit.sh` 的两种 DLC 行为不同：
+
+- `judge.backend=vllm`：只提交一个 `workers=1, worker_gpu=8` 的 eval DLC。eval 成功后，worker 先停止并等待评测 vLLM 完全释放 GPU，再在同一 Pod 用 Qwen3.5-9B、TP=8 启动本地 judge。
+- `judge.backend=api`：保留原流程；eval DLC 成功后另行提交 CPU-only judge DLC。
 
 ### 运行 Judge
 
@@ -373,7 +381,7 @@ bash run_scripts/run_judge.sh run_scripts/config_judge.json
 
 ### Judge 后端选择
 
-#### 1. API 后端（推荐，无需本地 GPU）
+#### 1. API 后端（无需本地 Judge GPU）
 
 在 `config_judge.json` 中设置：
 
@@ -399,8 +407,11 @@ bash run_scripts/run_judge.sh run_scripts/config_judge.json
   "judge": {
     "backend": "vllm",
     "vllm": {
-      "model_path": "/mnt/cpfsB/public_data/public_model/Qwen3.5/Qwen3.5-27B",
-      "tp": 4,
+      "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+      "tp": 8,
+      "max_model_len": 40960,
+      "gpu_memory_utilization": "0.88",
+      "max_num_seqs": 192,
       "port": 8002
     }
   }
@@ -412,6 +423,8 @@ bash run_scripts/run_judge.sh run_scripts/config_judge.json
 2. 等待服务就绪
 3. 调用 `python -m lmms_eval judge` 执行评判
 4. 退出时自动停止 vLLM 进程（`debug=false` 时）
+
+WebUI 的本地模式固定为单节点 8 卡；`workers != 1` 或 `worker_gpu != 8` 会直接报错，不会自动调整资源或降级为 API。
 
 ### Judge 输入输出
 

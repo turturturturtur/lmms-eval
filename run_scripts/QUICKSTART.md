@@ -79,12 +79,20 @@
 ```json
 {
   "judge": {
-    "backend": "api",
-    "parallel": 128,
-    "model": "gpt-4o-mini",
+    "backend": "vllm",
+    "parallel": 32,
+    "model": "Qwen3.5-9B",
     "api": {
       "key": "",
       "base_url": ""
+    },
+    "vllm": {
+      "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+      "tp": 8,
+      "max_model_len": 40960,
+      "gpu_memory_utilization": "0.88",
+      "max_num_seqs": 192,
+      "port": 8002
     }
   },
   "eval": {
@@ -96,7 +104,7 @@
 ```
 
 - **`judge.backend`**：`api`（调用远程 OpenAI 兼容 API）或 `vllm`（本地启动 vLLM 作为 judge 后端）。
-- **`judge.model`**：API 后端使用的 judge 模型名称。
+- **`judge.model`**：Judge 请求模型名；API 模式填远端模型名，本地模式必须与 vLLM served model name 一致。
 - **`judge.api.key` / `base_url`**：API 密钥和地址，建议通过环境变量注入而不是写死在配置里。
 - **`eval.input_result_path`**：待 judge 的 eval 结果目录（包含 `*samples_*.jsonl` 文件）。
 - **`eval.tasks`**：需要 judge 的任务列表，逗号分隔。
@@ -159,6 +167,8 @@ bash run_scripts/qwen3_vl_submit.sh run_scripts/config_dlc.json run_scripts/conf
 | 本地换模型 | `bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json <model_path>` |
 | 提交集群 | `bash run_scripts/qwen3_vl_submit.sh run_scripts/config_dlc.json run_scripts/config_eval.json` |
 | 本地 Judge | `bash run_scripts/run_judge.sh run_scripts/config_judge.json` |
+
+WebUI 选择需要 LLM-as-judge 的 task 时，默认滑块位于 **Local vLLM**：Qwen3.5-9B 会在原 8 卡 eval DLC 内、评测 vLLM 释放后继续启动。切到 **API** 才显示并使用 LLM API URL / Key，且保留独立 CPU judge DLC 流程。
 
 ---
 

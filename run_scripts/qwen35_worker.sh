@@ -4,7 +4,7 @@
 # one by one. This is a standalone Qwen3.5 path with its own submitter/worker.
 #
 # Usage:
-#   bash run_scripts/qwen35_worker.sh [config.json] [optional_model_path]
+#   bash run_scripts/qwen35_worker.sh [config.json] [optional_model_path] [optional_judge_config.json]
 
 set -euo pipefail
 
@@ -16,6 +16,7 @@ source "${SCRIPT_DIR}/eval_common.sh"
 
 CONFIG="${1:-${SCRIPT_DIR}/config_eval.json}"
 CMD_MODEL_PATH="${2:-}"
+JUDGE_CONFIG="${3:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
@@ -24,6 +25,17 @@ MODEL_BACKEND="$(printf '%s' "${MODEL_BACKEND}" | tr '[:upper:]' '[:lower:]')"
 if [[ "${MODEL_BACKEND}" != "vllm" && "${MODEL_BACKEND}" != "openai" ]]; then
     echo "[ERROR] model.backend must be vllm or openai, got: ${MODEL_BACKEND}" >&2
     exit 2
+fi
+if [[ -n "${JUDGE_CONFIG}" ]]; then
+    if [[ ! -f "${JUDGE_CONFIG}" ]]; then
+        echo "[ERROR] Inline judge config not found: ${JUDGE_CONFIG}" >&2
+        exit 2
+    fi
+    INLINE_JUDGE_BACKEND="$(jq -r '.judge.backend // ""' "${JUDGE_CONFIG}")"
+    if [[ "${INLINE_JUDGE_BACKEND}" != "vllm" ]]; then
+        echo "[ERROR] qwen35_worker.sh only accepts an inline judge config with judge.backend=vllm, got: ${INLINE_JUDGE_BACKEND:-<empty>}" >&2
+        exit 2
+    fi
 fi
 BATCH_SIZE="$(cfg_int '.eval.batch_size // 1')"
 if (( BATCH_SIZE < 1 )); then
@@ -235,6 +247,51 @@ print("[INFO] lmms-eval venv dependency check passed.")
 PY
 }
 
+resolve_qwen35_stop_token_ids() {
+    local _vllm_pythonpath
+    _vllm_pythonpath="$(innovator_vllm_pythonpath)"
+    MODEL_STOP_TOKEN_IDS_JSON="$(
+        INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 \
+        PYTHONPATH="${_vllm_pythonpath}" \
+        "${VENV_PATH}/bin/python" - "${MODEL}" <<'PY'
+import json
+import os
+import sys
+
+from transformers import AutoTokenizer
+
+
+model = sys.argv[1]
+stop_token = "<|im_end|>"
+tokenizer = AutoTokenizer.from_pretrained(
+    model,
+    trust_remote_code=True,
+    local_files_only=os.environ.get("TRANSFORMERS_OFFLINE") == "1",
+)
+token_ids = tokenizer.encode(stop_token, add_special_tokens=False)
+if len(token_ids) != 1:
+    raise ValueError(
+        f"Qwen3.5 stop token {stop_token!r} must encode to exactly one token, got {token_ids!r}"
+    )
+token_id = token_ids[0]
+if isinstance(token_id, bool) or not isinstance(token_id, int) or token_id < 0:
+    raise ValueError(f"Qwen3.5 stop token ID must be a non-negative integer, got {token_id!r}")
+decoded_token = tokenizer.convert_ids_to_tokens(token_id)
+if decoded_token != stop_token:
+    raise ValueError(
+        f"Qwen3.5 stop token round-trip mismatch: expected {stop_token!r}, got {decoded_token!r}"
+    )
+print(json.dumps([token_id], separators=(",", ":")))
+PY
+    )"
+    if ! jq -e 'type == "array" and length == 1 and all(.[]; type == "number" and floor == . and . >= 0)' \
+        <<< "${MODEL_STOP_TOKEN_IDS_JSON}" >/dev/null; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Invalid Qwen3.5 stop token ID payload: ${MODEL_STOP_TOKEN_IDS_JSON}" >&2
+        return 2
+    fi
+    echo "[INFO][Machine ${MACHINE_RANK}] Qwen3.5 model stop token IDs: ${MODEL_STOP_TOKEN_IDS_JSON}"
+}
+
 check_api_runtime_deps() {
     VENV_PATH="${VENV_PATH}" "${VENV_PATH}/bin/python" - <<'PY'
 import importlib.metadata as md
@@ -295,8 +352,12 @@ task_slug() {
 }
 
 build_vllm_backend_model_args() {
+    if [[ -z "${MODEL_STOP_TOKEN_IDS_JSON:-}" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Qwen3.5 stop token IDs were not resolved" >&2
+        return 2
+    fi
     local args
-    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True"
+    args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},task_native_max_new_tokens=${MODEL_TASK_NATIVE_MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True,stop_token_ids=${MODEL_STOP_TOKEN_IDS_JSON}"
     if [[ -n "${MODEL_ENABLE_THINKING}" ]]; then
         args="${args},enable_thinking=${MODEL_ENABLE_THINKING}"
     fi
@@ -541,6 +602,48 @@ run_lmms_eval() {
     echo "[INFO][Machine ${MACHINE_RANK}] Evaluation completed successfully for all tasks."
 }
 
+wait_for_eval_gpu_release() {
+    local active_pids=""
+    local attempt
+    echo "[INFO][Machine ${MACHINE_RANK}] Waiting for all eval GPU processes to exit before local judge..."
+    for attempt in {1..60}; do
+        active_pids="$(nvidia-smi --query-compute-apps=pid --format=csv,noheader,nounits 2>/dev/null | sed '/^[[:space:]]*$/d' | sort -u | tr '\n' ' ')"
+        if [[ -z "${active_pids}" ]]; then
+            echo "[INFO][Machine ${MACHINE_RANK}] Eval GPU processes released; all 8 GPUs are available for local judge."
+            return 0
+        fi
+        sleep 2
+    done
+    echo "[ERROR][Machine ${MACHINE_RANK}] Eval GPU processes did not exit before local judge: ${active_pids}" >&2
+    return 1
+}
+
+run_inline_local_judge() {
+    if [[ -z "${JUDGE_CONFIG}" ]]; then
+        return 0
+    fi
+    if (( WORLD_SIZE != 1 || RANK != 0 )); then
+        echo "[ERROR] Inline local judge requires WORLD_SIZE=1 and RANK=0, got WORLD_SIZE=${WORLD_SIZE} RANK=${RANK}" >&2
+        return 2
+    fi
+    local gpu_count
+    gpu_count="$(nvidia-smi -L | wc -l)"
+    if (( gpu_count != 8 )); then
+        echo "[ERROR] Inline local judge requires exactly 8 visible GPUs, got: ${gpu_count}" >&2
+        return 2
+    fi
+
+    if [[ "${MODEL_BACKEND}" == "vllm" ]]; then
+        echo "[INFO][Machine ${MACHINE_RANK}] Eval succeeded; stopping eval vLLM backends before inline local judge."
+        cleanup_vllm
+    fi
+    wait_for_eval_gpu_release
+
+    echo "[INFO][Machine ${MACHINE_RANK}] Starting inline local vLLM judge in the current DLC worker."
+    bash "${SCRIPT_DIR}/run_judge.sh" "${JUDGE_CONFIG}"
+    echo "[INFO][Machine ${MACHINE_RANK}] Inline local vLLM judge completed successfully."
+}
+
 if [[ "${MODEL_BACKEND}" == "openai" ]]; then
     compute_api_resources
     setup_logging
@@ -565,6 +668,7 @@ else
     prepend_pythonpath_bins
     setup_native_libs
     check_runtime_deps
+    resolve_qwen35_stop_token_ids
     setup_cleanup_trap
 
     launch_vllm_backends
@@ -580,3 +684,5 @@ else
 
     run_lmms_eval
 fi
+
+run_inline_local_judge

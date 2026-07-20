@@ -9,6 +9,10 @@ doc_to_messages: !function utils_qwen3_official.mmmu_doc_to_messages
 # Use official evaluation logic with GPT judge fallback
 process_results: !function utils_qwen3_official.mmmu_process_results_official
 
+generation_kwargs:
+  max_new_tokens: 128
+  until: []
+
 metric_list:
   - metric: mmmu_acc_official
     aggregation: !function utils_qwen3_official.mmmu_aggregate_results_official

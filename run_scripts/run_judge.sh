@@ -125,7 +125,7 @@ export FORCE_COLOR=0
 export LOGURU_NO_COLOR=1
 
 # 虚拟环境路径
-VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfsB/<USER>/lmms-eval/.venv"')
+VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv"')
 
 # 数据集缓存与离线模式
 LMMS_EVAL_DATASETS_CACHE=$(cfg '.env.lmms_eval_datasets_cache // empty')
@@ -143,24 +143,47 @@ LOG_DIR="${LOG_BASE}/judge_$(date +%Y-%m-%d_%H-%M-%S)"
 mkdir -p "${LOG_DIR}"
 
 # ── Judge 配置 ────────────────────────────────────────────────────────────────
-JUDGE_BACKEND=$(cfg '.judge.backend // "api"')  # api 或 vllm
-JUDGE_PARALLEL=$(cfg_int '.judge.parallel // 128')
-JUDGE_MODEL=$(cfg '.judge.model // empty')
-if [[ -z "${JUDGE_MODEL}" || "${JUDGE_MODEL}" == "null" ]]; then
-    JUDGE_MODEL=$(basename "${VLLM_MODEL_PATH}")
-fi
+JUDGE_BACKEND=$(cfg '.judge.backend // "vllm"')  # api 或 vllm
+JUDGE_PARALLEL=$(cfg_int '.judge.parallel // 32')
 
 # ── API 后端配置 (当 backend=api 时使用) ───────────────────────────────────────
 API_KEY=$(cfg '.judge.api.key // empty')
 API_BASE_URL=$(cfg '.judge.api.base_url // empty')
 
 # ── vLLM 后端配置 (当 backend=vllm 时使用) ─────────────────────────────────────
-VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/cpfsB/<USER>/data/model/Qwen3-VL-8B-Instruct"')
-VLLM_TP=$(cfg_int '.judge.vllm.tp // 1')
-VLLM_MAX_MODEL_LEN=$(cfg_int '.judge.vllm.max_model_len // 32768')
-VLLM_GPU_MEM_UTIL=$(cfg '.judge.vllm.gpu_memory_utilization // "0.8"')
-VLLM_MAX_NUM_SEQS=$(cfg_int '.judge.vllm.max_num_seqs // 512')
+VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B"')
+VLLM_TP=$(cfg_int '.judge.vllm.tp // 8')
+VLLM_MAX_MODEL_LEN=$(cfg_int '.judge.vllm.max_model_len // 40960')
+VLLM_GPU_MEM_UTIL=$(cfg '.judge.vllm.gpu_memory_utilization // "0.88"')
+VLLM_MAX_NUM_SEQS=$(cfg_int '.judge.vllm.max_num_seqs // 192')
 VLLM_PORT=$(cfg_int '.judge.vllm.port // 8002')
+JUDGE_MODEL=$(cfg '.judge.model // empty')
+if [[ -z "${JUDGE_MODEL}" || "${JUDGE_MODEL}" == "null" ]]; then
+    JUDGE_MODEL=$(basename "${VLLM_MODEL_PATH}")
+fi
+
+case "${JUDGE_BACKEND}" in
+    api|vllm) ;;
+    *) echo "[ERROR] Unknown judge backend: ${JUDGE_BACKEND}. Use 'api' or 'vllm'" >&2; exit 2 ;;
+esac
+if ! [[ "${JUDGE_PARALLEL}" =~ ^[0-9]+$ ]] || (( JUDGE_PARALLEL < 1 )); then
+    echo "[ERROR] judge.parallel must be a positive integer, got: ${JUDGE_PARALLEL}" >&2
+    exit 2
+fi
+if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
+    if [[ ! -d "${VLLM_MODEL_PATH}" ]]; then
+        echo "[ERROR] Local judge model directory not found: ${VLLM_MODEL_PATH}" >&2
+        exit 2
+    fi
+    for pair in "tp:${VLLM_TP}" "max_model_len:${VLLM_MAX_MODEL_LEN}" "max_num_seqs:${VLLM_MAX_NUM_SEQS}" "port:${VLLM_PORT}"; do
+        name="${pair%%:*}"
+        value="${pair#*:}"
+        if ! [[ "${value}" =~ ^[0-9]+$ ]] || (( value < 1 )); then
+            echo "[ERROR] judge.vllm.${name} must be a positive integer, got: ${value}" >&2
+            exit 2
+        fi
+    done
+fi
 
 # ── 评测配置 ──────────────────────────────────────────────────────────────────
 # 优先从 input_result_path 读取，如果没有则尝试从旧的 output_path 读取
@@ -205,7 +228,9 @@ fi
 
 echo "[INFO] Activating virtual environment: ${VENV_PATH}"
 source "${VENV_PATH}/bin/activate"
-export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+INNOVATOR_SITECUSTOMIZE="${LMMS_EVAL_ROOT}/run_scripts/lmms_eval_sitecustomize"
+export PYTHONPATH="${INNOVATOR_SITECUSTOMIZE}:${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+export INNOVATOR_LMMS_HIDE_FLASH_ATTN=1
 
 # 验证 lmms-eval 可用
 if ! python -c "import lmms_eval" 2>/dev/null; then
@@ -218,6 +243,7 @@ fi
 # §3  进程管理（cleanup on exit / signal）
 # ══════════════════════════════════════════════════════════════════════════════
 VLLM_PID=""
+VLLM_OWNED=0
 cleanup() {
     trap - EXIT INT TERM
     
@@ -227,10 +253,11 @@ cleanup() {
         return
     fi
     
-    if [[ -n "${VLLM_PID}" ]]; then
+    if [[ "${VLLM_OWNED}" == "1" && -n "${VLLM_PID}" ]]; then
         echo "[INFO] Stopping vLLM judge backend (PID: ${VLLM_PID})..."
-        kill -9 $(pgrep -P "${VLLM_PID}" 2>/dev/null) 2>/dev/null || true
-        kill -9 "${VLLM_PID}" 2>/dev/null || true
+        kill -TERM -- "-${VLLM_PID}" 2>/dev/null || kill -TERM "${VLLM_PID}" 2>/dev/null || true
+        sleep 1
+        kill -KILL -- "-${VLLM_PID}" 2>/dev/null || kill -KILL "${VLLM_PID}" 2>/dev/null || true
         echo "[INFO] vLLM stopped."
     fi
 }
@@ -243,7 +270,11 @@ JUDGE_BASE_URL=""
 JUDGE_API_KEY=""
 
 # 启动 vLLM 的独立脚本路径
-START_VLLM_SCRIPT="$(dirname "$0")/tools/start_vllm_judge.sh"
+START_VLLM_SCRIPT="${LMMS_EVAL_ROOT}/tools/start_vllm_judge.sh"
+if [[ ! -f "${START_VLLM_SCRIPT}" ]]; then
+    echo "[ERROR] Local vLLM launcher not found: ${START_VLLM_SCRIPT}" >&2
+    exit 2
+fi
 
 start_vllm_backend() {
     JUDGE_BASE_URL="http://localhost:${VLLM_PORT}/v1"
@@ -267,6 +298,7 @@ except Exception:
         if [[ "${matched}" == "true" ]]; then
             echo "[INFO] Found existing vLLM on port ${VLLM_PORT} with model ${JUDGE_MODEL}, reusing it."
             VLLM_PID=$(lsof -ti :"${VLLM_PORT}" 2>/dev/null | head -n1 || echo "")
+            VLLM_OWNED=0
             return
         fi
     fi
@@ -286,10 +318,15 @@ except Exception:
         --log "${VLLM_LOG}" \
     ) || { echo "[ERROR] Failed to start vLLM judge backend"; exit 1; }
     
-    # 打印子脚本日志（过滤掉 VLLM_PID= 那一行）
-    echo "${_output}" | grep -v '^VLLM_PID='
+    # 打印子脚本日志（过滤掉机器可读的进程元数据行）
+    echo "${_output}" | grep -v -E '^VLLM_(PID|OWNED)='
     
     VLLM_PID=$(echo "${_output}" | grep '^VLLM_PID=' | cut -d= -f2)
+    VLLM_OWNED=$(echo "${_output}" | grep '^VLLM_OWNED=' | cut -d= -f2)
+    if [[ "${VLLM_OWNED}" != "1" || -z "${VLLM_PID}" ]]; then
+        echo "[ERROR] Local vLLM launcher did not return an owned PID" >&2
+        exit 2
+    fi
 }
 
 load_api_keys() {
@@ -336,6 +373,17 @@ load_api_keys() {
 
 if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
     start_vllm_backend
+    export OPENAI_API_KEY="${JUDGE_API_KEY}"
+    export OPENAI_API_URL="${JUDGE_BASE_URL%/}/chat/completions"
+    export OPENAI_API_BASE="${JUDGE_BASE_URL}"
+    export OPENAI_BASE_URL="${JUDGE_BASE_URL}"
+    export API_TYPE="openai"
+    export JUDGE_API_TYPE="openai"
+    export JUDGE_DISABLE_THINKING=1
+    export MODEL_VERSION="${JUDGE_MODEL}"
+    export JUDGE_MODEL_NAME="${JUDGE_MODEL}"
+    export SCIVQR_OPEN_JUDGE_MODEL="${JUDGE_MODEL}"
+    export SCIVQR_REASONING_JUDGE_MODEL="${JUDGE_MODEL}"
     
 elif [[ "${JUDGE_BACKEND}" == "api" ]]; then
     # ── 使用 API 后端 ─────────────────────────────────────────────────────────
@@ -383,9 +431,6 @@ elif [[ "${JUDGE_BACKEND}" == "api" ]]; then
     export OPENAI_API_BASE="${JUDGE_BASE_URL}"
     export API_TYPE="openai"
     
-else
-    echo "[ERROR] Unknown judge backend: ${JUDGE_BACKEND}. Use 'api' or 'vllm'"
-    exit 1
 fi
 
 # ══════════════════════════════════════════════════════════════════════════════
