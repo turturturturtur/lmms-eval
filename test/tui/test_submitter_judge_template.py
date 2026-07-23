@@ -47,7 +47,7 @@ def _configs(tmp_path: Path, lmms_root: Path) -> tuple[Path, Path, Path]:
                 "worker_cpu": 4,
                 "worker_memory": "8Gi",
                 "worker_shared_memory": "2Gi",
-                "priority": 5,
+                "priority": 6,
                 "job_max_running_time_minutes": 60,
                 "running_timeout": 3600,
                 "worker_image": "judge-image",
@@ -132,6 +132,7 @@ def test_judge_dlc_uses_cpu_only_template_resource(script_name: str, tmp_path: P
     assert "--workspace_id=workspace-eval" in eval_line
     assert "--worker_gpu=8" in eval_line
     assert "--worker_image=eval-image" in eval_line
+    assert "--priority=6" in eval_line
     assert REQUIRED_NAS_MOUNT_URI in eval_line
 
     assert f"--resource_id={DEFAULT_DLC_RESOURCE_ID}" in judge_line
@@ -141,6 +142,7 @@ def test_judge_dlc_uses_cpu_only_template_resource(script_name: str, tmp_path: P
     assert "--worker_memory=8Gi" in judge_line
     assert "--worker_shared_memory=2Gi" in judge_line
     assert "--worker_image=judge-image" in judge_line
+    assert "--priority=6" in judge_line
     assert REQUIRED_NAS_MOUNT_URI in judge_line
 
 
