@@ -248,6 +248,8 @@ def test_defaults_leave_evaluate_user_empty_and_keep_placeholders(monkeypatch: p
     assert data["judge_api_url"] == server.DEFAULT_JUDGE_API_URL
     assert data["judge_api_key"] == ""
     assert data["dlc_config"]["dlc"]["binary"] == server.DEFAULT_DLC_PATH_TEMPLATE
+    assert data["dlc_config"]["dlc"]["priority"] == 6
+    assert data["dlc_config"]["dlc"]["judge"]["priority"] == 6
     assert server.USER_PLACEHOLDER in data["dlc_config"]["dlc"]["run_script"]
     assert "configured-user" not in json.dumps(data)
 
