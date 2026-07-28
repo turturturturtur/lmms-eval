@@ -750,19 +750,20 @@ export default function LogViewer() {
     try {
       const historyWindow = makeInitialHistoryWindow()
       const payload = await requestJobs(historyWindow.startTime, historyWindow.endTime)
-      setJobs(payload.jobs)
+      const initialJobs = mergeJobsById([], payload.jobs)
+      setJobs(initialJobs)
       setJobsFetchedAt(payload.fetched_at)
       setJobsSource(payload.source)
       setHistoryStartTime(payload.start_time)
       historyStartTimeRef.current = payload.start_time
       setHistoryEndTime(payload.end_time)
       setSelectedJob(prev => {
-        if (prev && payload.jobs.some(job => job.job_id === prev.job_id)) {
-          return payload.jobs.find(job => job.job_id === prev.job_id) ?? prev
+        if (prev && initialJobs.some(job => job.job_id === prev.job_id)) {
+          return initialJobs.find(job => job.job_id === prev.job_id) ?? prev
         }
-        return payload.jobs[0] ?? null
+        return initialJobs[0] ?? null
       })
-      return payload.jobs
+      return initialJobs
     } catch (error) {
       setJobs([])
       setSelectedJob(null)
