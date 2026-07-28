@@ -15,6 +15,9 @@ generation_kwargs:
   top_p: 1.0
   num_beams: 1
   do_sample: false
+  # The answer may follow a paragraph break. Do not let the
+  # framework's default few-shot delimiter ("\n\n") truncate that answer.
+  until: null
 process_results: !function utils.ocrbench_process_results
 metric_list:
   - metric: ocrbench_accuracy
