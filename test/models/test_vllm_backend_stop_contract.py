@@ -115,6 +115,18 @@ def test_generate_until_omits_absent_stop_conditions(monkeypatch):
     assert "stop_token_ids" not in payloads[0]
 
 
+def test_generate_until_omits_text_stop_but_keeps_model_stop_token_ids(monkeypatch):
+    backend = _backend(monkeypatch, stop_token_ids="[248046]")
+    request, generation_kwargs = _request(until=None)
+    original_generation_kwargs = deepcopy(generation_kwargs)
+
+    payloads = _capture_payloads(backend, [request])
+
+    assert "stop" not in payloads[0]
+    assert payloads[0]["stop_token_ids"] == [248046]
+    assert generation_kwargs == original_generation_kwargs
+
+
 def test_model_args_parser_preserves_json_stop_token_ids(monkeypatch):
     parsed = simple_parse_args_string("model=model-under-test,stop_token_ids=[248046]")
 
