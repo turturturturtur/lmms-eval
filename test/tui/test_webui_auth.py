@@ -687,6 +687,57 @@ def test_dlc_job_list_marks_kill_permission_for_owner(monkeypatch: pytest.Monkey
     assert "not killable" in jobs["dlcdone"]["kill_disabled_reason"]
 
 
+def test_dlc_job_list_queries_and_returns_explicit_time_window(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(server, "_resolve_dlc_binary", lambda: "/tmp/dlc")
+    captured: dict[str, object] = {}
+
+    def fake_list_jobs(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(server, "_list_dlc_jobs_from_cli", fake_list_jobs)
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.get(
+        "/dlc/jobs",
+        params={
+            "start_time": "2026-06-28T12:00:00Z",
+            "end_time": "2026-07-28T12:00:00Z",
+        },
+    )
+
+    assert response.status_code == 200
+    assert captured["start_time"] == "2026-06-28T12:00:00Z"
+    assert captured["end_time"] == "2026-07-28T12:00:00Z"
+    assert response.json()["start_time"] == "2026-06-28T12:00:00Z"
+    assert response.json()["end_time"] == "2026-07-28T12:00:00Z"
+
+
+@pytest.mark.parametrize(
+    ("params", "expected_detail"),
+    [
+        ({"start_time": "2026-06-28T12:00:00Z"}, "provided together"),
+        (
+            {"start_time": "2026-07-28T12:00:00Z", "end_time": "2026-06-28T12:00:00Z"},
+            "earlier than end_time",
+        ),
+        (
+            {"start_time": "2026-06-28T12:00:00", "end_time": "2026-07-28T12:00:00Z"},
+            "include a timezone",
+        ),
+    ],
+)
+def test_dlc_job_list_rejects_invalid_time_windows(params: dict[str, str], expected_detail: str):
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.get("/dlc/jobs", params=params)
+
+    assert response.status_code == 422
+    assert expected_detail in response.json()["detail"]
+
+
 def test_dlc_job_list_marks_admin_can_kill_active_jobs(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(server, "_resolve_dlc_binary", lambda: "/tmp/dlc")
     monkeypatch.setattr(

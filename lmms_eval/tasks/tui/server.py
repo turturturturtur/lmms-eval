@@ -20,6 +20,7 @@ import subprocess
 import time
 import uuid
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from importlib.metadata import version as pkg_version
 from pathlib import Path
 from typing import Any
@@ -78,6 +79,7 @@ DEFAULT_LOCAL_JUDGE_MAX_NUM_SEQS = 192
 DEFAULT_LOCAL_JUDGE_PORT = 8002
 DEFAULT_LOCAL_JUDGE_PARALLEL = 32
 DEFAULT_AUTH_SESSION_TTL_SECONDS = 15 * 24 * 60 * 60
+DEFAULT_DLC_HISTORY_DAYS = 30
 AUTH_VALIDATION_TIMEOUT_SECONDS = 20
 AUTH_IDENTITY_TIMEOUT_SECONDS = 20
 USER_PLACEHOLDER = "<USER>"
@@ -1129,6 +1131,8 @@ class DlcJobSummary(BaseModel):
 class DlcJobsResponse(BaseModel):
     jobs: list[DlcJobSummary]
     total: int
+    start_time: str
+    end_time: str
     fetched_at: str
     source: str
 
@@ -1563,6 +1567,39 @@ def _job_stage_from_name(name: Any) -> str:
 def _split_display_name_filters(display_name: str) -> list[str]:
     filters = [item.strip() for item in display_name.split(",") if item.strip()]
     return filters or list(VIEW_LOG_JOB_NAME_PREFIXES)
+
+
+def _parse_dlc_history_time(value: str, field_name: str) -> datetime:
+    normalized = value.strip()
+    if normalized.endswith("Z"):
+        normalized = f"{normalized[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"{field_name} must be an RFC3339 timestamp") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise HTTPException(status_code=422, detail=f"{field_name} must include a timezone")
+    return parsed.astimezone(timezone.utc)
+
+
+def _format_dlc_history_time(value: datetime) -> str:
+    return value.astimezone(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _resolve_dlc_history_window(start_time: str, end_time: str) -> tuple[str, str]:
+    start_time = start_time.strip()
+    end_time = end_time.strip()
+    if bool(start_time) != bool(end_time):
+        raise HTTPException(status_code=422, detail="start_time and end_time must be provided together")
+    if not start_time:
+        end = datetime.now(timezone.utc).replace(microsecond=0)
+        start = end - timedelta(days=DEFAULT_DLC_HISTORY_DAYS)
+    else:
+        start = _parse_dlc_history_time(start_time, "start_time")
+        end = _parse_dlc_history_time(end_time, "end_time")
+    if start >= end:
+        raise HTTPException(status_code=422, detail="start_time must be earlier than end_time")
+    return _format_dlc_history_time(start), _format_dlc_history_time(end)
 
 
 def _clear_dlc_runtime_caches() -> None:
@@ -2010,11 +2047,14 @@ def _list_dlc_jobs_from_cli(
     max_pages: int,
     status: str,
     display_name: str,
+    start_time: str = "",
+    end_time: str = "",
 ) -> list[dict[str, Any]]:
     page_size = max(1, min(page_size, 100))
     max_pages = max(1, min(max_pages, 20))
+    start_time, end_time = _resolve_dlc_history_window(start_time, end_time)
     display_name_filters = _split_display_name_filters(display_name)
-    cache_key = (page_size, max_pages, status, tuple(display_name_filters))
+    cache_key = (page_size, max_pages, status, tuple(display_name_filters), start_time, end_time)
     cached = _dlc_jobs_cache.get(cache_key)
     now = time.time()
     if cached and now - cached[0] < DLC_JOBS_CACHE_TTL_SECONDS:
@@ -2034,6 +2074,10 @@ def _list_dlc_jobs_from_cli(
                 "--page_num",
                 str(page_num),
                 "--show_detail",
+                "--start_time",
+                start_time,
+                "--end_time",
+                end_time,
             ]
             if status:
                 args.extend(["--status", status])
@@ -4025,15 +4069,20 @@ async def list_dlc_jobs(
     max_pages: int = Query(1, ge=1, le=20),
     status: str = Query(""),
     display_name: str = Query(_view_log_job_prefix_label()),
+    start_time: str = Query(""),
+    end_time: str = Query(""),
 ) -> DlcJobsResponse:
     """List DLC jobs from the configured DLC workspace."""
     auth_user = _require_authenticated_user(http_request)
+    start_time, end_time = _resolve_dlc_history_window(start_time, end_time)
     rows = await asyncio.to_thread(
         _list_dlc_jobs_from_cli,
         page_size=page_size,
         max_pages=max_pages,
         status=status.strip(),
         display_name=display_name.strip(),
+        start_time=start_time,
+        end_time=end_time,
     )
     jobs: list[DlcJobSummary] = []
     for row in rows:
@@ -4041,6 +4090,8 @@ async def list_dlc_jobs(
     return DlcJobsResponse(
         jobs=jobs,
         total=len(jobs),
+        start_time=start_time,
+        end_time=end_time,
         fetched_at=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         source=f"{_resolve_dlc_binary()} workspace={DEFAULT_DLC_WORKSPACE_ID}",
     )

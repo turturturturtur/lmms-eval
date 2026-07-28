@@ -34,6 +34,33 @@ def test_list_dlc_jobs_from_cli_returns_full_wrapped_name(monkeypatch):
     assert rows[0]["name"] == "eval_qwen35_9b_lllllllllllllllllllllllllllllllll"
 
 
+def test_list_dlc_jobs_from_cli_passes_explicit_history_window(monkeypatch):
+    server._dlc_jobs_cache.clear()
+    commands: list[list[str]] = []
+
+    def fake_run(args, **_kwargs):
+        commands.append(args)
+        return WRAPPED_DLC_JOBS
+
+    monkeypatch.setattr(server, "_run_dlc_command", fake_run)
+    monkeypatch.setattr(server, "_paistudio_user_name_map", lambda: {})
+    monkeypatch.setattr(server, "_aiworkspace_member_name_map", lambda: {})
+
+    server._list_dlc_jobs_from_cli(
+        page_size=5,
+        max_pages=1,
+        status="",
+        display_name="eval_",
+        start_time="2026-06-28T12:00:00Z",
+        end_time="2026-07-28T12:00:00Z",
+    )
+
+    assert len(commands) == 1
+    args = commands[0]
+    assert args[args.index("--start_time") + 1] == "2026-06-28T12:00:00Z"
+    assert args[args.index("--end_time") + 1] == "2026-07-28T12:00:00Z"
+
+
 def test_view_logs_metric_rows_keep_ordinary_and_judge_results_together(tmp_path):
     result_root = tmp_path / "result"
     result_root.mkdir()

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react'
+import { makeInitialHistoryWindow, makePreviousHistoryWindow, mergeJobsById } from './historyWindow.js'
 
 const API_BASE = ''
 const JOB_PAGE_SIZE = 100
-const JOB_MAX_PAGES = 3
+const JOB_MAX_PAGES = 20
+const JOB_SCROLL_BOTTOM_THRESHOLD = 80
 const SAMPLE_PAGE_SIZE = 50
 const JOB_NAME_PREFIXES = ['eval_', 'judge_']
 const JOB_NAME_PREFIX_QUERY = JOB_NAME_PREFIXES.join(',')
@@ -37,6 +39,8 @@ interface DlcJobSummary {
 interface DlcJobsResponse {
   jobs: DlcJobSummary[]
   total: number
+  start_time: string
+  end_time: string
   fetched_at: string
   source: string
 }
@@ -684,9 +688,12 @@ function AnswerStatsPanel({ stats }: { stats: ChoiceAnswerStats }) {
 export default function LogViewer() {
   const [jobs, setJobs] = useState<DlcJobSummary[]>([])
   const [jobsLoading, setJobsLoading] = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(false)
   const [jobsError, setJobsError] = useState('')
   const [jobsFetchedAt, setJobsFetchedAt] = useState('')
   const [jobsSource, setJobsSource] = useState('')
+  const [historyStartTime, setHistoryStartTime] = useState('')
+  const [historyEndTime, setHistoryEndTime] = useState('')
   const [jobQuery, setJobQuery] = useState('')
   const [columnFilters, setColumnFilters] = useState<ColumnFilters>(makeInitialColumnFilters)
   const [openFilterKey, setOpenFilterKey] = useState<JobColumnKey | null>(null)
@@ -711,28 +718,44 @@ export default function LogViewer() {
   const [sampleColumnWidths, setSampleColumnWidths] = useState<Record<string, number>>({})
   const [previewMedia, setPreviewMedia] = useState<DlcSampleMedia | null>(null)
   const splitPaneRef = useRef<HTMLDivElement | null>(null)
+  const jobsRequestInFlightRef = useRef(false)
+  const historyStartTimeRef = useRef('')
+  const jobListBottomLatchedRef = useRef(false)
   const panelResizeSessionRef = useRef<PanelResizeSession | null>(null)
   const columnResizeSessionRef = useRef<ColumnResizeSession | null>(null)
   const sampleColumnResizeSessionRef = useRef<SampleColumnResizeSession | null>(null)
 
+  const requestJobs = async (startTime: string, endTime: string): Promise<DlcJobsResponse> => {
+    const params = new URLSearchParams({
+      page_size: String(JOB_PAGE_SIZE),
+      max_pages: String(JOB_MAX_PAGES),
+      display_name: JOB_NAME_PREFIX_QUERY,
+      start_time: startTime,
+      end_time: endTime,
+    })
+    const response = await fetch(`${API_BASE}/dlc/jobs?${params.toString()}`)
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      throw new Error(data.detail || response.statusText)
+    }
+    return data as DlcJobsResponse
+  }
+
   const fetchJobs = async (): Promise<DlcJobSummary[]> => {
+    if (jobsRequestInFlightRef.current) return jobs
+    jobsRequestInFlightRef.current = true
     setJobsLoading(true)
     setJobsError('')
+    jobListBottomLatchedRef.current = false
     try {
-      const params = new URLSearchParams({
-        page_size: String(JOB_PAGE_SIZE),
-        max_pages: String(JOB_MAX_PAGES),
-        display_name: JOB_NAME_PREFIX_QUERY,
-      })
-      const response = await fetch(`${API_BASE}/dlc/jobs?${params.toString()}`)
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(data.detail || response.statusText)
-      }
-      const payload = data as DlcJobsResponse
+      const historyWindow = makeInitialHistoryWindow()
+      const payload = await requestJobs(historyWindow.startTime, historyWindow.endTime)
       setJobs(payload.jobs)
       setJobsFetchedAt(payload.fetched_at)
       setJobsSource(payload.source)
+      setHistoryStartTime(payload.start_time)
+      historyStartTimeRef.current = payload.start_time
+      setHistoryEndTime(payload.end_time)
       setSelectedJob(prev => {
         if (prev && payload.jobs.some(job => job.job_id === prev.job_id)) {
           return payload.jobs.find(job => job.job_id === prev.job_id) ?? prev
@@ -743,11 +766,54 @@ export default function LogViewer() {
     } catch (error) {
       setJobs([])
       setSelectedJob(null)
+      setHistoryStartTime('')
+      historyStartTimeRef.current = ''
+      setHistoryEndTime('')
       setJobsError(error instanceof Error ? error.message : 'Failed to fetch DLC jobs')
       return []
     } finally {
       setJobsLoading(false)
+      jobsRequestInFlightRef.current = false
     }
+  }
+
+  const loadOlderJobs = async (): Promise<void> => {
+    const currentStartTime = historyStartTimeRef.current
+    if (!currentStartTime || jobsRequestInFlightRef.current) return
+    jobsRequestInFlightRef.current = true
+    setHistoryLoading(true)
+    setJobsError('')
+    try {
+      const historyWindow = makePreviousHistoryWindow(currentStartTime)
+      const payload = await requestJobs(historyWindow.startTime, historyWindow.endTime)
+      const merged = mergeJobsById(jobs, payload.jobs)
+      setJobs(merged)
+      setSelectedJob(selected => {
+        if (selected) return merged.find(job => job.job_id === selected.job_id) ?? selected
+        return merged[0] ?? null
+      })
+      setJobsFetchedAt(payload.fetched_at)
+      setJobsSource(payload.source)
+      setHistoryStartTime(payload.start_time)
+      historyStartTimeRef.current = payload.start_time
+    } catch (error) {
+      setJobsError(error instanceof Error ? error.message : 'Failed to load older DLC jobs')
+    } finally {
+      setHistoryLoading(false)
+      jobsRequestInFlightRef.current = false
+    }
+  }
+
+  const handleJobListScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.currentTarget
+    const atBottom = target.scrollHeight - target.scrollTop - target.clientHeight <= JOB_SCROLL_BOTTOM_THRESHOLD
+    if (!atBottom) {
+      jobListBottomLatchedRef.current = false
+      return
+    }
+    if (jobListBottomLatchedRef.current) return
+    jobListBottomLatchedRef.current = true
+    void loadOlderJobs()
   }
 
   const loadJob = async (job: DlcJobSummary | null) => {
@@ -1429,10 +1495,15 @@ export default function LogViewer() {
                 prefixes {JOB_NAME_PREFIX_QUERY} / {filteredJobs.length}/{jobs.length} shown
                 {jobsFetchedAt && <span> / {jobsFetchedAt}</span>}
               </div>
+              {historyStartTime && historyEndTime && (
+                <div className="mt-1 text-[10px] font-mono text-neutral-400">
+                  history {historyStartTime} → {historyEndTime}
+                </div>
+              )}
             </div>
             <button
               onClick={() => void fetchJobs()}
-              disabled={jobsLoading}
+              disabled={jobsLoading || historyLoading}
               className="border border-neutral-200 px-4 py-2 text-[10px] uppercase tracking-wider text-neutral-500 disabled:text-neutral-300 disabled:cursor-not-allowed hover:border-black hover:text-black"
             >
               {jobsLoading ? 'Syncing...' : 'Sync DLC'}
@@ -1463,7 +1534,11 @@ export default function LogViewer() {
           {parsedQuery.error && <div className="border border-red-200 bg-red-50 p-2 text-[11px] font-mono text-red-700">{parsedQuery.error}</div>}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-auto">
+        <div
+          className="flex-1 min-h-0 overflow-auto"
+          onScroll={handleJobListScroll}
+          data-testid="viewlog-job-list-scroll"
+        >
           <table
             className="table-fixed border-collapse text-xs"
             style={{ width: jobTableWidth, minWidth: jobTableWidth }}
@@ -1577,6 +1652,11 @@ export default function LogViewer() {
               )}
             </tbody>
           </table>
+          <div className="flex items-center justify-center border-t border-neutral-100 px-3 py-3">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-neutral-400">
+              {historyLoading ? 'Loading 15 days older...' : 'Scroll to the bottom to load 15 days older'}
+            </span>
+          </div>
         </div>
       </div>
 
