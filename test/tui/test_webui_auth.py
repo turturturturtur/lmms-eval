@@ -254,7 +254,7 @@ def test_defaults_leave_evaluate_user_empty_and_keep_placeholders(monkeypatch: p
     assert "configured-user" not in json.dumps(data)
 
 
-def test_defaults_use_generic_tasks_instead_of_qwen_specializations():
+def test_defaults_match_qwen35_feishu_benchmarks_exactly():
     client = _client()
     assert _login(client).status_code == 200
 
@@ -262,37 +262,38 @@ def test_defaults_use_generic_tasks_instead_of_qwen_specializations():
 
     assert response.status_code == 200
     tasks = response.json()["tasks"]
-    assert "mmmu_val" in tasks
-    assert "mmmu_pro_standard_cot_reasoning" in tasks
-    assert "mathvision_reason_test_reasoning" in tasks
-    assert not any("qwen3" in task.lower() for task in tasks)
+    expected_tasks = [
+        "ai2d",
+        "ai2d_no_mask",
+        "chartqa",
+        "infovqa_val",
+        "mmbench_en_dev",
+        "mmerealworld",
+        "mmerealworld_cn",
+        "mmmu_pro_standard_reasoning_qwen3_official",
+        "mmmu_val_qwen3_official",
+        "mmstar",
+        "ocrbench",
+        "realworldqa",
+        "seedbench_2_plus",
+        "vstar_bench",
+        "simplevqa",
+        "EMVista",
+        "sfe-en",
+        "microvqa",
+        "embspatial",
+        "erqa",
+    ]
 
-    judge_tasks = server._split_tasks(server._default_judge_config()["eval"]["tasks"])
-    assert not any("qwen3" in task.lower() for task in judge_tasks)
-
-
-def test_defaults_include_simplevqa_once_and_require_judge():
-    client = _client()
-    assert _login(client).status_code == 200
-
-    response = client.get("/defaults")
-
-    assert response.status_code == 200
-    tasks = response.json()["tasks"]
-    assert tasks.count("simplevqa") == 1
+    assert tasks == expected_tasks
+    assert len(tasks) == 20
+    assert len(set(tasks)) == 20
     assert server._task_requires_llm_judge("simplevqa") is True
 
-
-def test_defaults_include_spatial_benchmarks_once():
-    client = _client()
-    assert _login(client).status_code == 200
-
-    response = client.get("/defaults")
-
-    assert response.status_code == 200
-    tasks = response.json()["tasks"]
-    assert tasks.count("embspatial") == 1
-    assert tasks.count("erqa") == 1
+    tasks_response = client.get("/tasks")
+    assert tasks_response.status_code == 200
+    discovered_task_ids = {task["id"] for task in tasks_response.json()}
+    assert set(tasks) <= discovered_task_ids
 
 
 def test_username_alias_placeholder_is_replaced_for_webui_preview(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
