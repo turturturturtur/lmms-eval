@@ -35,12 +35,18 @@ def realworldqa_doc_to_text(doc, lmms_eval_specific_kwargs=None):
 
 
 def realworldqa_process_results(doc, results):
-    pred = results[0].lower().strip().rstrip(".")
-    gt_ans = doc["answer"].lower().strip()
+    from lmms_eval.tasks._task_utils.mcq_extract import extract_mcq_answer
 
-    print(f"Prediction: {pred}, Ground Truth: {gt_ans}")
-    # assert gt_ans in ["a", "b", "c", "d"]
-    score = 1.0 if pred == gt_ans else 0.0
+    pred = results[0]
+    gt_ans = doc["answer"].strip()
+
+    if gt_ans.upper() in ("A", "B", "C", "D"):
+        pred_ans = extract_mcq_answer(pred, choices=["A", "B", "C", "D"])
+        score = 1.0 if pred_ans == gt_ans.upper() else 0.0
+    else:
+        pred_clean = pred.lower().strip().rstrip(".")
+        score = 1.0 if pred_clean == gt_ans.lower() else 0.0
+
     return {
         "exact_match": score,
     }
