@@ -33,7 +33,7 @@ def ocrbench_doc_to_text(doc, lmms_eval_specific_kwargs):
 
 
 def ocrbench_process_results(doc, results):
-    pred = results[0].lower().strip()
+    pred = results[0].strip()
     gt_ans = doc["answer"]
     dataset_name = doc["dataset"]
     question_type = doc["question_type"]
