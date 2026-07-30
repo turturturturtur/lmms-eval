@@ -906,6 +906,7 @@ class EvalRequest(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -945,6 +946,7 @@ class PreviewRequest(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -983,6 +985,7 @@ class ExportYamlRequest(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -1025,6 +1028,7 @@ class ImportYamlResponse(BaseModel):
     model: str = ""
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str] = []
@@ -1058,6 +1062,7 @@ class DefaultsResponse(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str
     model_args: str = ""
     tasks: list[str]
@@ -3122,6 +3127,7 @@ async def get_defaults() -> DefaultsResponse:
         model=str(model_config["path"]),
         api_url=DEFAULT_API_EVAL_URL,
         api_key="",
+        api_model="",
         dlc_path=dlc_path,
         model_args="",
         tasks=_split_tasks(eval_section["tasks"]),
@@ -3564,7 +3570,11 @@ def _build_api_eval_config(request: EvalRequest | PreviewRequest | ExportYamlReq
     if env_dict:
         config["env"].update(_replace_user_placeholder(env_dict, request.user))
 
-    api_model = os.getenv("LMMS_EVAL_WEBUI_API_MODEL", DEFAULT_API_EVAL_MODEL).strip() or DEFAULT_API_EVAL_MODEL
+    api_model = (
+        request.api_model.strip()
+        or os.getenv("LMMS_EVAL_WEBUI_API_MODEL", DEFAULT_API_EVAL_MODEL).strip()
+        or DEFAULT_API_EVAL_MODEL
+    )
     config["env"]["api_type"] = DEFAULT_API_EVAL_TYPE
     config["env"]["openai_api_url"] = api_url
     config["env"]["openai_api_key"] = api_key
@@ -3800,6 +3810,7 @@ async def export_yaml(request: ExportYamlRequest) -> ExportYamlResponse:
             "eval_inference_mode": _validate_eval_inference_mode(request.eval_inference_mode),
             "api_url": request.api_url.strip(),
             "api_key": request.api_key.strip(),
+            "api_model": request.api_model.strip(),
             "dlc_path": request.dlc_path.strip(),
             "judge_backend": _validate_judge_backend(request.judge_backend),
             "judge_api_url": request.judge_api_url.strip(),
@@ -3898,6 +3909,7 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
             model=str(model_config.get("path", "")),
             api_url=str(config.get("api_url") or env_dict.get("openai_api_url") or DEFAULT_API_EVAL_URL),
             api_key=str(config.get("api_key") or env_dict.get("openai_api_key") or ""),
+            api_model=str(config.get("api_model") or ""),
             dlc_path=dlc_path,
             model_args="",
             tasks=_split_tasks(eval_config.get("tasks", "")),
@@ -3941,6 +3953,7 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
         model=config.get("model", ""),
         api_url=str(config.get("api_url") or DEFAULT_API_EVAL_URL),
         api_key=str(config.get("api_key") or ""),
+        api_model=str(config.get("api_model") or ""),
         model_args=config.get("model_args", ""),
         tasks=tasks,
         judge_backend=_validate_judge_backend(str(config.get("judge_backend") or DEFAULT_JUDGE_BACKEND)),

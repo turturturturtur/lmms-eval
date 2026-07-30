@@ -464,6 +464,7 @@ interface Config {
   model: string
   api_url: string
   api_key: string
+  api_model: string
   dlc_path: string
   model_args: string
   tasks: string[]
@@ -735,6 +736,7 @@ export default function App() {
   const [model, setModel] = useState(DEFAULT_MODEL_PATH_TEMPLATE)
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_EVAL_URL)
   const [apiKey, setApiKey] = useState('')
+  const [apiModel, setApiModel] = useState('')
   const [dlcPath, setDlcPath] = useState(DEFAULT_DLC_PATH_TEMPLATE)
   const [modelArgs, setModelArgs] = useState('')
   const [envVars, setEnvVars] = useState('')
@@ -827,6 +829,7 @@ export default function App() {
       model,
       api_url: apiUrl,
       api_key: apiKey,
+      api_model: apiModel,
       dlc_path: dlcPath,
       model_args: modelArgs,
       tasks: Array.from(selectedTasks),
@@ -936,6 +939,7 @@ export default function App() {
         setModel(normalizeUserPlaceholderText(d.model || DEFAULT_MODEL_PATH_TEMPLATE))
         setApiUrl(d.api_url || DEFAULT_API_EVAL_URL)
         setApiKey(d.api_key || '')
+        setApiModel(d.api_model || '')
         setDlcPath(normalizeUserPlaceholderText(d.dlc_path || extractDlcPath(normalizedDlcConfig) || DEFAULT_DLC_PATH_TEMPLATE))
         setModelArgs(d.model_args || '')
         setSelectedTasks(new Set(d.tasks || []))
@@ -1004,7 +1008,7 @@ export default function App() {
       })
       .then(d => setCommand(d.command))
       .catch((e) => setCommand(`# Error generating command: ${e.message || e}`))
-  }, [defaultsLoaded, defaultsError, userName, jobName, evalInferenceMode, model, apiUrl, apiKey, dlcPath, modelArgs, selectedTasks, judgeBackend, judgeApiUrl, judgeApiKey, envVars, batchSize, limit, device, outputPath, verbosity, envSetup, runMode, dlcConfigJson, modelTp, maxModelLen, gpuMemoryUtilization, maxNumSeqs, basePort, concurrency, genKwargs, enableThinking, debugMode])
+  }, [defaultsLoaded, defaultsError, userName, jobName, evalInferenceMode, model, apiUrl, apiKey, apiModel, dlcPath, modelArgs, selectedTasks, judgeBackend, judgeApiUrl, judgeApiKey, envVars, batchSize, limit, device, outputPath, verbosity, envSetup, runMode, dlcConfigJson, modelTp, maxModelLen, gpuMemoryUtilization, maxNumSeqs, basePort, concurrency, genKwargs, enableThinking, debugMode])
 
   useEffect(() => {
     if (!defaultsLoaded || !userName.trim()) return
@@ -1287,6 +1291,7 @@ export default function App() {
         if (data.model) setModel(normalizeUserPlaceholderText(data.model))
         if (data.api_url != null) setApiUrl(data.api_url || DEFAULT_API_EVAL_URL)
         if (data.api_key != null) setApiKey(data.api_key)
+        if (data.api_model != null) setApiModel(data.api_model)
         if (data.dlc_path != null) setDlcPath(normalizeUserPlaceholderText(data.dlc_path))
         if (data.model_args) setModelArgs(data.model_args)
         if (data.tasks && data.tasks.length > 0) setSelectedTasks(new Set(data.tasks))
@@ -1614,6 +1619,15 @@ export default function App() {
 	                        value={apiUrl}
 	                        onChange={e => setApiUrl(e.target.value)}
 	                        placeholder={DEFAULT_API_EVAL_URL}
+	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
+	                      />
+	                    </div>
+	                    <div className="group">
+	                      <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5 group-focus-within:text-neutral-900 transition-colors">API Model Name (Optional)</label>
+	                      <input
+	                        value={apiModel}
+	                        onChange={e => setApiModel(e.target.value)}
+	                        placeholder="e.g. kimi-for-coding"
 	                        className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
 	                      />
 	                    </div>

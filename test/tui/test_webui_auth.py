@@ -247,6 +247,7 @@ def test_defaults_leave_evaluate_user_empty_and_keep_placeholders(monkeypatch: p
     assert data["judge_backend"] == "vllm"
     assert data["judge_api_url"] == server.DEFAULT_JUDGE_API_URL
     assert data["judge_api_key"] == ""
+    assert data["api_model"] == ""
     assert data["dlc_config"]["dlc"]["binary"] == server.DEFAULT_DLC_PATH_TEMPLATE
     assert data["dlc_config"]["dlc"]["priority"] == 6
     assert data["dlc_config"]["dlc"]["judge"]["priority"] == 6
@@ -543,6 +544,28 @@ def test_dlc_yaml_roundtrip_preserves_judge_backend(
         assert imported["judge_api_key"] == ""
 
 
+def test_dlc_yaml_roundtrip_preserves_optional_api_model_name():
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "sk-roundtrip"
+    payload["api_model"] = "kimi-for-coding"
+
+    export_response = client.post("/eval/export-yaml", json=payload)
+
+    assert export_response.status_code == 200
+    yaml_content = export_response.json()["yaml_content"]
+    assert "api_model: kimi-for-coding" in yaml_content
+
+    import_response = client.post("/eval/import-yaml", json={"yaml_content": yaml_content})
+
+    assert import_response.status_code == 200
+    assert import_response.json()["api_model"] == "kimi-for-coding"
+
+
 def test_ckpt_reasoning_task_syncs_judge_key_into_eval_env():
     payload = _eval_payload()
     payload["tasks"] = ["mathverse_testmini_reasoning"]
@@ -589,6 +612,52 @@ def test_api_eval_preview_redacts_token_and_forces_cpu_dlc(tmp_path: Path, monke
     assert '"worker_cpu": 16' in command
     assert "sk-api-secret" not in command
     assert server.MASKED_SECRET in command
+
+
+def test_api_eval_preview_uses_optional_openai_model_name(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "sk-api-secret"
+    payload["api_model"] = "  kimi-for-coding  "
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert '"path": "kimi-for-coding"' in command
+
+
+def test_api_eval_preview_keeps_legacy_model_when_optional_name_is_blank(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    submit_script = tmp_path / "qwen35_submit.sh"
+    submit_script.write_text("#!/bin/bash\nexit 0\n", encoding="utf-8")
+    monkeypatch.setattr(server, "DLC_SUBMIT_SCRIPT", submit_script)
+    monkeypatch.setenv("LMMS_EVAL_WEBUI_API_MODEL", "legacy-api-model")
+
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "sk-api-secret"
+    payload["api_model"] = "   "
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 200
+    command = response.json()["command"]
+    assert '"path": "legacy-api-model"' in command
 
 
 def test_api_eval_judge_preview_redacts_eval_and_judge_tokens(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
