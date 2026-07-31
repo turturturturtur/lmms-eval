@@ -1,0 +1,9 @@
+group: superchem_official
+task:
+  - superchem_official_text
+  - superchem_official_multimodal
+
+metadata:
+  version: 1.0
+  display_name: "superchem official"
+  protocol: SUPERChem official eval
