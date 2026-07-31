@@ -5,6 +5,10 @@
 
 set -euo pipefail
 
+# Pre-populated benchmark cache mounted from CPFSB. DLC workers must consume
+# this cache directly; copying it to another shared path only adds startup I/O.
+LMMS_EVAL_BENCHMARK_CACHE="/mnt/cpfsB/evaluation_cache/lmms_eval"
+
 # ── Guard: must be sourced ────────────────────────────────────────────────────
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "[ERROR] eval_common.sh should be sourced, not executed directly."
@@ -143,10 +147,24 @@ load_config() {
 
     export HF_HOME=$(cfg '.env.hf_home')
     export HF_TOKEN=$(cfg '.env.hf_token')
-    export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+    HF_DATASETS_CACHE_CFG=$(cfg '.env.hf_datasets_cache // ""')
+    if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" ]]; then
+        export HF_DATASETS_CACHE="${HF_DATASETS_CACHE_CFG}"
+    else
+        export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+    fi
 
     LMMS_EVAL_DATASETS_CACHE=$(cfg '.env.lmms_eval_datasets_cache // ""')
-    [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]] && export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+    if [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]]; then
+        export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+        # Task utilities such as SuperChem use HF_DATASETS_CACHE directly;
+        # keep it aligned with lmms-eval's explicit cache override.
+        if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" && "${HF_DATASETS_CACHE_CFG}" != "${LMMS_EVAL_DATASETS_CACHE}" ]]; then
+            echo "[ERROR] env.hf_datasets_cache must equal env.lmms_eval_datasets_cache, got: ${HF_DATASETS_CACHE_CFG} vs ${LMMS_EVAL_DATASETS_CACHE}" >&2
+            exit 2
+        fi
+        export HF_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+    fi
 
     HF_DATASETS_OFFLINE=$(cfg_bool '.env.hf_datasets_offline')
     TRANSFORMERS_OFFLINE=$(cfg_bool '.env.transformers_offline')
@@ -218,28 +236,35 @@ ensure_venv() {
     source "${VENV_PATH}/bin/activate"
 }
 
-# ── stage pre-cached datasets from CPFS to local cache ────────────────────────
+# ── optionally stage pre-cached datasets ──────────────────────────────────────
 stage_datasets() {
     # 仅在 DLC 提交场景下由 submitter 显式开启；本地调试默认跳过 staging
     if [[ "${LMMS_EVAL_STAGE_DATASETS:-}" != "1" ]]; then
         return
     fi
 
-    local src=""
-    for candidate in /mnt/cpfsB/evaluation_cache/lmms_eval /mnt/cpfs/evaluation_cache/lmms_eval; do
-        if [[ -d "${candidate}" ]]; then
-            src="${candidate}"
-            break
-        fi
-    done
-
-    if [[ -n "${src}" ]]; then
-        if [[ -n "${LMMS_EVAL_DATASETS_CACHE:-}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]]; then
-            echo "[INFO][Machine ${MACHINE_RANK}] Staging datasets from ${src} to ${LMMS_EVAL_DATASETS_CACHE} ..."
-            mkdir -p "${LMMS_EVAL_DATASETS_CACHE}"
-            cp -r "${src}"/* "${LMMS_EVAL_DATASETS_CACHE}/"
-        fi
+    local src="${LMMS_EVAL_BENCHMARK_CACHE}"
+    local dst="${LMMS_EVAL_DATASETS_CACHE:-}"
+    if [[ ! -d "${src}" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Benchmark cache is not mounted: ${src}" >&2
+        return 2
     fi
+    if [[ -z "${dst}" || "${dst}" == "null" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] LMMS_EVAL_DATASETS_CACHE is required when staging is enabled." >&2
+        return 2
+    fi
+
+    local src_real dst_real
+    src_real="$(readlink -f -- "${src}")"
+    dst_real="$(readlink -f -- "${dst}" 2>/dev/null || true)"
+    if [[ "${src_real}" == "${dst_real}" ]]; then
+        echo "[INFO][Machine ${MACHINE_RANK}] Dataset staging skipped; using existing benchmark cache ${src_real}."
+        return 0
+    fi
+
+    echo "[INFO][Machine ${MACHINE_RANK}] Staging datasets from ${src} to ${dst} ..."
+    mkdir -p -- "${dst}"
+    cp -r -- "${src}"/* "${dst}/"
 }
 
 # ── compute GPU / machine role ────────────────────────────────────────────────

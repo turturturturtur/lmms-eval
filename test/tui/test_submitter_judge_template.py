@@ -10,6 +10,7 @@ DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
 REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
 MOUNT_URIS = f"cpfs://example/::/mnt/cpfsB,{REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss"
 MOUNT_URIS_WITHOUT_NAS = "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss"
+MOUNT_URIS_WITHOUT_CPFSB = f"{REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss"
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -407,3 +408,44 @@ def test_submitter_rejects_missing_required_nas_mount(
 
     assert proc.returncode != 0
     assert f"must include {REQUIRED_NAS_MOUNT_URI}" in proc.stdout
+
+
+@pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
+@pytest.mark.parametrize("field_path", [("dlc", "data_source_uris"), ("dlc", "judge", "data_source_uris")])
+def test_submitter_rejects_missing_cpfsb_mount(
+    script_name: str,
+    field_path: tuple[str, ...],
+    tmp_path: Path,
+):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    payload = json.loads(dlc_config.read_text(encoding="utf-8"))
+    target = payload
+    for key in field_path[:-1]:
+        target = target[key]
+    target[field_path[-1]] = MOUNT_URIS_WITHOUT_CPFSB
+    _write_json(dlc_config, payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / script_name),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    assert proc.returncode != 0
+    assert "must include a CPFS URI mounted at /mnt/cpfsB" in proc.stdout

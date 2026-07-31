@@ -14,6 +14,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LMMS_EVAL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEFAULT_DLC_RESOURCE_ID="quotaev2tl4w6aw0"
 REQUIRED_NAS_MOUNT_URI="nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
+REQUIRED_CPFSB_MOUNT_PATH="/mnt/cpfsB"
+BENCHMARK_DATASETS_CACHE="/mnt/cpfsB/evaluation_cache/lmms_eval"
 
 if (( $# < 2 )); then
     echo "[ERROR] Usage: bash $(basename "$0") <dlc_config.json> <eval_config.json> [judge_config.json] [-- <dlc auth flags>]"
@@ -131,6 +133,24 @@ require_required_nas_mount() {
     esac
 }
 
+require_required_cpfsb_mount() {
+    local value="$1"
+    local field="$2"
+    require_non_empty "${value}" "${field}"
+
+    local uri
+    local uris=()
+    IFS=',' read -ra uris <<< "${value}"
+    for uri in "${uris[@]}"; do
+        if [[ "${uri}" == cpfs://*::${REQUIRED_CPFSB_MOUNT_PATH} ]]; then
+            return 0
+        fi
+    done
+
+    echo "[ERROR] ${field} must include a CPFS URI mounted at ${REQUIRED_CPFSB_MOUNT_PATH}, got: ${value}" >&2
+    exit 9
+}
+
 # ── resolve job name (needs model info from eval config) ──────────────────────
 MODEL=$(eval_cfg '.model.path')
 MODEL_TP=$(eval_cfg_int '.model.tp')
@@ -188,6 +208,7 @@ jq \
   --arg ts "${TIMESTAMP}" \
   --arg judge_api_key "${JUDGE_RUNTIME_API_KEY}" \
   --arg judge_base_url "${JUDGE_RUNTIME_BASE_URL}" \
+  --arg benchmark_datasets_cache "${BENCHMARK_DATASETS_CACHE}" \
   '
   if (.model | type) != "object" then
     error("config.model must be an object")
@@ -202,6 +223,8 @@ jq \
   | .dlc.submit = false
   | .eval.debug = false
   | .eval.timestamp = $ts
+  | .env.lmms_eval_datasets_cache = $benchmark_datasets_cache
+  | .env.hf_datasets_cache = $benchmark_datasets_cache
   | if ($judge_api_key | length) > 0 then
       .env.judge_api_key = $judge_api_key
     else
@@ -270,6 +293,7 @@ ENDPOINT=$(dlc_cfg '.dlc.endpoint // ""')
 
 require_single_resource_id "${RESOURCE_ID}" "dlc.resource_id"
 require_required_nas_mount "${DATA_SOURCE_URIS}" "dlc.data_source_uris"
+require_required_cpfsb_mount "${DATA_SOURCE_URIS}" "dlc.data_source_uris"
 
 if ! [[ "${PRIORITY}" =~ ^[0-9]+$ ]]; then
     echo "[ERROR] DLC priority must be an integer, got: ${PRIORITY}"
@@ -456,6 +480,7 @@ build_judge_submit_args() {
     require_non_empty "${judge_extended_cidrs}" "dlc.judge.extended_cidrs"
     require_single_resource_id "${judge_resource_id}" "dlc.judge.resource_id"
     require_required_nas_mount "${judge_data_source_uris}" "dlc.judge.data_source_uris"
+    require_required_cpfsb_mount "${judge_data_source_uris}" "dlc.judge.data_source_uris"
 
     if [[ "${judge_worker_gpu}" != "0" ]]; then
         echo "[ERROR] Judge DLC must be CPU-only; expected worker_gpu=0, got ${judge_worker_gpu}" >&2
@@ -521,7 +546,9 @@ prepare_judge_runtime_config() {
         '.eval.input_result_path = $input_path
          | .eval.output_path = $output_path
          | .eval.debug = false
-         | .log.dir = $log_dir' \
+         | .log.dir = $log_dir
+         | .env.lmms_eval_datasets_cache = "/mnt/cpfsB/evaluation_cache/lmms_eval"
+         | .env.hf_datasets_cache = "/mnt/cpfsB/evaluation_cache/lmms_eval"' \
         "${JUDGE_CONFIG}" > "${judge_runtime_config}"
 }
 
@@ -629,7 +656,7 @@ INLINE_JUDGE_ARG=""
 if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
     INLINE_JUDGE_ARG=" \"\" ${JUDGE_RUNTIME_CONFIG}"
 fi
-INNER_COMMAND="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=1;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}${INLINE_JUDGE_ARG}"
+INNER_COMMAND="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=0;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}${INLINE_JUDGE_ARG}"
 COMMAND="/bin/bash -c '$(quote_for_single_quotes "${INNER_COMMAND}")'"
 DLC_SUBMIT_ARGS=(
     submit pytorchjob

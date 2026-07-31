@@ -5,7 +5,8 @@
     "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
     "venv_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv",
-    "lmms_eval_datasets_cache": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface/datasets",
+    "lmms_eval_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
     "hf_datasets_offline": true,
     "transformers_offline": true
   },

@@ -20,6 +20,27 @@ JUDGE_CONFIG="${3:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+
+validate_benchmark_cache_mount() {
+    if [[ ! -d "/mnt/cpfsB" ]]; then
+        echo "[ERROR] CPFSB mount is missing: /mnt/cpfsB" >&2
+        return 2
+    fi
+    if [[ ! -d "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] Benchmark cache is missing from CPFSB: ${LMMS_EVAL_BENCHMARK_CACHE}" >&2
+        return 2
+    fi
+    if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] Eval must use benchmark cache ${LMMS_EVAL_BENCHMARK_CACHE}, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+    if [[ "${HF_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache ${LMMS_EVAL_BENCHMARK_CACHE}, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+}
+
+validate_benchmark_cache_mount
 MODEL_BACKEND="$(cfg '.model.backend // "vllm"')"
 MODEL_BACKEND="$(printf '%s' "${MODEL_BACKEND}" | tr '[:upper:]' '[:lower:]')"
 if [[ "${MODEL_BACKEND}" != "vllm" && "${MODEL_BACKEND}" != "openai" ]]; then
@@ -656,7 +677,7 @@ if [[ "${MODEL_BACKEND}" == "openai" ]]; then
     stage_datasets &
     DATASET_STAGE_PID=$!
     if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
-        wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+        wait "${DATASET_STAGE_PID}"
     fi
 
     run_lmms_eval
@@ -679,7 +700,7 @@ else
     wait_for_backends
 
     if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
-        wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+        wait "${DATASET_STAGE_PID}"
     fi
 
     run_lmms_eval

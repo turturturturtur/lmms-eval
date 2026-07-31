@@ -115,7 +115,12 @@ cfg_bool() {
 export HF_HOME=$(cfg '.env.hf_home // "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface"')
 # Priority: existing env var (e.g. from ~/.bashrc) > config file
 export HF_TOKEN="${HF_TOKEN:-$(cfg '.env.hf_token // empty')}"
-export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+HF_DATASETS_CACHE_CFG=$(cfg '.env.hf_datasets_cache // empty')
+if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" ]]; then
+    export HF_DATASETS_CACHE="${HF_DATASETS_CACHE_CFG}"
+else
+    export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+fi
 # unset HF_DATASETS_OFFLINE
 export HF_HUB_OFFLINE=1
 
@@ -129,7 +134,29 @@ VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.
 
 # 数据集缓存与离线模式
 LMMS_EVAL_DATASETS_CACHE=$(cfg '.env.lmms_eval_datasets_cache // empty')
-[[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]] && export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+if [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]]; then
+    export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+    # Judge task utilities also use HF_DATASETS_CACHE directly; keep both
+    # variables on the same pre-populated benchmark cache.
+    if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" && "${HF_DATASETS_CACHE_CFG}" != "${LMMS_EVAL_DATASETS_CACHE}" ]]; then
+        echo "[ERROR] env.hf_datasets_cache must equal env.lmms_eval_datasets_cache, got: ${HF_DATASETS_CACHE_CFG} vs ${LMMS_EVAL_DATASETS_CACHE}" >&2
+        exit 2
+    fi
+    export HF_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+fi
+
+if [[ ! -d "/mnt/cpfsB" || ! -d "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] CPFSB benchmark cache is not mounted: /mnt/cpfsB/evaluation_cache/lmms_eval" >&2
+    exit 2
+fi
+if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] Judge must use benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
+    exit 2
+fi
+if [[ "${HF_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
+    exit 2
+fi
 
 HF_DATASETS_OFFLINE=$(cfg_bool '.env.hf_datasets_offline')
 [[ "${HF_DATASETS_OFFLINE}" == "true" ]] && export HF_DATASETS_OFFLINE=1 || unset HF_DATASETS_OFFLINE

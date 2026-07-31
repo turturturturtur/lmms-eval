@@ -51,6 +51,7 @@ DEFAULT_DLC_WORKER_GPU = 8
 DEFAULT_DLC_WORKSPACE_ID = "240810"
 DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
 REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
+REQUIRED_CPFSB_MOUNT_PATH = "/mnt/cpfsB"
 DEFAULT_DLC_POOL_TOTAL_GPU = 256
 DEFAULT_DLC_POOL_GPU_PER_NODE = 8
 DEFAULT_DLC_POOL_CPU_PER_NODE = 124
@@ -735,6 +736,13 @@ def _require_default_config_nas_mount(data_source_uris: Any, *, field: str) -> s
     normalized = data_source_uris.strip()
     if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
         raise RuntimeError(f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include {REQUIRED_NAS_MOUNT_URI}")
+    if not any(
+        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
+        for item in normalized.split(",")
+    ):
+        raise RuntimeError(
+            f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}"
+        )
     return normalized
 
 
@@ -3392,6 +3400,14 @@ def _require_dlc_nas_mount(data_source_uris: Any, *, field: str) -> str:
     normalized = data_source_uris.strip()
     if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
         raise HTTPException(status_code=400, detail=f"{field} must include {REQUIRED_NAS_MOUNT_URI}")
+    if not any(
+        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
+        for item in normalized.split(",")
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}",
+        )
     return normalized
 
 
