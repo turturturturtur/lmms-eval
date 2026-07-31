@@ -98,18 +98,19 @@ check_existing_vllm() {
     local url="$1"
     local expected_model="$2"
     local http_status
-    http_status=$(curl -s -o /dev/null -w "%{http_code}" "${url}/models" 2>/dev/null || echo "000")
+    http_status=$(curl -sS --connect-timeout 2 --max-time 5 \
+        -o /dev/null -w "%{http_code}" "${url}/models" 2>/dev/null || echo "000")
     [[ "${http_status}" != "200" ]] && return 1
 
     # 用 python 检查返回的模型列表中是否包含 expected_model
     local matched
-    matched=$(curl -s "${url}/models" 2>/dev/null | python -c "
+    matched=$(curl -sS --connect-timeout 2 --max-time 5 "${url}/models" 2>/dev/null | python -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
     models = [m.get('id','') for m in data.get('data',[])]
     expected = sys.argv[1]
-    print('true' if any(expected == m or expected in m for m in models) else 'false')
+    print('true' if expected in models else 'false')
 except Exception:
     print('false')
 " "${expected_model}" 2>/dev/null)
@@ -134,38 +135,25 @@ echo "[INFO] TP: ${TP}, Port: ${PORT}"
 echo "[INFO] CUDA_VISIBLE_DEVICES: ${JUDGE_CUDA_VISIBLE_DEVICES}"
 echo "[INFO] Log file: ${LOG_FILE}"
 
-# 使用 setsid 让 vLLM 脱离当前终端进程组，避免前台按 Ctrl+C 误杀
-if command -v setsid &>/dev/null; then
-    CUDA_VISIBLE_DEVICES="${JUDGE_CUDA_VISIBLE_DEVICES}" setsid python -m vllm.entrypoints.openai.api_server \
-        --model "${MODEL_PATH}" \
-        --served-model-name "${SERVED_MODEL_NAME}" \
-        --tensor-parallel-size "${TP}" \
-        --max-model-len "${MAX_MODEL_LEN}" \
-        --gpu-memory-utilization "${GPU_MEM_UTIL}" \
-        --max-num-seqs "${MAX_NUM_SEQS}" \
-        --port "${PORT}" \
-        --attention-backend FLASHINFER \
-        --mm-encoder-tp-mode data \
-        --enforce-eager \
-        --enable-prefix-caching \
-        --trust-remote-code \
-        > "${LOG_FILE}" 2>&1 &
-else
-    CUDA_VISIBLE_DEVICES="${JUDGE_CUDA_VISIBLE_DEVICES}" nohup python -m vllm.entrypoints.openai.api_server \
-        --model "${MODEL_PATH}" \
-        --served-model-name "${SERVED_MODEL_NAME}" \
-        --tensor-parallel-size "${TP}" \
-        --max-model-len "${MAX_MODEL_LEN}" \
-        --gpu-memory-utilization "${GPU_MEM_UTIL}" \
-        --max-num-seqs "${MAX_NUM_SEQS}" \
-        --port "${PORT}" \
-        --attention-backend FLASHINFER \
-        --mm-encoder-tp-mode data \
-        --enforce-eager \
-        --enable-prefix-caching \
-        --trust-remote-code \
-        > "${LOG_FILE}" 2>&1 &
+# 使用独立 session/process group，保证 cleanup 能清理 vLLM 的 EngineCore 子进程。
+if ! command -v setsid >/dev/null 2>&1; then
+    echo "[ERROR] setsid is required for owned vLLM process-group cleanup." >&2
+    exit 1
 fi
+CUDA_VISIBLE_DEVICES="${JUDGE_CUDA_VISIBLE_DEVICES}" setsid python -m vllm.entrypoints.openai.api_server \
+    --model "${MODEL_PATH}" \
+    --served-model-name "${SERVED_MODEL_NAME}" \
+    --tensor-parallel-size "${TP}" \
+    --max-model-len "${MAX_MODEL_LEN}" \
+    --gpu-memory-utilization "${GPU_MEM_UTIL}" \
+    --max-num-seqs "${MAX_NUM_SEQS}" \
+    --port "${PORT}" \
+    --attention-backend FLASHINFER \
+    --mm-encoder-tp-mode data \
+    --enforce-eager \
+    --enable-prefix-caching \
+    --trust-remote-code \
+    > "${LOG_FILE}" 2>&1 &
 
 VLLM_PID=$!
 cleanup_failed_start() {
@@ -176,11 +164,16 @@ cleanup_failed_start() {
         kill -KILL -- "-${VLLM_PID}" 2>/dev/null || kill -KILL "${VLLM_PID}" 2>/dev/null || true
     fi
 }
-trap cleanup_failed_start EXIT INT TERM
+trap cleanup_failed_start EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # 等待 vLLM 就绪
 echo "[INFO] Waiting for vLLM to be ready (timeout: 10min)..."
-check_http() { curl -s -o /dev/null -w "%{http_code}" "$1/models" 2>/dev/null; }
+check_http() {
+    curl -sS --connect-timeout 2 --max-time 5 \
+        -o /dev/null -w "%{http_code}" "$1/models" 2>/dev/null
+}
 retries=0
 while [[ "$(check_http "${JUDGE_BASE_URL}")" != "200" ]]; do
     if ! kill -0 "${VLLM_PID}" 2>/dev/null; then
@@ -196,6 +189,11 @@ while [[ "$(check_http "${JUDGE_BASE_URL}")" != "200" ]]; do
     fi
     echo "[INFO] Waiting... (${retries}/120)"
 done
+if ! check_existing_vllm "${JUDGE_BASE_URL}" "${SERVED_MODEL_NAME}"; then
+    echo "[ERROR] vLLM judge backend model identity mismatch after HTTP readiness: expected=${SERVED_MODEL_NAME}" >&2
+    tail -n 80 "${LOG_FILE}" 2>/dev/null || true
+    exit 1
+fi
 
 trap - EXIT INT TERM
 echo "[INFO] vLLM judge backend ready at ${JUDGE_BASE_URL}"

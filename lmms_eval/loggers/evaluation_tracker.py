@@ -3,6 +3,7 @@ import json
 import os
 import re
 import time
+from collections.abc import Mapping
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -58,7 +59,7 @@ class GeneralConfigTracker:
         self.start_time = time.perf_counter()
 
     @staticmethod
-    def _get_model_name(model_args: str) -> str:
+    def _get_model_name(model_args: str | Mapping[str, object]) -> str:
         """Extracts the model name from the model arguments."""
 
         def extract_model_name(model_args: str, key: str) -> str:
@@ -68,6 +69,17 @@ class GeneralConfigTracker:
 
         # order does matter, e.g. peft and delta are provided together with pretrained
         prefixes = ["peft=", "delta=", "pretrained=", "model=", "model_version=", "model_name=", "model_id=", "path=", "engine="]
+        if isinstance(model_args, Mapping):
+            for prefix in prefixes:
+                key = prefix[:-1]
+                value = model_args.get(key)
+                if value not in (None, ""):
+                    return str(value)
+            return ""
+        if not isinstance(model_args, str):
+            raise TypeError(
+                f"model_args must be a string or mapping, got {type(model_args).__name__}"
+            )
         for prefix in prefixes:
             if prefix in model_args:
                 return extract_model_name(model_args, prefix)
@@ -76,7 +88,7 @@ class GeneralConfigTracker:
     def log_experiment_args(
         self,
         model_source: str,
-        model_args: str,
+        model_args: str | Mapping[str, object],
         system_instruction: str,
         chat_template: str,
         fewshot_as_multiturn: bool,

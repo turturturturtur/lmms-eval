@@ -67,11 +67,16 @@ fi
 HF_HOME_CFG="$(cfg '.env.hf_home')"
 LMMS_EVAL_DATASETS_CACHE_CFG="$(cfg '.env.lmms_eval_datasets_cache // ""')"
 export HF_HOME="${HF_HOME_CFG}"
-export HF_DATASETS_CACHE="${HF_HOME}/datasets"
 if [[ -n "${LMMS_EVAL_DATASETS_CACHE_CFG}" && "${LMMS_EVAL_DATASETS_CACHE_CFG}" != "null" ]]; then
     export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE_CFG}"
+    export HF_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
 else
+    export HF_DATASETS_CACHE="${HF_HOME}/datasets"
     export LMMS_EVAL_DATASETS_CACHE="${HF_DATASETS_CACHE}"
+fi
+if [[ "${LMMS_EVAL_DATASETS_CACHE}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" || ! -d "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] OCRBench worker requires mounted benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval" >&2
+    exit 2
 fi
 export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1

@@ -1,6 +1,7 @@
 import abc
 import gc
 import os
+from collections.abc import Mapping
 from typing import List, Optional, Tuple, Type, TypeVar
 
 import torch
@@ -133,6 +134,28 @@ class lmms(abc.ABC):
         additional_config = {} if additional_config is None else additional_config
         args = utils.simple_parse_args_string(arg_string)
         args2 = {k: v for k, v in additional_config.items() if v is not None}
+        return cls(**args, **args2)
+
+    @classmethod
+    def create_from_arg_object(
+        cls: Type[T],
+        arg_object: Mapping[str, object],
+        additional_config: Optional[dict] = None,
+    ) -> T:
+        """Create a model from an already parsed mapping without string round-trips."""
+
+        if not isinstance(arg_object, Mapping):
+            raise TypeError(
+                f"arg_object must be a mapping, got {type(arg_object).__name__}"
+            )
+        args = dict(arg_object)
+        additional_config = {} if additional_config is None else additional_config
+        args2 = {key: value for key, value in additional_config.items() if value is not None}
+        duplicate_keys = sorted(set(args).intersection(args2))
+        if duplicate_keys:
+            raise ValueError(
+                f"duplicate model argument keys in arg_object and additional_config: {duplicate_keys}"
+            )
         return cls(**args, **args2)
 
     @property

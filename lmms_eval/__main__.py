@@ -90,6 +90,126 @@ def _handle_non_serializable(o):
         return str(o)
 
 
+def _parse_model_args_without_duplicates(raw_model_args: str) -> dict[str, object]:
+    parts = utils._smart_comma_split(raw_model_args)
+    keys: list[str] = []
+    for part in parts:
+        if "=" not in part:
+            raise ValueError(
+                "model_args must contain comma-separated key=value entries when "
+                f"processor compatibility is enabled; invalid entry: {part!r}"
+            )
+        key = part.split("=", 1)[0].strip()
+        if not key:
+            raise ValueError(f"model_args contains an empty key: {part!r}")
+        if key in keys:
+            raise ValueError(f"duplicate model_args key: {key}")
+        keys.append(key)
+    return simple_parse_args_string(raw_model_args)
+
+
+def _resolve_cli_model_processor_compat(args: argparse.Namespace) -> None:
+    """Resolve an explicitly requested Qwen3.5 local model compatibility view."""
+
+    mode = str(getattr(args, "model_processor_compat", "off"))
+    view_root = getattr(args, "model_view_root", None)
+    args.model_artifact = None
+    args.model_args_original = None
+    if mode not in {"off", "auto", "required"}:
+        raise ValueError(
+            "model_processor_compat must be off, auto, or required; "
+            f"got {mode!r}"
+        )
+    if mode == "off":
+        if view_root not in (None, ""):
+            raise ValueError(
+                "--model_view_root requires --model_processor_compat auto or required"
+            )
+        return
+
+    if not isinstance(view_root, str) or not view_root.strip():
+        raise ValueError(
+            "--model_view_root is required when --model_processor_compat is "
+            f"{mode}"
+        )
+    view_root_path = os.path.expanduser(view_root)
+    if not os.path.isabs(view_root_path):
+        raise ValueError(f"--model_view_root must be an absolute path: {view_root}")
+
+    target_fields = {
+        "vllm": "model",
+        "vllm_chat": "model",
+        "qwen3_5": "pretrained",
+    }
+    target_field = target_fields.get(str(args.model))
+    if target_field is None:
+        raise ValueError(
+            "--model_processor_compat only supports --model vllm, vllm_chat, "
+            f"or qwen3_5; got {args.model!r}"
+        )
+    if not isinstance(args.model_args, str):
+        raise TypeError(
+            "model_args must be a string before processor compatibility resolution, "
+            f"got {type(args.model_args).__name__}"
+        )
+
+    parsed_args = _parse_model_args_without_duplicates(args.model_args)
+    if target_field not in parsed_args:
+        raise ValueError(
+            f"model_args must contain {target_field}=... for --model {args.model}"
+        )
+    source_value = parsed_args[target_field]
+    if not isinstance(source_value, str) or not source_value:
+        raise ValueError(
+            f"model_args {target_field} must be a non-empty local directory path"
+        )
+
+    source_path = os.path.abspath(os.path.expanduser(source_value))
+    if not os.path.isdir(source_path):
+        looks_explicitly_local = (
+            os.path.isabs(os.path.expanduser(source_value))
+            or source_value.startswith(".")
+            or source_value.startswith("~")
+        )
+        if mode == "auto" and not looks_explicitly_local:
+            return
+        raise ValueError(
+            f"--model_processor_compat={mode} requires a local model directory, "
+            f"got: {source_value}"
+        )
+
+    from lmms_eval.models.model_utils.qwen35_model_compat import (
+        SUPPORTED_MODEL_TYPES,
+        get_local_model_type,
+        prepare_model,
+    )
+
+    model_type = get_local_model_type(source_path)
+    if model_type not in SUPPORTED_MODEL_TYPES:
+        if mode == "auto":
+            return
+        raise ValueError(
+            "--model_processor_compat=required requires a Qwen3.5 checkpoint; "
+            f"got model_type={model_type!r} at {source_path}"
+        )
+
+    artifact = prepare_model(source_path, view_root_path, run_id="cli")
+    resolved_path = artifact.get("resolved_path")
+    if not isinstance(resolved_path, str) or not resolved_path:
+        raise ValueError(
+            f"Qwen3.5 compatibility resolver returned invalid resolved_path: {resolved_path!r}"
+        )
+    original_model_args = args.model_args
+    parsed_args[target_field] = resolved_path
+    args.model_args = parsed_args
+    args.model_args_original = original_model_args
+    args.model_artifact = {
+        **artifact,
+        "processor_compat": mode,
+        "model_arg_field": target_field,
+    }
+
+
 def _run_power_analysis(args: argparse.Namespace) -> None:
     """Run power analysis to calculate minimum sample size for detecting a given effect."""
     task_sizes = {}
@@ -162,6 +282,26 @@ def parse_eval_args() -> tuple[argparse.ArgumentParser, argparse.Namespace]:
         "--model_args",
         default="",
         help="String arguments for model, e.g. `pretrained=EleutherAI/pythia-160m,dtype=float32`",
+    )
+    parser.add_argument(
+        "--model_processor_compat",
+        type=str,
+        choices=["off", "auto", "required"],
+        default="off",
+        help=(
+            "Qwen3.5 local-checkpoint processor compatibility policy. "
+            "'off' preserves model_args unchanged; 'auto' adapts only an explicit "
+            "local Qwen3.5 directory; 'required' rejects anything else."
+        ),
+    )
+    parser.add_argument(
+        "--model_view_root",
+        type=str,
+        default=None,
+        help=(
+            "Absolute shared directory for immutable Qwen3.5 processor compatibility "
+            "views. Required when --model_processor_compat is auto or required."
+        ),
     )
     parser.add_argument(
         "--launcher_args",
@@ -482,6 +622,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
 
     args_list = []
     results_list = []
+    had_error = False
     if args.config:
         if not os.path.exists(args.config):
             raise ValueError(f"Config file does not exist: {args.config}")
@@ -562,6 +703,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
                 # wandb_logger.finish()
 
         except Exception as e:
+            had_error = True
             if args.verbosity == "DEBUG":
                 raise e
             else:
@@ -580,9 +722,12 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
 
     if args.wandb_args:
         wandb_logger.run.finish()
+    if had_error:
+        raise SystemExit(1)
 
 
 def cli_evaluate_single(args: Union[argparse.Namespace, None] = None) -> None:
+    _resolve_cli_model_processor_compat(args)
     selected_task_list = args.tasks.split(",") if args.tasks else None
 
     if args.include_path is not None:
@@ -722,6 +867,9 @@ def cli_evaluate_single(args: Union[argparse.Namespace, None] = None) -> None:
     )
 
     if results is not None:
+        model_artifact = getattr(args, "model_artifact", None)
+        if model_artifact is not None:
+            results["config"]["model_artifact"] = model_artifact
         if args.log_samples:
             samples = results.pop("samples")
         else:

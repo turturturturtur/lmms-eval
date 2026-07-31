@@ -105,6 +105,38 @@ def test_generate_until_ignores_task_until_for_all_requests(monkeypatch):
     assert all(payload["stop_token_ids"] == [248046] for payload in payloads)
 
 
+def test_generate_until_uses_only_model_text_stops_when_task_until_is_present(monkeypatch):
+    backend = _backend(
+        monkeypatch,
+        stop_token_ids="[248046]",
+        stop_strings='["User:","\\nuser\\n"]',
+    )
+    request_0, generation_kwargs_0 = _request(doc_id=0, until="END-0")
+    request_1, generation_kwargs_1 = _request(doc_id=1, until=["END-1", "END-2"])
+    original_0 = deepcopy(generation_kwargs_0)
+    original_1 = deepcopy(generation_kwargs_1)
+
+    payloads = _capture_payloads(backend, [request_0, request_1])
+    payloads_by_question = {payload["messages"][0]["content"][0]["text"]: payload for payload in payloads}
+
+    assert payloads_by_question["question-0"]["stop"] == ["User:", "\nuser\n"]
+    assert payloads_by_question["question-1"]["stop"] == ["User:", "\nuser\n"]
+    assert all(payload["stop_token_ids"] == [248046] for payload in payloads)
+    assert generation_kwargs_0 == original_0
+    assert generation_kwargs_1 == original_1
+
+
+def test_generate_until_uses_model_text_stops_when_task_has_none(monkeypatch):
+    backend = _backend(monkeypatch, stop_strings='["User:","\\nuser\\n"]')
+    request, generation_kwargs = _request(until=None)
+    original = deepcopy(generation_kwargs)
+
+    payloads = _capture_payloads(backend, [request])
+
+    assert payloads[0]["stop"] == ["User:", "\nuser\n"]
+    assert generation_kwargs == original
+
+
 def test_generate_until_omits_absent_stop_conditions(monkeypatch):
     backend = _backend(monkeypatch)
     request, _ = _request(until=None)
@@ -135,6 +167,14 @@ def test_model_args_parser_preserves_json_stop_token_ids(monkeypatch):
     assert backend.stop_token_ids == [248046]
 
 
+def test_model_args_parser_preserves_json_stop_strings(monkeypatch):
+    parsed = simple_parse_args_string(r'model=model-under-test,stop_strings=["User:","\nuser\n"]')
+
+    assert parsed["stop_strings"] == r'["User:","\nuser\n"]'
+    backend = _backend(monkeypatch, stop_strings=parsed["stop_strings"])
+    assert backend.stop_strings == ["User:", "\nuser\n"]
+
+
 @pytest.mark.parametrize(
     "until",
     ["", ["valid", ""], ["valid", 1], {"not": "valid"}],
@@ -155,3 +195,12 @@ def test_generate_until_does_not_parse_ignored_task_until(monkeypatch, until):
 def test_backend_rejects_invalid_stop_token_ids(monkeypatch, stop_token_ids):
     with pytest.raises(ValueError, match="stop_token_ids"):
         _backend(monkeypatch, stop_token_ids=stop_token_ids)
+
+
+@pytest.mark.parametrize(
+    "stop_strings",
+    ["", "not-json", "[]", '["User:", ""]', '["User:", 1]', '{"stop": "User:"}'],
+)
+def test_backend_rejects_invalid_stop_strings(monkeypatch, stop_strings):
+    with pytest.raises(ValueError, match="stop_strings"):
+        _backend(monkeypatch, stop_strings=stop_strings)

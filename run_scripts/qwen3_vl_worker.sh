@@ -20,6 +20,23 @@ CMD_MODEL_PATH="${2:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+
+validate_benchmark_cache_mount() {
+    if [[ ! -d "/mnt/cpfsB" || ! -d "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] CPFSB benchmark cache is not mounted: ${LMMS_EVAL_BENCHMARK_CACHE}" >&2
+        return 2
+    fi
+    if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] Eval must use benchmark cache ${LMMS_EVAL_BENCHMARK_CACHE}, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+    if [[ "${HF_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache ${LMMS_EVAL_BENCHMARK_CACHE}, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+}
+
+validate_benchmark_cache_mount
 SYSTEM_INSTRUCTION=$(cfg '.eval.system_instruction // ""')
 CONFIG_REASONING_PARSER="$(cfg '.model.reasoning_parser // ""')"
 MODEL_REASONING_PARSER="${EVAL_REASONING_PARSER:-${CONFIG_REASONING_PARSER}}"
@@ -444,7 +461,7 @@ DATASET_STAGE_PID=$!
 wait_for_backends
 
 if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
-    wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+    wait "${DATASET_STAGE_PID}"
 fi
 
 run_lmms_eval
