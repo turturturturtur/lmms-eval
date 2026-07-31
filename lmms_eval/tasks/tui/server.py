@@ -3555,6 +3555,7 @@ def _build_vllm_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRe
     config["model"]["path"] = request.model
     config["model"]["source_path"] = request.model
     config["model"]["processor_compat"] = "required"
+    config["model"]["view_root"] = f"/mnt/cpfsB/{request.user}/lmms_eval_views"
     config["model"]["startup_timeout_seconds"] = 1800
     config["model"].pop("resolved_path", None)
     config["model"].pop("preflight", None)

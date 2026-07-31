@@ -145,18 +145,20 @@ if [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null
     export HF_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
 fi
 
-if [[ ! -d "/mnt/cpfsB" || ! -d "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
-    echo "[ERROR] CPFSB benchmark cache is not mounted: /mnt/cpfsB/evaluation_cache/lmms_eval" >&2
-    exit 2
-fi
-if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
-    echo "[ERROR] Judge must use benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
-    exit 2
-fi
-if [[ "${HF_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
-    echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
-    exit 2
-fi
+validate_benchmark_cache_mount() {
+    if [[ ! -d "/mnt/cpfsB" || ! -d "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+        echo "[ERROR] CPFSB benchmark cache is not mounted: /mnt/cpfsB/evaluation_cache/lmms_eval" >&2
+        return 2
+    fi
+    if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+        echo "[ERROR] Judge must use benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+    if [[ "${HF_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+        echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+}
 
 HF_DATASETS_OFFLINE=$(cfg_bool '.env.hf_datasets_offline')
 [[ "${HF_DATASETS_OFFLINE}" == "true" ]] && export HF_DATASETS_OFFLINE=1 || unset HF_DATASETS_OFFLINE
@@ -336,6 +338,7 @@ PY
 }
 
 validate_qwen35_judge_model_compat
+validate_benchmark_cache_mount
 
 # ══════════════════════════════════════════════════════════════════════════════
 # §3  进程管理（cleanup on exit / signal）

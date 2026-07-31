@@ -47,23 +47,23 @@ while [[ $# -gt 0 ]]; do
         --log)
             LOG_FILE="$2"; shift 2 ;;
         *)
-            echo "[ERROR] Unknown argument: $1"; exit 1 ;;
+            echo "[ERROR] Unknown argument: $1" >&2; exit 1 ;;
     esac
 done
 
-[[ -z "${MODEL_PATH}" ]] && { echo "[ERROR] --model-path is required"; exit 1; }
-[[ -z "${LOG_FILE}" ]] && { echo "[ERROR] --log is required"; exit 1; }
-[[ ! -d "${MODEL_PATH}" ]] && { echo "[ERROR] Model directory not found: ${MODEL_PATH}"; exit 1; }
+[[ -z "${MODEL_PATH}" ]] && { echo "[ERROR] --model-path is required" >&2; exit 1; }
+[[ -z "${LOG_FILE}" ]] && { echo "[ERROR] --log is required" >&2; exit 1; }
+[[ ! -d "${MODEL_PATH}" ]] && { echo "[ERROR] Model directory not found: ${MODEL_PATH}" >&2; exit 1; }
 for pair in "tp:${TP}" "max-model-len:${MAX_MODEL_LEN}" "max-num-seqs:${MAX_NUM_SEQS}" "port:${PORT}"; do
     name="${pair%%:*}"
     value="${pair#*:}"
     if ! [[ "${value}" =~ ^[0-9]+$ ]] || (( value < 1 )); then
-        echo "[ERROR] --${name} must be a positive integer, got: ${value}"
+        echo "[ERROR] --${name} must be a positive integer, got: ${value}" >&2
         exit 1
     fi
 done
 if ! [[ "${GPU_MEM_UTIL}" =~ ^0(\.[0-9]+)?$|^1(\.0+)?$ ]] || [[ "${GPU_MEM_UTIL}" == "0" ]]; then
-    echo "[ERROR] --gpu-memory-utilization must be in (0, 1], got: ${GPU_MEM_UTIL}"
+    echo "[ERROR] --gpu-memory-utilization must be in (0, 1], got: ${GPU_MEM_UTIL}" >&2
     exit 1
 fi
 
@@ -77,7 +77,7 @@ else
     done
 fi
 if (( ${#VISIBLE_GPU_TOKENS[@]} < TP )); then
-    echo "[ERROR] Not enough visible GPUs for TP=${TP}: ${#VISIBLE_GPU_TOKENS[@]} available"
+    echo "[ERROR] Not enough visible GPUs for TP=${TP}: ${#VISIBLE_GPU_TOKENS[@]} available" >&2
     exit 1
 fi
 SELECTED_GPU_TOKENS=("${VISIBLE_GPU_TOKENS[@]:0:TP}")
@@ -119,7 +119,7 @@ except Exception:
 }
 
 if check_existing_vllm "${JUDGE_BASE_URL}" "${SERVED_MODEL_NAME}"; then
-    echo "[INFO] Found existing vLLM on port ${PORT} with model ${SERVED_MODEL_NAME}, reusing it."
+    echo "[INFO] Found existing vLLM on port ${PORT} with model ${SERVED_MODEL_NAME}, reusing it." >&2
     # 尝试找到已有进程的 PID
     EXISTING_PID=$(lsof -ti :"${PORT}" 2>/dev/null | head -n1 || echo "")
     echo "VLLM_PID=${EXISTING_PID}"
@@ -128,12 +128,12 @@ if check_existing_vllm "${JUDGE_BASE_URL}" "${SERVED_MODEL_NAME}"; then
 fi
 
 # ── 启动新的 vLLM ────────────────────────────────────────────────────────────
-echo "[INFO] Starting vLLM judge backend..."
-echo "[INFO] Model: ${MODEL_PATH}"
-echo "[INFO] Served model name: ${SERVED_MODEL_NAME}"
-echo "[INFO] TP: ${TP}, Port: ${PORT}"
-echo "[INFO] CUDA_VISIBLE_DEVICES: ${JUDGE_CUDA_VISIBLE_DEVICES}"
-echo "[INFO] Log file: ${LOG_FILE}"
+echo "[INFO] Starting vLLM judge backend..." >&2
+echo "[INFO] Model: ${MODEL_PATH}" >&2
+echo "[INFO] Served model name: ${SERVED_MODEL_NAME}" >&2
+echo "[INFO] TP: ${TP}, Port: ${PORT}" >&2
+echo "[INFO] CUDA_VISIBLE_DEVICES: ${JUDGE_CUDA_VISIBLE_DEVICES}" >&2
+echo "[INFO] Log file: ${LOG_FILE}" >&2
 
 # 使用独立 session/process group，保证 cleanup 能清理 vLLM 的 EngineCore 子进程。
 if ! command -v setsid >/dev/null 2>&1; then
@@ -169,7 +169,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 # 等待 vLLM 就绪
-echo "[INFO] Waiting for vLLM to be ready (timeout: 10min)..."
+echo "[INFO] Waiting for vLLM to be ready (timeout: 10min)..." >&2
 check_http() {
     curl -sS --connect-timeout 2 --max-time 5 \
         -o /dev/null -w "%{http_code}" "$1/models" 2>/dev/null
@@ -177,17 +177,17 @@ check_http() {
 retries=0
 while [[ "$(check_http "${JUDGE_BASE_URL}")" != "200" ]]; do
     if ! kill -0 "${VLLM_PID}" 2>/dev/null; then
-        echo "[ERROR] vLLM judge backend exited before becoming ready. Tail of ${LOG_FILE}:"
+        echo "[ERROR] vLLM judge backend exited before becoming ready. Tail of ${LOG_FILE}:" >&2
         tail -n 80 "${LOG_FILE}" 2>/dev/null || true
         exit 1
     fi
     sleep 5
     retries=$((retries + 1))
     if (( retries >= 120 )); then
-        echo "[ERROR] Timeout waiting for vLLM"
+        echo "[ERROR] Timeout waiting for vLLM" >&2
         exit 1
     fi
-    echo "[INFO] Waiting... (${retries}/120)"
+    echo "[INFO] Waiting... (${retries}/120)" >&2
 done
 if ! check_existing_vllm "${JUDGE_BASE_URL}" "${SERVED_MODEL_NAME}"; then
     echo "[ERROR] vLLM judge backend model identity mismatch after HTTP readiness: expected=${SERVED_MODEL_NAME}" >&2
@@ -196,6 +196,6 @@ if ! check_existing_vllm "${JUDGE_BASE_URL}" "${SERVED_MODEL_NAME}"; then
 fi
 
 trap - EXIT INT TERM
-echo "[INFO] vLLM judge backend ready at ${JUDGE_BASE_URL}"
+echo "[INFO] vLLM judge backend ready at ${JUDGE_BASE_URL}" >&2
 echo "VLLM_PID=${VLLM_PID}"
 echo "VLLM_OWNED=1"
