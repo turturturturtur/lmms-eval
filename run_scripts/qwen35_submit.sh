@@ -14,6 +14,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LMMS_EVAL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 DEFAULT_DLC_RESOURCE_ID="quotaev2tl4w6aw0"
 REQUIRED_NAS_MOUNT_URI="nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
+REQUIRED_CPFSB_MOUNT_PATH="/mnt/cpfsB"
+BENCHMARK_DATASETS_CACHE="/mnt/cpfsB/evaluation_cache/lmms_eval"
 
 if (( $# < 2 )); then
     echo "[ERROR] Usage: bash $(basename "$0") <dlc_config.json> <eval_config.json> [judge_config.json] [-- <dlc auth flags>]"
@@ -131,16 +133,44 @@ require_required_nas_mount() {
     esac
 }
 
+require_required_cpfsb_mount() {
+    local value="$1"
+    local field="$2"
+    require_non_empty "${value}" "${field}"
+
+    local uri
+    local uris=()
+    IFS=',' read -ra uris <<< "${value}"
+    for uri in "${uris[@]}"; do
+        if [[ "${uri}" == cpfs://*::${REQUIRED_CPFSB_MOUNT_PATH} ]]; then
+            return 0
+        fi
+    done
+
+    echo "[ERROR] ${field} must include a CPFS URI mounted at ${REQUIRED_CPFSB_MOUNT_PATH}, got: ${value}" >&2
+    exit 9
+}
+
 # ── resolve job name (needs model info from eval config) ──────────────────────
-MODEL=$(eval_cfg '.model.path')
+MODEL=$(eval_cfg '.model.source_path // .model.path')
 MODEL_TP=$(eval_cfg_int '.model.tp')
 LOG_BASE=$(eval_cfg '.log.dir')
+MODEL_BACKEND=$(eval_cfg '.model.backend // "vllm"')
+MODEL_BACKEND="$(printf '%s' "${MODEL_BACKEND}" | tr '[:upper:]' '[:lower:]')"
+if [[ "${MODEL_BACKEND}" != "vllm" && "${MODEL_BACKEND}" != "openai" ]]; then
+    echo "[ERROR] model.backend must be vllm or openai, got: ${MODEL_BACKEND}" >&2
+    exit 2
+fi
+if [[ -z "${MODEL}" || "${MODEL}" == "null" ]]; then
+    echo "[ERROR] model.source_path/model.path must be non-empty in ${EVAL_CONFIG}" >&2
+    exit 2
+fi
 
 JOB_NAME_FROM_CFG=$(dlc_cfg '.dlc.job_name // ""')
 if [[ -n "${JOB_NAME_FROM_CFG}" && "${JOB_NAME_FROM_CFG}" != "null" ]]; then
     JOB_NAME="${JOB_NAME_FROM_CFG}"
 else
-    JOB_NAME="eval_$(basename ${MODEL})_tp${MODEL_TP}_$(date +%m%d_%H%M%S)"
+    JOB_NAME="eval_$(basename "${MODEL}")_tp${MODEL_TP}_$(date +%m%d_%H%M%S)"
 fi
 if [[ "${JOB_NAME}" != eval_* ]]; then
     echo "[ERROR] DLC eval job name must start with eval_, got: ${JOB_NAME}" >&2
@@ -163,6 +193,113 @@ TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
 FIXED_LOG_DIR="${LOG_BASE}/${JOB_NAME}/${TIMESTAMP}"
 mkdir -p "${FIXED_LOG_DIR}"
 
+# ── Qwen3.5 model processor preflight ────────────────────────────────────────
+MODEL_SOURCE_INPUT="${MODEL}"
+MODEL_SOURCE="${MODEL_SOURCE_INPUT}"
+RESOLVED_MODEL="${MODEL}"
+MODEL_PREFLIGHT_JSON="${FIXED_LOG_DIR}/model_preflight.json"
+MODEL_PREFLIGHT_LOG="${FIXED_LOG_DIR}/model_preflight.stderr.log"
+MODEL_VIEW_MANIFEST_PATH=""
+MODEL_VIEW_ROOT=""
+PROCESSOR_COMPAT="off"
+HAS_MODEL_PREFLIGHT=false
+SERVED_MODEL_NAME=$(eval_cfg '.model.served_model_name // ""')
+if [[ -z "${SERVED_MODEL_NAME}" || "${SERVED_MODEL_NAME}" == "null" ]]; then
+    SERVED_MODEL_NAME="$(basename "${MODEL_SOURCE}")"
+fi
+if ! [[ "${SERVED_MODEL_NAME}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+    echo "[ERROR] model.served_model_name must match ^[A-Za-z0-9._-]+$ so it is safe in lmms-eval model_args; got: ${SERVED_MODEL_NAME}" >&2
+    exit 2
+fi
+
+if [[ "${MODEL_BACKEND}" == "vllm" ]]; then
+    PROCESSOR_COMPAT=$(eval_cfg '.model.processor_compat // "required"')
+    case "${PROCESSOR_COMPAT}" in
+        auto|required) ;;
+        off)
+            echo "[ERROR] qwen35_submit.sh does not allow model.processor_compat=off for a local Qwen3.5 vLLM model; use auto or required." >&2
+            exit 2
+            ;;
+        *)
+            echo "[ERROR] model.processor_compat must be auto, required, or off; got: ${PROCESSOR_COMPAT}" >&2
+            exit 2
+            ;;
+    esac
+
+    EVAL_VENV_PATH=$(eval_cfg '.env.venv_path // ""')
+    if [[ -z "${EVAL_VENV_PATH}" || "${EVAL_VENV_PATH}" == "null" ]]; then
+        EVAL_VENV_PATH="${LMMS_EVAL_ROOT}/.venv"
+    fi
+    if [[ ! -x "${EVAL_VENV_PATH}/bin/python" ]]; then
+        echo "[ERROR] Evaluation Python is missing or not executable: ${EVAL_VENV_PATH}/bin/python" >&2
+        exit 2
+    fi
+
+    MODEL_VIEW_ROOT=$(eval_cfg '.model.view_root // ""')
+    if [[ -z "${MODEL_VIEW_ROOT}" || "${MODEL_VIEW_ROOT}" == "null" ]]; then
+        echo "[ERROR] model.view_root must be an explicit absolute shared path for Qwen3.5 vLLM evaluation." >&2
+        exit 2
+    fi
+    if [[ "${MODEL_VIEW_ROOT}" != /* ]]; then
+        echo "[ERROR] model.view_root must be an absolute shared path, got: ${MODEL_VIEW_ROOT}" >&2
+        exit 2
+    fi
+
+    echo "[INFO] Qwen3.5 model preflight source: ${MODEL_SOURCE}"
+    echo "[INFO] Qwen3.5 processor compatibility mode: ${PROCESSOR_COMPAT}"
+    echo "[INFO] Qwen3.5 compatibility view root: ${MODEL_VIEW_ROOT}"
+    set +e
+    PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}" \
+        "${EVAL_VENV_PATH}/bin/python" \
+        "${LMMS_EVAL_ROOT}/lmms_eval/models/model_utils/qwen35_model_compat.py" \
+        prepare \
+        --source "${MODEL_SOURCE}" \
+        --view-root "${MODEL_VIEW_ROOT}" \
+        --run-id "${JOB_NAME}_${TIMESTAMP}" \
+        > "${MODEL_PREFLIGHT_JSON}" \
+        2> "${MODEL_PREFLIGHT_LOG}"
+    MODEL_PREFLIGHT_RC=$?
+    set -e
+    if [[ -s "${MODEL_PREFLIGHT_LOG}" ]]; then
+        sed 's/^/[MODEL_PREFLIGHT] /' "${MODEL_PREFLIGHT_LOG}" >&2
+    fi
+    if (( MODEL_PREFLIGHT_RC != 0 )); then
+        echo "[ERROR] Qwen3.5 model preflight failed with exit code ${MODEL_PREFLIGHT_RC}." >&2
+        echo "[ERROR] source_path=${MODEL_SOURCE}" >&2
+        echo "[ERROR] preflight_log=${MODEL_PREFLIGHT_LOG}" >&2
+        exit "${MODEL_PREFLIGHT_RC}"
+    fi
+    if ! jq -e '
+        (.source_path | type == "string" and length > 0)
+        and (.resolved_path | type == "string" and length > 0)
+        and (.processor_class | type == "string" and length > 0)
+        and (.source_manifest_sha256 | type == "string" and length == 64)
+    ' "${MODEL_PREFLIGHT_JSON}" >/dev/null; then
+        echo "[ERROR] Qwen3.5 model preflight returned an invalid result: ${MODEL_PREFLIGHT_JSON}" >&2
+        exit 2
+    fi
+    RESOLVED_MODEL=$(jq -er '.resolved_path' "${MODEL_PREFLIGHT_JSON}")
+    MODEL_SOURCE=$(jq -er '.source_path' "${MODEL_PREFLIGHT_JSON}")
+    if [[ "${MODEL_SOURCE}" != /* || ! -d "${MODEL_SOURCE}" ]]; then
+        echo "[ERROR] Qwen3.5 model preflight canonical source path is invalid: ${MODEL_SOURCE}" >&2
+        exit 2
+    fi
+    if [[ ! -d "${RESOLVED_MODEL}" ]]; then
+        echo "[ERROR] Qwen3.5 model preflight resolved path is not visible: ${RESOLVED_MODEL}" >&2
+        exit 2
+    fi
+    if [[ -f "${RESOLVED_MODEL}/.qwen35_processor_compat_manifest.json" ]]; then
+        MODEL_VIEW_MANIFEST_PATH="${RESOLVED_MODEL}/.qwen35_processor_compat_manifest.json"
+    fi
+    HAS_MODEL_PREFLIGHT=true
+    echo "[INFO] Qwen3.5 model preflight passed."
+    echo "[INFO] Qwen3.5 model resolved path: ${RESOLVED_MODEL}"
+    echo "[INFO] Qwen3.5 processor class: $(jq -r '.processor_class' "${MODEL_PREFLIGHT_JSON}")"
+else
+    printf '{}\n' > "${MODEL_PREFLIGHT_JSON}"
+    : > "${MODEL_PREFLIGHT_LOG}"
+fi
+
 EXTRA_LD_LIBRARY_DIRS=$(eval_cfg '.env.extra_ld_library_dirs // ""')
 EXTRA_LD_EXPORT=""
 if [[ -n "${EXTRA_LD_LIBRARY_DIRS}" && "${EXTRA_LD_LIBRARY_DIRS}" != "null" ]]; then
@@ -184,10 +321,38 @@ if [[ "${JUDGE_BACKEND}" == "api" ]]; then
     JUDGE_RUNTIME_BASE_URL="$(judge_cfg '.judge.api.base_url // ""')"
 fi
 RUNTIME_CONFIG="${FIXED_LOG_DIR}/runtime_config.json"
+LMMS_EVAL_COMMIT="$(git -C "${LMMS_EVAL_ROOT}" rev-parse HEAD 2>/dev/null || printf 'unknown')"
+LMMS_EVAL_GIT_DIRTY=false
+if [[ -n "$(git -C "${LMMS_EVAL_ROOT}" status --porcelain=v1 --untracked-files=normal 2>/dev/null || true)" ]]; then
+    LMMS_EVAL_GIT_DIRTY=true
+fi
+LMMS_EVAL_TREE_STATE_SHA256="$(
+    (
+        cd "${LMMS_EVAL_ROOT}"
+        git diff --binary HEAD -- 2>/dev/null || true
+        while IFS= read -r -d '' untracked_file; do
+            printf '\0untracked\0%s\0' "${untracked_file}"
+            sha256sum -- "${untracked_file}"
+        done < <(git ls-files --others --exclude-standard -z 2>/dev/null)
+    ) | sha256sum | awk '{print $1}'
+)"
 jq \
   --arg ts "${TIMESTAMP}" \
   --arg judge_api_key "${JUDGE_RUNTIME_API_KEY}" \
   --arg judge_base_url "${JUDGE_RUNTIME_BASE_URL}" \
+  --arg source_input_model "${MODEL_SOURCE_INPUT}" \
+  --arg source_model "${MODEL_SOURCE}" \
+  --arg resolved_model "${RESOLVED_MODEL}" \
+  --arg served_model_name "${SERVED_MODEL_NAME}" \
+  --arg processor_compat "${PROCESSOR_COMPAT}" \
+  --arg model_view_root "${MODEL_VIEW_ROOT}" \
+  --arg model_view_manifest_path "${MODEL_VIEW_MANIFEST_PATH}" \
+  --arg lmms_eval_commit "${LMMS_EVAL_COMMIT}" \
+  --arg lmms_eval_tree_state_sha256 "${LMMS_EVAL_TREE_STATE_SHA256}" \
+  --arg benchmark_datasets_cache "${BENCHMARK_DATASETS_CACHE}" \
+  --argjson lmms_eval_git_dirty "${LMMS_EVAL_GIT_DIRTY}" \
+  --argjson has_model_preflight "${HAS_MODEL_PREFLIGHT}" \
+  --slurpfile model_preflight "${MODEL_PREFLIGHT_JSON}" \
   '
   if (.model | type) != "object" then
     error("config.model must be an object")
@@ -202,6 +367,8 @@ jq \
   | .dlc.submit = false
   | .eval.debug = false
   | .eval.timestamp = $ts
+  | .env.lmms_eval_datasets_cache = $benchmark_datasets_cache
+  | .env.hf_datasets_cache = $benchmark_datasets_cache
   | if ($judge_api_key | length) > 0 then
       .env.judge_api_key = $judge_api_key
     else
@@ -224,6 +391,27 @@ jq \
     end
   | .model.reasoning_parser = "qwen3"
   | .model.is_qwen3_vl = false
+  | .model.startup_timeout_seconds = (.model.startup_timeout_seconds // 1800)
+  | if $has_model_preflight then
+      .model.path = $resolved_model
+      | .model.source_input_path = $source_input_model
+      | .model.source_path = $source_model
+      | .model.resolved_path = $resolved_model
+      | .model.served_model_name = $served_model_name
+      | .model.processor_compat = $processor_compat
+      | .model.view_root = $model_view_root
+      | .model.view_manifest_path = $model_view_manifest_path
+      | .model.preflight = (
+          $model_preflight[0]
+          + {
+              lmms_eval_commit: $lmms_eval_commit,
+              lmms_eval_git_dirty: $lmms_eval_git_dirty,
+              lmms_eval_tree_state_sha256: $lmms_eval_tree_state_sha256
+            }
+        )
+    else
+      .
+    end
   | if (.model.enable_thinking == null) then
       .model.enable_thinking = false
     else
@@ -270,6 +458,7 @@ ENDPOINT=$(dlc_cfg '.dlc.endpoint // ""')
 
 require_single_resource_id "${RESOURCE_ID}" "dlc.resource_id"
 require_required_nas_mount "${DATA_SOURCE_URIS}" "dlc.data_source_uris"
+require_required_cpfsb_mount "${DATA_SOURCE_URIS}" "dlc.data_source_uris"
 
 if ! [[ "${PRIORITY}" =~ ^[0-9]+$ ]]; then
     echo "[ERROR] DLC priority must be an integer, got: ${PRIORITY}"
@@ -456,6 +645,7 @@ build_judge_submit_args() {
     require_non_empty "${judge_extended_cidrs}" "dlc.judge.extended_cidrs"
     require_single_resource_id "${judge_resource_id}" "dlc.judge.resource_id"
     require_required_nas_mount "${judge_data_source_uris}" "dlc.judge.data_source_uris"
+    require_required_cpfsb_mount "${judge_data_source_uris}" "dlc.judge.data_source_uris"
 
     if [[ "${judge_worker_gpu}" != "0" ]]; then
         echo "[ERROR] Judge DLC must be CPU-only; expected worker_gpu=0, got ${judge_worker_gpu}" >&2
@@ -521,7 +711,9 @@ prepare_judge_runtime_config() {
         '.eval.input_result_path = $input_path
          | .eval.output_path = $output_path
          | .eval.debug = false
-         | .log.dir = $log_dir' \
+         | .log.dir = $log_dir
+         | .env.lmms_eval_datasets_cache = "/mnt/cpfsB/evaluation_cache/lmms_eval"
+         | .env.hf_datasets_cache = "/mnt/cpfsB/evaluation_cache/lmms_eval"' \
         "${JUDGE_CONFIG}" > "${judge_runtime_config}"
 }
 
@@ -629,7 +821,7 @@ INLINE_JUDGE_ARG=""
 if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
     INLINE_JUDGE_ARG=" \"\" ${JUDGE_RUNTIME_CONFIG}"
 fi
-INNER_COMMAND="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=1;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}${INLINE_JUDGE_ARG}"
+INNER_COMMAND="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=0;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}${INLINE_JUDGE_ARG}"
 COMMAND="/bin/bash -c '$(quote_for_single_quotes "${INNER_COMMAND}")'"
 DLC_SUBMIT_ARGS=(
     submit pytorchjob

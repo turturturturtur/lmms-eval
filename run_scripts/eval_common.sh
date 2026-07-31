@@ -5,6 +5,10 @@
 
 set -euo pipefail
 
+# Pre-populated benchmark cache mounted from CPFSB.  DLC workers must consume
+# this cache directly; copying it to another shared path only adds startup I/O.
+LMMS_EVAL_BENCHMARK_CACHE="/mnt/cpfsB/evaluation_cache/lmms_eval"
+
 # ── Guard: must be sourced ────────────────────────────────────────────────────
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     echo "[ERROR] eval_common.sh should be sourced, not executed directly."
@@ -98,6 +102,22 @@ clean_failed_task_output() {
     jq --arg task "${task}" '.eval.tasks = $task' "${CONFIG}" > "${task_output_path}/config.json"
 }
 
+validate_lmms_eval_task_outputs() {
+    local task_output_path="$1"
+    local result_count sample_count
+
+    result_count="$(find "${task_output_path}" -type f -name '*results*.json' | wc -l)"
+    sample_count="$(find "${task_output_path}" -type f -name '*samples_*.jsonl' | wc -l)"
+    if (( result_count == 0 )); then
+        echo "missing results json under ${task_output_path}" >&2
+        return 1
+    fi
+    if (( sample_count == 0 )); then
+        echo "missing samples jsonl under ${task_output_path}" >&2
+        return 1
+    fi
+}
+
 # ── parse gen_kwargs ──────────────────────────────────────────────────────────
 parse_gen_kwarg() {
     local key=$1
@@ -143,10 +163,24 @@ load_config() {
 
     export HF_HOME=$(cfg '.env.hf_home')
     export HF_TOKEN=$(cfg '.env.hf_token')
-    export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+    HF_DATASETS_CACHE_CFG=$(cfg '.env.hf_datasets_cache // ""')
+    if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" ]]; then
+        export HF_DATASETS_CACHE="${HF_DATASETS_CACHE_CFG}"
+    else
+        export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+    fi
 
     LMMS_EVAL_DATASETS_CACHE=$(cfg '.env.lmms_eval_datasets_cache // ""')
-    [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]] && export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+    if [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]]; then
+        export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+        # Task utilities such as SuperChem use HF_DATASETS_CACHE directly;
+        # keep it aligned with lmms-eval's explicit cache override.
+        if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" && "${HF_DATASETS_CACHE_CFG}" != "${LMMS_EVAL_DATASETS_CACHE}" ]]; then
+            echo "[ERROR] env.hf_datasets_cache must equal env.lmms_eval_datasets_cache, got: ${HF_DATASETS_CACHE_CFG} vs ${LMMS_EVAL_DATASETS_CACHE}" >&2
+            exit 2
+        fi
+        export HF_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+    fi
 
     HF_DATASETS_OFFLINE=$(cfg_bool '.env.hf_datasets_offline')
     TRANSFORMERS_OFFLINE=$(cfg_bool '.env.transformers_offline')
@@ -176,7 +210,11 @@ load_config() {
     MODEL_GPU_MEM_UTIL=$(cfg '.model.gpu_memory_utilization')
     MODEL_MAX_NUM_SEQS=$(cfg_int '.model.max_num_seqs')
     MODEL_BASE_PORT=$(cfg_int '.model.base_port')
-    MODEL_NAME=$(basename "${MODEL}")
+    MODEL_NAME=$(cfg '.model.served_model_name // ""')
+    if [[ -z "${MODEL_NAME}" || "${MODEL_NAME}" == "null" ]]; then
+        MODEL_NAME=$(basename "${MODEL}")
+    fi
+    MODEL_STARTUP_TIMEOUT_SECONDS=$(cfg_required_positive_int '.model.startup_timeout_seconds // 1800' 'model.startup_timeout_seconds')
 
     # eval
     TASKS=$(cfg '.eval.tasks')
@@ -197,7 +235,7 @@ load_config() {
         [[ "${VERBOSITY}" == "null" || -z "${VERBOSITY}" ]] && VERBOSITY="INFO"
     fi
 
-    GEN_KWARGS=$(cfg '.eval.gen_kwargs // "max_new_tokens=32768"')
+    GEN_KWARGS=$(cfg '.eval.gen_kwargs // ""')
     MAX_NEW_TOKENS=$(parse_gen_kwarg "max_new_tokens" "32768")
     MAX_PIXELS=$(parse_gen_kwarg "max_pixels" "4014080")
     VLLM_REQUEST_TIMEOUT_SECONDS=$(cfg_required_positive_int '.eval.vllm_request_timeout_seconds // 300' 'eval.vllm_request_timeout_seconds')
@@ -218,34 +256,53 @@ ensure_venv() {
     source "${VENV_PATH}/bin/activate"
 }
 
-# ── stage pre-cached datasets from CPFS to local cache ────────────────────────
+# ── optionally stage pre-cached datasets ──────────────────────────────────────
 stage_datasets() {
     # 仅在 DLC 提交场景下由 submitter 显式开启；本地调试默认跳过 staging
     if [[ "${LMMS_EVAL_STAGE_DATASETS:-}" != "1" ]]; then
         return
     fi
 
-    local src=""
-    for candidate in /mnt/cpfsB/evaluation_cache/lmms_eval /mnt/cpfs/evaluation_cache/lmms_eval; do
-        if [[ -d "${candidate}" ]]; then
-            src="${candidate}"
-            break
-        fi
-    done
-
-    if [[ -n "${src}" ]]; then
-        if [[ -n "${LMMS_EVAL_DATASETS_CACHE:-}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]]; then
-            echo "[INFO][Machine ${MACHINE_RANK}] Staging datasets from ${src} to ${LMMS_EVAL_DATASETS_CACHE} ..."
-            mkdir -p "${LMMS_EVAL_DATASETS_CACHE}"
-            cp -r "${src}"/* "${LMMS_EVAL_DATASETS_CACHE}/"
-        fi
+    local src="${LMMS_EVAL_BENCHMARK_CACHE}"
+    local dst="${LMMS_EVAL_DATASETS_CACHE:-}"
+    if [[ ! -d "${src}" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Benchmark cache is not mounted: ${src}" >&2
+        return 2
     fi
+    if [[ -z "${dst}" || "${dst}" == "null" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] LMMS_EVAL_DATASETS_CACHE is required when staging is enabled." >&2
+        return 2
+    fi
+
+    local src_real dst_real
+    src_real="$(readlink -f -- "${src}")"
+    dst_real="$(readlink -f -- "${dst}" 2>/dev/null || true)"
+    if [[ "${src_real}" == "${dst_real}" ]]; then
+        echo "[INFO][Machine ${MACHINE_RANK}] Dataset staging skipped; using existing benchmark cache ${src_real}."
+        return 0
+    fi
+
+    echo "[INFO][Machine ${MACHINE_RANK}] Staging datasets from ${src} to ${dst} ..."
+    mkdir -p -- "${dst}"
+    cp -r -- "${src}"/* "${dst}/"
 }
 
 # ── compute GPU / machine role ────────────────────────────────────────────────
 compute_resources() {
     LOCAL_GPU_NUM=$(nvidia-smi -L | wc -l)
-    NPROC_PER_NODE=${LOCAL_GPU_NUM}
+    MAIN_GPU_NUM=${LOCAL_GPU_NUM}
+    if [[ -n "${LMMS_EVAL_MAIN_GPU_NUM:-}" ]]; then
+        if ! [[ "${LMMS_EVAL_MAIN_GPU_NUM}" =~ ^[0-9]+$ ]] || (( LMMS_EVAL_MAIN_GPU_NUM <= 0 )); then
+            echo "[ERROR] LMMS_EVAL_MAIN_GPU_NUM must be a positive integer, got: ${LMMS_EVAL_MAIN_GPU_NUM}" >&2
+            exit 2
+        fi
+        if (( LMMS_EVAL_MAIN_GPU_NUM > LOCAL_GPU_NUM )); then
+            echo "[ERROR] LMMS_EVAL_MAIN_GPU_NUM(${LMMS_EVAL_MAIN_GPU_NUM}) > local GPUs(${LOCAL_GPU_NUM})" >&2
+            exit 2
+        fi
+        MAIN_GPU_NUM=${LMMS_EVAL_MAIN_GPU_NUM}
+    fi
+    NPROC_PER_NODE=${MAIN_GPU_NUM}
     if [[ "${WORLD_SIZE}" -le "${NPROC_PER_NODE}" ]]; then
         # DLC semantic: WORLD_SIZE = num_machines, RANK = machine_rank
         NUM_MACHINES=${WORLD_SIZE}
@@ -255,8 +312,18 @@ compute_resources() {
         NUM_MACHINES=$(( (WORLD_SIZE + NPROC_PER_NODE - 1) / NPROC_PER_NODE ))
         MACHINE_RANK=$(( RANK / NPROC_PER_NODE ))
     fi
-    MAIN_GPU_NUM=${LOCAL_GPU_NUM}
-    NUM_BACKENDS=$(( MAIN_GPU_NUM / MODEL_TP ))
+    NUM_BACKENDS=$(( LOCAL_GPU_NUM / MODEL_TP ))
+    if [[ -n "${LMMS_EVAL_NUM_BACKENDS:-}" ]]; then
+        if ! [[ "${LMMS_EVAL_NUM_BACKENDS}" =~ ^[0-9]+$ ]] || (( LMMS_EVAL_NUM_BACKENDS <= 0 )); then
+            echo "[ERROR] LMMS_EVAL_NUM_BACKENDS must be a positive integer, got: ${LMMS_EVAL_NUM_BACKENDS}" >&2
+            exit 2
+        fi
+        if (( LMMS_EVAL_NUM_BACKENDS * MODEL_TP > LOCAL_GPU_NUM )); then
+            echo "[ERROR] LMMS_EVAL_NUM_BACKENDS(${LMMS_EVAL_NUM_BACKENDS}) * MODEL_TP(${MODEL_TP}) > local GPUs(${LOCAL_GPU_NUM})" >&2
+            exit 2
+        fi
+        NUM_BACKENDS=${LMMS_EVAL_NUM_BACKENDS}
+    fi
 
     if (( MODEL_TP > LOCAL_GPU_NUM )); then
         echo "[ERROR] MODEL_TP(${MODEL_TP}) > local GPUs(${LOCAL_GPU_NUM})"
@@ -288,6 +355,7 @@ setup_logging() {
 
 # ── process cleanup ───────────────────────────────────────────────────────────
 PIDS=()
+BACKEND_LOGS=()
 cleanup_vllm() {
     trap - EXIT INT TERM
     if [[ "${DEBUG}" == "true" ]]; then
@@ -297,18 +365,62 @@ cleanup_vllm() {
         return
     fi
     [[ ${#PIDS[@]} -eq 0 ]] && return
-    echo "[INFO][Machine ${MACHINE_RANK}] Stopping vLLM instances..."
-    pkill -f "vllm.entrypoints.openai.api_server" 2>/dev/null || true
-    pkill -f "VLLM" 2>/dev/null || true
+    echo "[INFO][Machine ${MACHINE_RANK}] Stopping owned vLLM process groups..."
+    local pid
+    for pid in "${PIDS[@]}"; do
+        if kill -0 -- "-${pid}" 2>/dev/null; then
+            kill -TERM -- "-${pid}" 2>/dev/null || true
+        elif kill -0 "${pid}" 2>/dev/null; then
+            kill -TERM "${pid}" 2>/dev/null || true
+        fi
+    done
+
+    local grace_seconds="${LMMS_EVAL_CLEANUP_GRACE_SECONDS:-10}"
+    local deadline=$((SECONDS + grace_seconds))
+    local still_running=1
+    while (( still_running == 1 && SECONDS < deadline )); do
+        still_running=0
+        for pid in "${PIDS[@]}"; do
+            if kill -0 -- "-${pid}" 2>/dev/null || kill -0 "${pid}" 2>/dev/null; then
+                still_running=1
+                break
+            fi
+        done
+        (( still_running == 1 )) && sleep 1
+    done
+    for pid in "${PIDS[@]}"; do
+        if kill -0 -- "-${pid}" 2>/dev/null; then
+            echo "[WARN][Machine ${MACHINE_RANK}] Force-killing owned vLLM process group ${pid}" >&2
+            kill -KILL -- "-${pid}" 2>/dev/null || true
+        elif kill -0 "${pid}" 2>/dev/null; then
+            echo "[WARN][Machine ${MACHINE_RANK}] Force-killing owned vLLM PID ${pid} before process-group initialization" >&2
+            kill -KILL "${pid}" 2>/dev/null || true
+        fi
+        wait "${pid}" 2>/dev/null || true
+    done
+    PIDS=()
+    BACKEND_LOGS=()
     echo "[INFO][Machine ${MACHINE_RANK}] Done."
 }
 setup_cleanup_trap() {
-    trap cleanup_vllm EXIT INT TERM
+    if ! [[ "${LMMS_EVAL_CLEANUP_GRACE_SECONDS:-10}" =~ ^[0-9]+$ ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] LMMS_EVAL_CLEANUP_GRACE_SECONDS must be a non-negative integer, got: ${LMMS_EVAL_CLEANUP_GRACE_SECONDS}" >&2
+        return 2
+    fi
+    trap cleanup_vllm EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
 }
 
 # ── launch vLLM backends ──────────────────────────────────────────────────────
 launch_vllm_backends() {
+    if ! command -v setsid >/dev/null 2>&1; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] setsid is required for owned vLLM process-group cleanup." >&2
+        return 2
+    fi
     BACKEND_URLS=""
+    PIDS=()
+    BACKEND_LOGS=()
     for (( i=0; i<NUM_BACKENDS; i++ )); do
         PORT=$(( MODEL_BASE_PORT + i ))
         START_GPU=$(( i * MODEL_TP ))
@@ -321,7 +433,7 @@ launch_vllm_backends() {
         MODEL_LOG="${LOG_DIR}/vllm_model_rank${RANK}_port${PORT}.log"
         echo "[INFO][Machine ${MACHINE_RANK}] Starting model vLLM  GPUs=${GPUS}  port=${PORT}..."
 
-        CUDA_VISIBLE_DEVICES=${GPUS} "${VENV_PATH}/bin/python" -m vllm.entrypoints.openai.api_server \
+        CUDA_VISIBLE_DEVICES=${GPUS} setsid "${VENV_PATH}/bin/python" -m vllm.entrypoints.openai.api_server \
             --model                  "${MODEL}" \
             --served-model-name      "${MODEL_NAME}" \
             --tensor-parallel-size   "${MODEL_TP}" \
@@ -333,7 +445,8 @@ launch_vllm_backends() {
             --trust-remote-code \
             --enable-prefix-caching \
             > "${MODEL_LOG}" 2>&1 &
-        PIDS+=($!)
+        PIDS+=("$!")
+        BACKEND_LOGS+=("${MODEL_LOG}")
         BACKEND_URLS="${BACKEND_URLS}http://localhost:${PORT}/v1;"
     done
     BACKEND_URLS=${BACKEND_URLS%;}
@@ -341,21 +454,100 @@ launch_vllm_backends() {
 
 # ── wait for backends to be ready ─────────────────────────────────────────────
 wait_for_backends() {
-    check_http() { curl -s -o /dev/null -w "%{http_code}" "$1/models" 2>/dev/null; }
+    local url_array=()
+    IFS=';' read -ra url_array <<< "${BACKEND_URLS}"
+    if (( ${#url_array[@]} == 0 )); then
+        echo "[ERROR][Machine ${MACHINE_RANK}] No backend URLs were registered." >&2
+        return 1
+    fi
+    if (( ${#url_array[@]} != ${#PIDS[@]} )); then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Backend URL/PID count mismatch: urls=${#url_array[@]} pids=${#PIDS[@]}" >&2
+        return 1
+    fi
+    if (( ${#url_array[@]} != ${#BACKEND_LOGS[@]} )); then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Backend URL/log count mismatch: urls=${#url_array[@]} logs=${#BACKEND_LOGS[@]}" >&2
+        return 1
+    fi
 
-    echo "[INFO][Machine ${MACHINE_RANK}] Waiting for all backends to be ready (timeout 30min)..."
-    IFS=';' read -ra URL_ARRAY <<< "${BACKEND_URLS}"
-    for url in "${URL_ARRAY[@]}"; do
-        retries=0
-        while [[ "$(check_http "${url}")" != "200" ]]; do
-            sleep 5
-            retries=$(( retries + 1 ))
-            if (( retries >= 360 )); then
-                echo "[ERROR] Timeout waiting for ${url}"
-                exit 1
+    local poll_seconds="${LMMS_EVAL_BACKEND_POLL_SECONDS:-2}"
+    if ! [[ "${poll_seconds}" =~ ^[1-9][0-9]*$ ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] LMMS_EVAL_BACKEND_POLL_SECONDS must be a positive integer, got: ${poll_seconds}" >&2
+        return 2
+    fi
+    local deadline=$((SECONDS + MODEL_STARTUP_TIMEOUT_SECONDS))
+    local ready=()
+    local index
+    for (( index=0; index<${#url_array[@]}; index++ )); do
+        ready+=(0)
+    done
+
+    echo "[INFO][Machine ${MACHINE_RANK}] Waiting for all backends to be ready (timeout ${MODEL_STARTUP_TIMEOUT_SECONDS}s, expected_model=${MODEL_NAME})..."
+    while true; do
+        local pending=0
+        for (( index=0; index<${#url_array[@]}; index++ )); do
+            local pid="${PIDS[index]}"
+            local url="${url_array[index]}"
+            local log_path="${BACKEND_LOGS[index]}"
+            if ! kill -0 "${pid}" 2>/dev/null; then
+                local exit_code=0
+                wait "${pid}" || exit_code=$?
+                echo "[ERROR][Machine ${MACHINE_RANK}] Backend ${url} PID ${pid} exited before readiness (exit_code=${exit_code})." >&2
+                echo "[ERROR][Machine ${MACHINE_RANK}] Last 120 lines from ${log_path}:" >&2
+                tail -n 120 "${log_path}" >&2 2>/dev/null || true
+                return 1
             fi
+            [[ "${ready[index]}" == "1" ]] && continue
+            pending=$((pending + 1))
+
+            local response_file
+            response_file="$(mktemp "${TMPDIR:-/tmp}/lmms_eval_models_XXXXXX.json")"
+            local http_code
+            http_code="$(curl -sS --connect-timeout 2 --max-time 5 \
+                -o "${response_file}" -w "%{http_code}" "${url}/models" 2>/dev/null || true)"
+            if [[ "${http_code}" == "200" ]]; then
+                local observed_models
+                if ! observed_models="$(jq -cer '[.data[]?.id] | if length > 0 and all(.[]; type == "string" and length > 0) then . else error("missing model ids") end' "${response_file}" 2>/dev/null)"; then
+                    echo "[ERROR][Machine ${MACHINE_RANK}] Backend ${url} returned HTTP 200 with an invalid /v1/models payload: $(tr '\n' ' ' < "${response_file}")" >&2
+                    rm -f "${response_file}"
+                    return 1
+                fi
+                if ! jq -e --arg expected "${MODEL_NAME}" 'index($expected) != null' <<< "${observed_models}" >/dev/null; then
+                    echo "[ERROR][Machine ${MACHINE_RANK}] Backend model identity mismatch at ${url}: expected=${MODEL_NAME}, observed=${observed_models}" >&2
+                    echo "[ERROR][Machine ${MACHINE_RANK}] Last 120 lines from ${log_path}:" >&2
+                    tail -n 120 "${log_path}" >&2 2>/dev/null || true
+                    rm -f "${response_file}"
+                    return 1
+                fi
+                ready[index]=1
+                pending=$((pending - 1))
+                echo "[INFO][Machine ${MACHINE_RANK}] Ready: ${url} model=${MODEL_NAME} pid=${pid}"
+            fi
+            rm -f "${response_file}"
         done
-        echo "[INFO][Machine ${MACHINE_RANK}] Ready: ${url}"
+
+        if (( pending == 0 )); then
+            for (( index=0; index<${#PIDS[@]}; index++ )); do
+                if ! kill -0 "${PIDS[index]}" 2>/dev/null; then
+                    local final_exit_code=0
+                    wait "${PIDS[index]}" || final_exit_code=$?
+                    echo "[ERROR][Machine ${MACHINE_RANK}] Backend ${url_array[index]} PID ${PIDS[index]} exited before readiness returned (exit_code=${final_exit_code})." >&2
+                    tail -n 120 "${BACKEND_LOGS[index]}" >&2 2>/dev/null || true
+                    return 1
+                fi
+            done
+            return 0
+        fi
+        if (( SECONDS >= deadline )); then
+            echo "[ERROR][Machine ${MACHINE_RANK}] Timed out after ${MODEL_STARTUP_TIMEOUT_SECONDS}s waiting for ${pending} backend(s)." >&2
+            for (( index=0; index<${#url_array[@]}; index++ )); do
+                if [[ "${ready[index]}" != "1" ]]; then
+                    echo "[ERROR][Machine ${MACHINE_RANK}] Not ready: ${url_array[index]} pid=${PIDS[index]} log=${BACKEND_LOGS[index]}" >&2
+                    tail -n 120 "${BACKEND_LOGS[index]}" >&2 2>/dev/null || true
+                fi
+            done
+            return 1
+        fi
+        sleep "${poll_seconds}"
     done
 }
 

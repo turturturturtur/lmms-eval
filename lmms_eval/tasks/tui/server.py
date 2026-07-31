@@ -51,6 +51,7 @@ DEFAULT_DLC_WORKER_GPU = 8
 DEFAULT_DLC_WORKSPACE_ID = "240810"
 DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
 REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
+REQUIRED_CPFSB_MOUNT_PATH = "/mnt/cpfsB"
 DEFAULT_DLC_POOL_TOTAL_GPU = 256
 DEFAULT_DLC_POOL_GPU_PER_NODE = 8
 DEFAULT_DLC_POOL_CPU_PER_NODE = 124
@@ -735,6 +736,13 @@ def _require_default_config_nas_mount(data_source_uris: Any, *, field: str) -> s
     normalized = data_source_uris.strip()
     if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
         raise RuntimeError(f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include {REQUIRED_NAS_MOUNT_URI}")
+    if not any(
+        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
+        for item in normalized.split(",")
+    ):
+        raise RuntimeError(
+            f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}"
+        )
     return normalized
 
 
@@ -906,6 +914,7 @@ class EvalRequest(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -945,6 +954,7 @@ class PreviewRequest(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -983,6 +993,7 @@ class ExportYamlRequest(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str]
@@ -1025,6 +1036,7 @@ class ImportYamlResponse(BaseModel):
     model: str = ""
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str = DEFAULT_DLC_PATH_TEMPLATE
     model_args: str = ""
     tasks: list[str] = []
@@ -1058,6 +1070,7 @@ class DefaultsResponse(BaseModel):
     model: str
     api_url: str = DEFAULT_API_EVAL_URL
     api_key: str = ""
+    api_model: str = ""
     dlc_path: str
     model_args: str = ""
     tasks: list[str]
@@ -1173,6 +1186,9 @@ class DlcJobDetailResponse(BaseModel):
     result_root: str | None = None
     runtime_config_path: str | None = None
     log_dir: str | None = None
+    model_source_path: str | None = None
+    model_resolved_path: str | None = None
+    processor_compat: str | None = None
     result_status: str
 
 
@@ -3122,6 +3138,7 @@ async def get_defaults() -> DefaultsResponse:
         model=str(model_config["path"]),
         api_url=DEFAULT_API_EVAL_URL,
         api_key="",
+        api_model="",
         dlc_path=dlc_path,
         model_args="",
         tasks=_split_tasks(eval_section["tasks"]),
@@ -3337,8 +3354,14 @@ def _dict_to_env_vars(env_dict: dict[str, Any]) -> str:
 
 
 def _validate_run_mode(run_mode: str) -> None:
-    if run_mode not in {"dlc", "local"}:
-        raise HTTPException(status_code=400, detail=f"Unsupported run_mode: {run_mode}")
+    if run_mode != "dlc":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unsupported run_mode: {run_mode}. The WebUI only supports DLC; "
+                "use run_scripts/qwen35_local_eval.sh for local evaluation."
+            ),
+        )
 
 
 def _validate_eval_inference_mode(eval_inference_mode: str) -> str:
@@ -3392,6 +3415,14 @@ def _require_dlc_nas_mount(data_source_uris: Any, *, field: str) -> str:
     normalized = data_source_uris.strip()
     if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
         raise HTTPException(status_code=400, detail=f"{field} must include {REQUIRED_NAS_MOUNT_URI}")
+    if not any(
+        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
+        for item in normalized.split(",")
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=f"{field} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}",
+        )
     return normalized
 
 
@@ -3526,6 +3557,12 @@ def _build_vllm_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRe
     _sync_judge_api_to_eval_env(config, request)
 
     config["model"]["path"] = request.model
+    config["model"]["source_path"] = request.model
+    config["model"]["processor_compat"] = "required"
+    config["model"]["startup_timeout_seconds"] = 1800
+    config["model"].pop("resolved_path", None)
+    config["model"].pop("preflight", None)
+    config["model"].pop("view_manifest_path", None)
     config["model"]["tp"] = request.model_tp
     config["model"]["max_model_len"] = request.max_model_len
     config["model"]["gpu_memory_utilization"] = request.gpu_memory_utilization
@@ -3564,12 +3601,21 @@ def _build_api_eval_config(request: EvalRequest | PreviewRequest | ExportYamlReq
     if env_dict:
         config["env"].update(_replace_user_placeholder(env_dict, request.user))
 
-    api_model = os.getenv("LMMS_EVAL_WEBUI_API_MODEL", DEFAULT_API_EVAL_MODEL).strip() or DEFAULT_API_EVAL_MODEL
+    api_model = (
+        request.api_model.strip()
+        or os.getenv("LMMS_EVAL_WEBUI_API_MODEL", DEFAULT_API_EVAL_MODEL).strip()
+        or DEFAULT_API_EVAL_MODEL
+    )
     config["env"]["api_type"] = DEFAULT_API_EVAL_TYPE
     config["env"]["openai_api_url"] = api_url
     config["env"]["openai_api_key"] = api_key
     config["model"]["backend"] = "openai"
     config["model"]["path"] = api_model
+    config["model"]["processor_compat"] = "off"
+    config["model"].pop("source_path", None)
+    config["model"].pop("resolved_path", None)
+    config["model"].pop("preflight", None)
+    config["model"].pop("view_manifest_path", None)
     config["model"]["is_qwen3_vl"] = False
     config["eval"]["tasks"] = ",".join(request.tasks)
     config["log"]["dir"] = _path_with_leaf(config["log"]["dir"], job_name, field_name="log.dir")
@@ -3625,6 +3671,7 @@ def _build_judge_config(
         vllm.update(
             {
                 "model_path": DEFAULT_LOCAL_JUDGE_MODEL_PATH,
+                "processor_compat": "auto",
                 "tp": DEFAULT_LOCAL_JUDGE_TP,
                 "max_model_len": DEFAULT_LOCAL_JUDGE_MAX_MODEL_LEN,
                 "gpu_memory_utilization": DEFAULT_LOCAL_JUDGE_GPU_MEMORY_UTILIZATION,
@@ -3800,6 +3847,7 @@ async def export_yaml(request: ExportYamlRequest) -> ExportYamlResponse:
             "eval_inference_mode": _validate_eval_inference_mode(request.eval_inference_mode),
             "api_url": request.api_url.strip(),
             "api_key": request.api_key.strip(),
+            "api_model": request.api_model.strip(),
             "dlc_path": request.dlc_path.strip(),
             "judge_backend": _validate_judge_backend(request.judge_backend),
             "judge_api_url": request.judge_api_url.strip(),
@@ -3859,6 +3907,7 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
         raise HTTPException(status_code=400, detail="YAML must be a dict (not a list or scalar)")
 
     run_mode = str(config.get("run_mode", DEFAULT_RUN_MODE))
+    _validate_run_mode(run_mode)
     if run_mode == "dlc":
         env_dict = config.get("env", {})
         if not isinstance(env_dict, dict):
@@ -3885,6 +3934,12 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
         if not raw_eval_inference_mode:
             raw_eval_inference_mode = "api" if str(model_config.get("backend") or "").strip().lower() == "openai" else "ckpt"
         eval_inference_mode = _validate_eval_inference_mode(raw_eval_inference_mode)
+        if "api_model" in config:
+            api_model = str(config.get("api_model") or "")
+        elif eval_inference_mode == "api":
+            api_model = str(model_config.get("path") or "")
+        else:
+            api_model = ""
         dlc_config = {"dlc": config.get("dlc", {})}
         if not isinstance(dlc_config["dlc"], dict):
             raise HTTPException(status_code=400, detail="dlc must be a dict in DLC mode")
@@ -3895,9 +3950,10 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
             user=str(config.get("user", "")),
             job_name=job_name,
             eval_inference_mode=eval_inference_mode,
-            model=str(model_config.get("path", "")),
+            model=str(model_config.get("source_path") or model_config.get("path", "")),
             api_url=str(config.get("api_url") or env_dict.get("openai_api_url") or DEFAULT_API_EVAL_URL),
             api_key=str(config.get("api_key") or env_dict.get("openai_api_key") or ""),
+            api_model=api_model,
             dlc_path=dlc_path,
             model_args="",
             tasks=_split_tasks(eval_config.get("tasks", "")),
@@ -3941,6 +3997,7 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
         model=config.get("model", ""),
         api_url=str(config.get("api_url") or DEFAULT_API_EVAL_URL),
         api_key=str(config.get("api_key") or ""),
+        api_model=str(config.get("api_model") or ""),
         model_args=config.get("model_args", ""),
         tasks=tasks,
         judge_backend=_validate_judge_backend(str(config.get("judge_backend") or DEFAULT_JUDGE_BACKEND)),
@@ -4129,11 +4186,30 @@ async def get_dlc_job(job_id: str) -> DlcJobDetailResponse:
     if not _is_view_log_job_name(detail.get("DisplayName")):
         raise HTTPException(status_code=400, detail=f"DLC job name must start with {_view_log_job_prefix_label()}")
     runtime_config, result_root, log_dir = _job_runtime_paths(detail)
+    model_source_path = None
+    model_resolved_path = None
+    processor_compat = None
+    if runtime_config is not None:
+        runtime_payload = _load_json_path(runtime_config)
+        model_payload = runtime_payload.get("model") if isinstance(runtime_payload, dict) else None
+        if isinstance(model_payload, dict):
+            raw_source = model_payload.get("source_path")
+            raw_resolved = model_payload.get("resolved_path") or model_payload.get("path")
+            raw_compat = model_payload.get("processor_compat")
+            if isinstance(raw_source, str) and raw_source.strip():
+                model_source_path = raw_source.strip()
+            if isinstance(raw_resolved, str) and raw_resolved.strip():
+                model_resolved_path = raw_resolved.strip()
+            if isinstance(raw_compat, str) and raw_compat.strip():
+                processor_compat = raw_compat.strip()
     return DlcJobDetailResponse(
         job=detail,
         result_root=str(result_root) if result_root else None,
         runtime_config_path=str(runtime_config) if runtime_config else None,
         log_dir=log_dir,
+        model_source_path=model_source_path,
+        model_resolved_path=model_resolved_path,
+        processor_compat=processor_compat,
         result_status=_result_status_for_root(result_root),
     )
 

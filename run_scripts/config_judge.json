@@ -5,7 +5,8 @@
     "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
     "venv_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv",
-    "lmms_eval_datasets_cache": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface/datasets",
+    "lmms_eval_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
     "hf_datasets_offline": true,
     "transformers_offline": true
   },
@@ -34,6 +35,7 @@
     "vllm": {
       "_comment": "vLLM 后端配置 (backend=vllm 时生效)",
       "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+      "processor_compat": "auto",
       "tp": 8,
       "max_model_len": 40960,
       "gpu_memory_utilization": "0.88",

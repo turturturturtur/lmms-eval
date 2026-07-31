@@ -50,6 +50,9 @@ interface DlcJobDetailResponse {
   result_root?: string | null
   runtime_config_path?: string | null
   log_dir?: string | null
+  model_source_path?: string | null
+  model_resolved_path?: string | null
+  processor_compat?: string | null
   result_status: string
 }
 
@@ -1740,6 +1743,18 @@ export default function LogViewer() {
                   <div>
                     <div className="text-neutral-400 uppercase tracking-wider">Log Dir</div>
                     <div className="mt-1 break-all text-neutral-700">{jobDetail?.log_dir || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-400 uppercase tracking-wider">Source Model</div>
+                    <div className="mt-1 break-all text-neutral-700">{jobDetail?.model_source_path || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-400 uppercase tracking-wider">Resolved Model</div>
+                    <div className="mt-1 break-all text-neutral-700">{jobDetail?.model_resolved_path || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div className="text-neutral-400 uppercase tracking-wider">Processor Compat</div>
+                    <div className="mt-1 break-all text-neutral-700">{jobDetail?.processor_compat || 'N/A'}</div>
                   </div>
                 </div>
               </section>

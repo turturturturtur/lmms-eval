@@ -63,23 +63,6 @@ class VLLMBackendRequestError(RuntimeError):
     pass
 
 
-def _normalize_until(until):
-    if until is None:
-        return None
-    if isinstance(until, str):
-        if not until:
-            raise ValueError("gen_kwargs['until'] must not be an empty string")
-        return until
-    if not isinstance(until, list):
-        raise ValueError(
-            "gen_kwargs['until'] must be None, a non-empty string, or a list of non-empty strings; "
-            f"got {type(until).__name__}"
-        )
-    if any(not isinstance(item, str) or not item for item in until):
-        raise ValueError("gen_kwargs['until'] must contain only non-empty strings")
-    return list(until)
-
-
 def _parse_stop_token_ids(value):
     if value is None:
         return None
@@ -95,6 +78,23 @@ def _parse_stop_token_ids(value):
     if any(isinstance(token_id, bool) or not isinstance(token_id, int) or token_id < 0 for token_id in value):
         raise ValueError("stop_token_ids must contain only non-negative integers")
     return list(value)
+
+
+def _parse_stop_strings(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if not value:
+            raise ValueError("stop_strings must be a non-empty JSON array of non-empty strings")
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError("stop_strings must be valid JSON") from exc
+    if not isinstance(value, list) or not value:
+        raise ValueError("stop_strings must be a non-empty JSON array of non-empty strings")
+    if any(not isinstance(item, str) or not item for item in value):
+        raise ValueError("stop_strings must contain only non-empty strings")
+    return list(dict.fromkeys(value))
 
 
 @register_model("vllm_backend")
@@ -131,6 +131,7 @@ class VLLMBackend(lmms):
         prefix_aware_queue: Whether to use prefix-aware queue ordering
         shuffle_requests: Whether to randomly shuffle requests before dispatch
         stop_token_ids: Optional JSON array of model-specific token IDs that stop generation
+        stop_strings: Optional JSON array of model-specific textual stop conditions
     """
     
     is_simple = False
@@ -165,6 +166,7 @@ class VLLMBackend(lmms):
         chat_template: Optional[str] = None,
         shuffle_requests: bool = False,
         stop_token_ids: Optional[Union[str, List[int]]] = None,
+        stop_strings: Optional[Union[str, List[str]]] = None,
         **kwargs,
     ):
         super().__init__()
@@ -217,6 +219,7 @@ class VLLMBackend(lmms):
         self.chat_template = chat_template
         self.shuffle_requests = parse_bool(shuffle_requests)
         self.stop_token_ids = _parse_stop_token_ids(stop_token_ids)
+        self.stop_strings = _parse_stop_strings(stop_strings)
         
         # Initialize session for connection pooling
         from requests.adapters import HTTPAdapter
@@ -308,12 +311,12 @@ class VLLMBackend(lmms):
             return []
 
         reordered_requests = list(requests)
-        request_stops = []
+        # Match the SGLang backend contract: task-level `until` is metadata for
+        # this backend and must not become an OpenAI-compatible `stop` field.
         for request in reordered_requests:
             gen_kwargs = request.args[2]
             if not isinstance(gen_kwargs, dict):
                 raise ValueError(f"generation kwargs must be a dict, got {type(gen_kwargs).__name__}")
-            request_stops.append(_normalize_until(gen_kwargs.get("until")))
         _gen_config_printed = False
         
         pbar = tqdm(
@@ -487,7 +490,7 @@ class VLLMBackend(lmms):
             chat_messages_raw = doc_to_messages(self.task_dict[task][split][doc_id])
             chat_messages: ChatMessages = ChatMessages(**{"messages": chat_messages_raw})
             request_gen_kwargs = dict(gen_kwargs)
-            stop = request_stops[global_index]
+            stop = self.stop_strings
             
             # Extract video kwargs
             video_kwargs = {
@@ -561,7 +564,8 @@ class VLLMBackend(lmms):
                     f"temperature={temperature}, top_p={top_p}, top_k={top_k}, "
                     f"repetition_penalty={repetition_penalty}, min_p={min_p}, "
                     f"presence_penalty={presence_penalty}, frequency_penalty={frequency_penalty}, "
-                    f"stop={stop}, stop_token_ids={self.stop_token_ids}, "
+                    f"task_until_ignored={request_gen_kwargs.get('until')}, "
+                    f"model_stop_strings={stop}, stop_token_ids={self.stop_token_ids}, "
                     f"enable_thinking={self.enable_thinking}, "
                     f"gen_kwargs={request_gen_kwargs}"
                 )

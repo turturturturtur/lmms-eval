@@ -118,6 +118,10 @@ jq \
     --argjson enable_thinking "${ENABLE_THINKING}" \
     "${replace_user_filter}
      | .model.path = \$model_path
+     | .model.source_path = \$model_path
+     | del(.model.resolved_path, .model.preflight, .model.view_manifest_path)
+     | .model.processor_compat = \"required\"
+     | .model.startup_timeout_seconds = (.model.startup_timeout_seconds // 1800)
      | .model.reasoning_parser = \"qwen3\"
      | .model.enable_thinking = \$enable_thinking
      | .model.is_qwen3_vl = false

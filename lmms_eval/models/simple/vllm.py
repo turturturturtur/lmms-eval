@@ -159,6 +159,7 @@ class VLLM(lmms):
         disable_log_stats: bool = False,
         image_first: bool = False,
         max_new_tokens: int = 1024,
+        enable_thinking: Optional[bool] = None,
         **kwargs,
     ) -> None:
         super().__init__()
@@ -173,6 +174,11 @@ class VLLM(lmms):
         self.tensor_parallel_size = int(tensor_parallel_size)
         self.image_first = image_first
         self.max_new_tokens = int(max_new_tokens)
+        if enable_thinking is not None and not isinstance(enable_thinking, bool):
+            raise TypeError(
+                f"enable_thinking must be a boolean or None, got {enable_thinking!r}"
+            )
+        self.enable_thinking = enable_thinking
         # Qwen 2/2.5-VL models enforce minimum image dimensions
         self._enforce_image_resize = self._is_qwen_vl_model(model)
 
@@ -514,14 +520,24 @@ class VLLM(lmms):
                 # The logic here is similar to the vllm implementation as shown here (https://docs.vllm.ai/en/stable/models/generative_models.html#llmchat)
                 # - vllm implementation: https://github.com/vllm-project/vllm/blob/d97841078b6e0dde8da36d5a2b8e8857a2c37944/vllm/entrypoints/chat_utils.py#L829
                 def _run_chat(inputs: list[Any]) -> list[str]:
+                    chat_template_kwargs = (
+                        {"enable_thinking": self.enable_thinking}
+                        if self.enable_thinking is not None
+                        else None
+                    )
                     if self.chat_template is not None:
                         response = self.client.chat(
                             sampling_params=sampling_params,
                             messages=inputs,
                             chat_template=self.chat_template,
+                            chat_template_kwargs=chat_template_kwargs,
                         )
                     else:
-                        response = self.client.chat(sampling_params=sampling_params, messages=inputs)
+                        response = self.client.chat(
+                            sampling_params=sampling_params,
+                            messages=inputs,
+                            chat_template_kwargs=chat_template_kwargs,
+                        )
                     return [o.outputs[0].text for o in response]
 
                 response_text = self._run_tp_synced(batched_messages, _run_chat)

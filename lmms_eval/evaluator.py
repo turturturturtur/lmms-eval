@@ -7,6 +7,7 @@ import mimetypes
 import os
 import random
 import re
+from collections.abc import Mapping
 from datetime import timedelta
 from typing import Callable, List, Optional, Union
 
@@ -363,14 +364,21 @@ def simple_evaluate(
     if isinstance(model, str):
         if model_args is None:
             model_args = ""
-        lm = models.get_model(model, force_simple).create_from_arg_string(
-            model_args,
-            {
-                "batch_size": batch_size,
-                "max_batch_size": max_batch_size,
-                "device": device,
-            },
-        )
+        model_class = models.get_model(model, force_simple)
+        additional_config = {
+            "batch_size": batch_size,
+            "max_batch_size": max_batch_size,
+            "device": device,
+        }
+        if isinstance(model_args, str):
+            lm = model_class.create_from_arg_string(model_args, additional_config)
+        elif isinstance(model_args, Mapping):
+            lm = model_class.create_from_arg_object(model_args, additional_config)
+        else:
+            raise TypeError(
+                "model_args must be a string or mapping, got "
+                f"{type(model_args).__name__}"
+            )
     elif isinstance(model, lmms_eval.api.model.lmms):
         lm = model
     task_type = "simple" if lm.is_simple else "chat"

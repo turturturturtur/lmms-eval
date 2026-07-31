@@ -10,6 +10,7 @@ DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
 REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
 MOUNT_URIS = f"cpfs://example/::/mnt/cpfsB,{REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss"
 MOUNT_URIS_WITHOUT_NAS = "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss"
+MOUNT_URIS_WITHOUT_CPFSB = f"{REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss"
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -17,6 +18,62 @@ def _write_json(path: Path, payload: dict) -> None:
 
 
 def _configs(tmp_path: Path, lmms_root: Path) -> tuple[Path, Path, Path]:
+    model_path = tmp_path / "checkpoint-raw"
+    model_path.mkdir()
+    _write_json(model_path / "config.json", {"model_type": "qwen3_5"})
+    _write_json(model_path / "tokenizer_config.json", {"tokenizer_class": "Qwen2Tokenizer"})
+    _write_json(model_path / "tokenizer.json", {"version": "1.0"})
+    _write_json(
+        model_path / "model.safetensors.index.json",
+        {"weight_map": {"model.weight": "model-00001-of-00001.safetensors"}},
+    )
+    (model_path / "model-00001-of-00001.safetensors").write_bytes(b"fixture")
+    _write_json(
+        model_path / "processor_config.json",
+        {
+            "processor_class": "Qwen3_5Processor",
+            "video_processor": {
+                "video_processor_type": "Qwen3VLVideoProcessor",
+                "image_mean": [0.48145466, 0.4578275, 0.40821073],
+                "image_std": [0.26862954, 0.26130258, 0.27577711],
+                "merge_size": 2,
+                "patch_size": 16,
+                "temporal_patch_size": 2,
+                "size": {"shortest_edge": 3136, "longest_edge": 12845056},
+            },
+        },
+    )
+    fake_venv = tmp_path / "fake_venv"
+    fake_venv_bin = fake_venv / "bin"
+    fake_venv_bin.mkdir(parents=True)
+    fake_python = fake_venv_bin / "python"
+    fake_python.write_text(
+        """#!/usr/bin/env bash
+set -euo pipefail
+source_path=""
+view_root=""
+run_id=""
+while (( $# > 0 )); do
+  case "$1" in
+    --source) source_path="$(readlink -f "$2")"; shift 2 ;;
+    --view-root) view_root="$2"; shift 2 ;;
+    --run-id) run_id="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+if [[ -z "${source_path}" || -z "${view_root}" || -z "${run_id}" ]]; then
+  echo "missing fake preflight argument" >&2
+  exit 2
+fi
+resolved_path="${view_root}/${run_id}_fake_video_processor_compat"
+mkdir -p "${resolved_path}"
+printf '{}\\n' > "${resolved_path}/video_preprocessor_config.json"
+printf '{"source_path":"%s","resolved_path":"%s","model_type":"qwen3_5","processor_class":"Qwen3VLVideoProcessor","compatibility":"qwen35_video_processor_view","source_manifest_sha256":"%064d","transformers_version":"4.57.6","vllm_version":"0.21.0"}\\n' \
+  "${source_path}" "${resolved_path}" 0
+""",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
     dlc_config = {
         "dlc": {
             "submit": True,
@@ -62,10 +119,15 @@ def _configs(tmp_path: Path, lmms_root: Path) -> tuple[Path, Path, Path]:
         }
     }
     eval_config = {
-        "env": {},
+        "env": {"venv_path": str(fake_venv)},
         "log": {"dir": str(tmp_path / "logs")},
         "distributed": {},
-        "model": {"path": "/tmp/model", "tp": 1},
+        "model": {
+            "path": str(model_path),
+            "tp": 1,
+            "processor_compat": "required",
+            "view_root": str(tmp_path / "model_views"),
+        },
         "eval": {
             "tasks": "ocrbench",
             "output_path": str(tmp_path / "results"),
@@ -96,6 +158,115 @@ def _configs(tmp_path: Path, lmms_root: Path) -> tuple[Path, Path, Path]:
     _write_json(eval_path, eval_config)
     _write_json(judge_path, judge_config)
     return dlc_path, eval_path, judge_path
+
+
+def test_qwen35_submitter_preflight_resolves_raw_checkpoint_in_runtime_config(
+    tmp_path: Path,
+):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, _judge_config = _configs(tmp_path, lmms_root)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / "qwen35_submit.sh"),
+            str(dlc_config),
+            str(eval_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stdout
+    runtime_configs = sorted(
+        (tmp_path / "logs" / "eval_submitter_judge_template").glob(
+            "*/runtime_config.json"
+        )
+    )
+    assert runtime_configs
+    runtime = json.loads(runtime_configs[-1].read_text(encoding="utf-8"))
+    source = json.loads(eval_config.read_text(encoding="utf-8"))["model"]["path"]
+    assert runtime["model"]["source_path"] == source
+    assert runtime["model"]["source_input_path"] == source
+    assert runtime["model"]["path"] == runtime["model"]["resolved_path"]
+    assert runtime["model"]["path"] != source
+    assert Path(runtime["model"]["path"], "video_preprocessor_config.json").is_file()
+    assert runtime["model"]["preflight"]["processor_class"] == "Qwen3VLVideoProcessor"
+    assert isinstance(runtime["model"]["preflight"]["lmms_eval_git_dirty"], bool)
+    assert (
+        len(runtime["model"]["preflight"]["lmms_eval_tree_state_sha256"]) == 64
+    )
+
+
+def test_qwen35_submitter_rejects_unsafe_served_model_name(tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, _judge_config = _configs(tmp_path, lmms_root)
+    eval_payload = json.loads(eval_config.read_text(encoding="utf-8"))
+    eval_payload["model"]["served_model_name"] = "unsafe,model"
+    _write_json(eval_config, eval_payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / "qwen35_submit.sh"),
+            str(dlc_config),
+            str(eval_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    assert proc.returncode != 0
+    assert "served_model_name must match" in proc.stdout
+
+
+def test_qwen35_submitter_rejects_missing_explicit_view_root(tmp_path: Path):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, _judge_config = _configs(tmp_path, lmms_root)
+    eval_payload = json.loads(eval_config.read_text(encoding="utf-8"))
+    del eval_payload["model"]["view_root"]
+    _write_json(eval_config, eval_payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / "qwen35_submit.sh"),
+            str(dlc_config),
+            str(eval_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    assert proc.returncode != 0
+    assert "model.view_root must be an explicit absolute shared path" in proc.stdout
 
 
 @pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
@@ -407,3 +578,44 @@ def test_submitter_rejects_missing_required_nas_mount(
 
     assert proc.returncode != 0
     assert f"must include {REQUIRED_NAS_MOUNT_URI}" in proc.stdout
+
+
+@pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
+@pytest.mark.parametrize("field_path", [("dlc", "data_source_uris"), ("dlc", "judge", "data_source_uris")])
+def test_submitter_rejects_missing_cpfsb_mount(
+    script_name: str,
+    field_path: tuple[str, ...],
+    tmp_path: Path,
+):
+    if shutil.which("jq") is None:
+        pytest.skip("submitter dry-run requires jq")
+
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_config, eval_config, judge_config = _configs(tmp_path, lmms_root)
+    payload = json.loads(dlc_config.read_text(encoding="utf-8"))
+    target = payload
+    for key in field_path[:-1]:
+        target = target[key]
+    target[field_path[-1]] = MOUNT_URIS_WITHOUT_CPFSB
+    _write_json(dlc_config, payload)
+    env = os.environ.copy()
+    env["DRY_RUN"] = "1"
+
+    proc = subprocess.run(
+        [
+            "bash",
+            str(lmms_root / "run_scripts" / script_name),
+            str(dlc_config),
+            str(eval_config),
+            str(judge_config),
+        ],
+        cwd=lmms_root.parent,
+        env=env,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+    assert proc.returncode != 0
+    assert "must include a CPFS URI mounted at /mnt/cpfsB" in proc.stdout

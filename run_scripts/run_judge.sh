@@ -115,7 +115,12 @@ cfg_bool() {
 export HF_HOME=$(cfg '.env.hf_home // "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface"')
 # Priority: existing env var (e.g. from ~/.bashrc) > config file
 export HF_TOKEN="${HF_TOKEN:-$(cfg '.env.hf_token // empty')}"
-export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+HF_DATASETS_CACHE_CFG=$(cfg '.env.hf_datasets_cache // empty')
+if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" ]]; then
+    export HF_DATASETS_CACHE="${HF_DATASETS_CACHE_CFG}"
+else
+    export HF_DATASETS_CACHE="${HF_HOME}/datasets"
+fi
 # unset HF_DATASETS_OFFLINE
 export HF_HUB_OFFLINE=1
 
@@ -129,7 +134,29 @@ VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.
 
 # 数据集缓存与离线模式
 LMMS_EVAL_DATASETS_CACHE=$(cfg '.env.lmms_eval_datasets_cache // empty')
-[[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]] && export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+if [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null" ]]; then
+    export LMMS_EVAL_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+    # Judge task utilities also use HF_DATASETS_CACHE directly; keep both
+    # variables on the same pre-populated benchmark cache.
+    if [[ -n "${HF_DATASETS_CACHE_CFG}" && "${HF_DATASETS_CACHE_CFG}" != "null" && "${HF_DATASETS_CACHE_CFG}" != "${LMMS_EVAL_DATASETS_CACHE}" ]]; then
+        echo "[ERROR] env.hf_datasets_cache must equal env.lmms_eval_datasets_cache, got: ${HF_DATASETS_CACHE_CFG} vs ${LMMS_EVAL_DATASETS_CACHE}" >&2
+        exit 2
+    fi
+    export HF_DATASETS_CACHE="${LMMS_EVAL_DATASETS_CACHE}"
+fi
+
+if [[ ! -d "/mnt/cpfsB" || ! -d "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] CPFSB benchmark cache is not mounted: /mnt/cpfsB/evaluation_cache/lmms_eval" >&2
+    exit 2
+fi
+if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] Judge must use benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
+    exit 2
+fi
+if [[ "${HF_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
+    exit 2
+fi
 
 HF_DATASETS_OFFLINE=$(cfg_bool '.env.hf_datasets_offline')
 [[ "${HF_DATASETS_OFFLINE}" == "true" ]] && export HF_DATASETS_OFFLINE=1 || unset HF_DATASETS_OFFLINE
@@ -152,6 +179,7 @@ API_BASE_URL=$(cfg '.judge.api.base_url // empty')
 
 # ── vLLM 后端配置 (当 backend=vllm 时使用) ─────────────────────────────────────
 VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B"')
+VLLM_PROCESSOR_COMPAT=$(cfg '.judge.vllm.processor_compat // "auto"')
 VLLM_TP=$(cfg_int '.judge.vllm.tp // 8')
 VLLM_MAX_MODEL_LEN=$(cfg_int '.judge.vllm.max_model_len // 40960')
 VLLM_GPU_MEM_UTIL=$(cfg '.judge.vllm.gpu_memory_utilization // "0.88"')
@@ -175,6 +203,13 @@ if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
         echo "[ERROR] Local judge model directory not found: ${VLLM_MODEL_PATH}" >&2
         exit 2
     fi
+    case "${VLLM_PROCESSOR_COMPAT}" in
+        off|auto|required) ;;
+        *)
+            echo "[ERROR] judge.vllm.processor_compat must be off, auto, or required; got: ${VLLM_PROCESSOR_COMPAT}" >&2
+            exit 2
+            ;;
+    esac
     for pair in "tp:${VLLM_TP}" "max_model_len:${VLLM_MAX_MODEL_LEN}" "max_num_seqs:${VLLM_MAX_NUM_SEQS}" "port:${VLLM_PORT}"; do
         name="${pair%%:*}"
         value="${pair#*:}"
@@ -239,6 +274,69 @@ if ! python -c "import lmms_eval" 2>/dev/null; then
     exit 1
 fi
 
+validate_qwen35_judge_model_compat() {
+    [[ "${JUDGE_BACKEND}" == "vllm" ]] || return 0
+    [[ "${VLLM_PROCESSOR_COMPAT}" != "off" ]] || return 0
+
+    local result_path="${LOG_DIR}/judge_model_preflight.json"
+    local stderr_path="${LOG_DIR}/judge_model_preflight.stderr.log"
+    local rc
+    set +e
+    python - "${VLLM_MODEL_PATH}" "${VLLM_PROCESSOR_COMPAT}" >"${result_path}" 2>"${stderr_path}" <<'PY'
+import json
+import sys
+
+from lmms_eval.models.model_utils.qwen35_model_compat import (
+    SUPPORTED_MODEL_TYPES,
+    ModelCompatibilityError,
+    check_model,
+    get_local_model_type,
+)
+
+
+model_path, mode = sys.argv[1:]
+try:
+    model_type = get_local_model_type(model_path)
+    if model_type not in SUPPORTED_MODEL_TYPES:
+        if mode == "required":
+            raise ModelCompatibilityError(
+                "required judge processor compatibility only supports Qwen3.5; "
+                f"got model_type={model_type!r}: {model_path}"
+            )
+        payload = {
+            "model_type": model_type,
+            "processor_compat": mode,
+            "resolved_path": model_path,
+            "status": "not_applicable",
+        }
+    else:
+        payload = {
+            **check_model(model_path),
+            "processor_compat": mode,
+            "status": "verified",
+        }
+except ModelCompatibilityError as exc:
+    print(f"[ERROR] {exc}", file=sys.stderr)
+    raise SystemExit(2)
+
+print(json.dumps(payload, indent=2, sort_keys=True))
+PY
+    rc=$?
+    set -e
+    if [[ -s "${stderr_path}" ]]; then
+        sed 's/^/[JUDGE_MODEL_PREFLIGHT] /' "${stderr_path}" >&2
+    fi
+    if (( rc != 0 )); then
+        echo "[ERROR] Qwen3.5 judge model check failed before vLLM launch (exit_code=${rc})." >&2
+        echo "[ERROR] judge.vllm.model_path=${VLLM_MODEL_PATH}" >&2
+        echo "[ERROR] Prepare the model through qwen35_submit.sh/qwen35_local_eval.sh and use its verified resolved_path." >&2
+        return "${rc}"
+    fi
+    echo "[INFO] Judge model processor preflight passed: $(tr '\n' ' ' < "${result_path}")"
+}
+
+validate_qwen35_judge_model_compat
+
 # ══════════════════════════════════════════════════════════════════════════════
 # §3  进程管理（cleanup on exit / signal）
 # ══════════════════════════════════════════════════════════════════════════════
@@ -261,7 +359,9 @@ cleanup() {
         echo "[INFO] vLLM stopped."
     fi
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # ══════════════════════════════════════════════════════════════════════════════
 # §4  启动 Judge 后端
@@ -282,16 +382,17 @@ start_vllm_backend() {
     
     # 先检查是否已有可用的 vLLM 在跑
     local http_status
-    http_status=$(curl -s -o /dev/null -w "%{http_code}" "${JUDGE_BASE_URL}/models" 2>/dev/null || echo "000")
+    http_status=$(curl -sS --connect-timeout 2 --max-time 5 \
+        -o /dev/null -w "%{http_code}" "${JUDGE_BASE_URL}/models" 2>/dev/null || echo "000")
     if [[ "${http_status}" == "200" ]]; then
         local matched
-        matched=$(curl -s "${JUDGE_BASE_URL}/models" 2>/dev/null | python -c "
+        matched=$(curl -sS --connect-timeout 2 --max-time 5 "${JUDGE_BASE_URL}/models" 2>/dev/null | python -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
     models = [m.get('id','') for m in data.get('data',[])]
     expected = sys.argv[1]
-    print('true' if any(expected == m or expected in m for m in models) else 'false')
+    print('true' if expected in models else 'false')
 except Exception:
     print('false')
 " "${JUDGE_MODEL}" 2>/dev/null)
