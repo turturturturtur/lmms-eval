@@ -391,6 +391,28 @@ def _canonical_future_directory(path: Path) -> Path:
     return resolved
 
 
+def _require_view_root_outside_source(root: Path, source_path: Path) -> None:
+    try:
+        root.relative_to(source_path)
+    except ValueError:
+        return
+    raise ModelCompatibilityError(
+        "view_root must not be inside the source checkpoint: "
+        f"source={source_path}, view_root={root}"
+    )
+
+
+def _require_target_path_length(target: Path) -> None:
+    if len(str(target)) + _MODELSCOPE_LOCK_NAME_OVERHEAD > _FILESYSTEM_NAME_MAX:
+        raise ModelCompatibilityError(
+            "resolved compatibility view path is too long for the vLLM/ModelScope "
+            "cache lock filename; choose a shorter model.view_root: "
+            f"path_length={len(str(target))}, maximum="
+            f"{_FILESYSTEM_NAME_MAX - _MODELSCOPE_LOCK_NAME_OVERHEAD}, "
+            f"target={target}"
+        )
+
+
 def _verify_view_links(resolved_path: Path, source_path: Path) -> None:
     source_entries = {entry.name: entry for entry in source_path.iterdir()}
     view_entries = {
@@ -467,30 +489,19 @@ def prepare_model(
         raise ModelCompatibilityError(f"view_root must be an absolute path: {root}")
     root = Path(os.path.normpath(root))
     root = _canonical_future_directory(root)
-    try:
-        root.relative_to(source_path)
-    except ValueError:
-        pass
-    else:
-        raise ModelCompatibilityError(
-            "view_root must not be inside the source checkpoint: "
-            f"source={source_path}, view_root={root}"
-        )
+    _require_view_root_outside_source(root, source_path)
 
     safe_run_id = _normalise_run_id(run_id)
     fingerprint = inspection["source_manifest_sha256"]
     run_fingerprint = hashlib.sha256(safe_run_id.encode("utf-8")).hexdigest()[:8]
-    target = root / (
-        f"q35v-{fingerprint[:12]}-{run_fingerprint}"
-    )
-    if len(str(target)) + _MODELSCOPE_LOCK_NAME_OVERHEAD > _FILESYSTEM_NAME_MAX:
-        raise ModelCompatibilityError(
-            "resolved compatibility view path is too long for the vLLM/ModelScope "
-            "cache lock filename; choose a shorter model.view_root: "
-            f"path_length={len(str(target))}, maximum="
-            f"{_FILESYSTEM_NAME_MAX - _MODELSCOPE_LOCK_NAME_OVERHEAD}, "
-            f"target={target}"
-        )
+    target_name = f"q35v-{fingerprint[:12]}-{run_fingerprint}"
+    _require_target_path_length(root / target_name)
+
+    root.mkdir(parents=True, exist_ok=True)
+    root = _canonical_future_directory(root)
+    _require_view_root_outside_source(root, source_path)
+    target = root / target_name
+    _require_target_path_length(target)
     if target.exists():
         return _validate_existing_view(
             target,
@@ -498,7 +509,6 @@ def prepare_model(
             source_manifest_sha256=fingerprint,
         )
 
-    root.mkdir(parents=True, exist_ok=True)
     temporary: Path | None = Path(
         tempfile.mkdtemp(prefix=f".{target.name}.tmp-", dir=root)
     )
