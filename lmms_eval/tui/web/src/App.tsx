@@ -1610,6 +1610,9 @@ export default function App() {
 	                      placeholder={DEFAULT_MODEL_PATH_TEMPLATE}
 	                      className="w-full bg-white border border-neutral-200 px-3 py-2 text-xs font-mono focus:border-black focus:outline-none transition-colors placeholder-neutral-400 text-neutral-600"
 	                    />
+	                    <p className="mt-1.5 text-[10px] leading-relaxed text-neutral-400">
+	                      Preview keeps this source path unchanged. Start performs a strict submit-time processor preflight and records the resolved read-only model view in the runtime config.
+	                    </p>
 	                  </div>
 	                ) : (
 	                  <div className="space-y-4">

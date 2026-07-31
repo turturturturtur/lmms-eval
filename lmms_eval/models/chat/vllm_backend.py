@@ -80,6 +80,23 @@ def _parse_stop_token_ids(value):
     return list(value)
 
 
+def _parse_stop_strings(value):
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if not value:
+            raise ValueError("stop_strings must be a non-empty JSON array of non-empty strings")
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise ValueError("stop_strings must be valid JSON") from exc
+    if not isinstance(value, list) or not value:
+        raise ValueError("stop_strings must be a non-empty JSON array of non-empty strings")
+    if any(not isinstance(item, str) or not item for item in value):
+        raise ValueError("stop_strings must contain only non-empty strings")
+    return list(dict.fromkeys(value))
+
+
 @register_model("vllm_backend")
 class VLLMBackend(lmms):
     """
@@ -114,6 +131,7 @@ class VLLMBackend(lmms):
         prefix_aware_queue: Whether to use prefix-aware queue ordering
         shuffle_requests: Whether to randomly shuffle requests before dispatch
         stop_token_ids: Optional JSON array of model-specific token IDs that stop generation
+        stop_strings: Optional JSON array of model-specific textual stop conditions
     """
     
     is_simple = False
@@ -148,6 +166,7 @@ class VLLMBackend(lmms):
         chat_template: Optional[str] = None,
         shuffle_requests: bool = False,
         stop_token_ids: Optional[Union[str, List[int]]] = None,
+        stop_strings: Optional[Union[str, List[str]]] = None,
         **kwargs,
     ):
         super().__init__()
@@ -200,6 +219,7 @@ class VLLMBackend(lmms):
         self.chat_template = chat_template
         self.shuffle_requests = parse_bool(shuffle_requests)
         self.stop_token_ids = _parse_stop_token_ids(stop_token_ids)
+        self.stop_strings = _parse_stop_strings(stop_strings)
         
         # Initialize session for connection pooling
         from requests.adapters import HTTPAdapter
@@ -470,6 +490,7 @@ class VLLMBackend(lmms):
             chat_messages_raw = doc_to_messages(self.task_dict[task][split][doc_id])
             chat_messages: ChatMessages = ChatMessages(**{"messages": chat_messages_raw})
             request_gen_kwargs = dict(gen_kwargs)
+            stop = self.stop_strings
             
             # Extract video kwargs
             video_kwargs = {
@@ -529,6 +550,8 @@ class VLLMBackend(lmms):
                 payload["min_p"] = min_p
             if skip_special_tokens is not None:
                 payload["skip_special_tokens"] = skip_special_tokens
+            if stop is not None:
+                payload["stop"] = stop
             if self.stop_token_ids is not None:
                 payload["stop_token_ids"] = list(self.stop_token_ids)
             if self.enable_thinking is not None:
@@ -542,7 +565,7 @@ class VLLMBackend(lmms):
                     f"repetition_penalty={repetition_penalty}, min_p={min_p}, "
                     f"presence_penalty={presence_penalty}, frequency_penalty={frequency_penalty}, "
                     f"task_until_ignored={request_gen_kwargs.get('until')}, "
-                    f"stop_token_ids={self.stop_token_ids}, "
+                    f"model_stop_strings={stop}, stop_token_ids={self.stop_token_ids}, "
                     f"enable_thinking={self.enable_thinking}, "
                     f"gen_kwargs={request_gen_kwargs}"
                 )

@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from datasets import Dataset
 from openai import OpenAI
@@ -31,8 +32,22 @@ _client = None
 def _get_client():
     global _client
     if _client is None:
-        _client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+        client_kwargs = {}
+        timeout_seconds = os.getenv("CHARXIV_JUDGE_TIMEOUT_SECONDS")
+        api_max_retries = os.getenv("CHARXIV_JUDGE_API_MAX_RETRIES")
+        if timeout_seconds:
+            client_kwargs["timeout"] = float(timeout_seconds)
+        if api_max_retries:
+            client_kwargs["max_retries"] = int(api_max_retries)
+        _client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL, **client_kwargs)
     return _client
+
+
+def _positive_env_int(name, default):
+    value = int(os.getenv(name, str(default)))
+    if value < 1:
+        raise ValueError(f"{name} must be positive, got {value}")
+    return value
 
 
 def charxiv_reasoning_doc_to_text_cot(doc, lmms_eval_specific_kwargs=None):
@@ -142,11 +157,26 @@ def charxiv_reasoning_aggregate_results(results):
         data[i] = result["data"]
         resps[result["resp_key"]] = result["resp_value"]
     queries = build_reasoning_grading_queries(data, resps)
-    for figure_id, query in tqdm(queries.items()):
-        ext, scr = get_reasoning_result_gpt(_get_client(), query["grading_query"], model=MODEL_VERSION)
-        queries[figure_id]["extracted_answer"] = ext
-        queries[figure_id]["score"] = scr
-        queries[figure_id].pop("grading_query")
+    judge_parallel = _positive_env_int("CHARXIV_JUDGE_PARALLEL", 1)
+    judge_max_retries = _positive_env_int("CHARXIV_JUDGE_MAX_RETRIES", 10)
+    client = _get_client()
+
+    def _grade(figure_id, query):
+        ext, scr = get_reasoning_result_gpt(
+            client,
+            query["grading_query"],
+            model=MODEL_VERSION,
+            max_retries=judge_max_retries,
+        )
+        return figure_id, ext, scr
+
+    with ThreadPoolExecutor(max_workers=judge_parallel) as executor:
+        futures = [executor.submit(_grade, figure_id, query) for figure_id, query in queries.items()]
+        graded = (future.result() for future in as_completed(futures))
+        for figure_id, ext, scr in tqdm(graded, total=len(futures)):
+            queries[figure_id]["extracted_answer"] = ext
+            queries[figure_id]["score"] = scr
+            queries[figure_id].pop("grading_query")
     # Return the average score
     scores = [query["score"] for query in queries.values()]
     return sum(scores) / len(scores)

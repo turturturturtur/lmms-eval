@@ -27,14 +27,23 @@ with open(Path(__file__).parent / "_default_template_yaml", "r") as f:
 
     config = yaml.safe_load("".join(safe_data))
 
-API_TYPE = os.getenv("API_TYPE", "openai")
-MODEL_VERSION = os.getenv("MODEL_VERSION", "gpt-4o-2024-11-20")
+_JUDGE_SERVER = None
 
-# Initialize the judge server
-server_config = ServerConfig(
-    model_name=MODEL_VERSION,
-)
-server = get_server(server_name=API_TYPE, config=server_config)
+
+def _get_judge_server():
+    """Create the optional reasoning judge only when it is actually needed.
+
+    Generation-stage task imports must be side-effect free.  In particular,
+    ``mmmu_val`` uses the rule-based aggregation path and must not require an
+    API key merely because this module is imported.
+    """
+    global _JUDGE_SERVER
+    if _JUDGE_SERVER is None:
+        api_type = os.getenv("API_TYPE", "openai")
+        model_version = os.getenv("MODEL_VERSION", "gpt-4o-2024-11-20")
+        server_config = ServerConfig(model_name=model_version)
+        _JUDGE_SERVER = get_server(server_name=api_type, config=server_config)
+    return _JUDGE_SERVER
 
 
 def replace_images_tokens(input_string):
@@ -188,7 +197,12 @@ def mmmu_reasoning_process_results(doc, results):
 
         try:
             # Use the llm_judge API for binary evaluation
-            result = server.evaluate_binary(question=formatted_question, answer=str(answer), prediction=pred, output_format="0/1")
+            result = _get_judge_server().evaluate_binary(
+                question=formatted_question,
+                answer=str(answer),
+                prediction=pred,
+                output_format="0/1",
+            )
 
             # Parse the result
             if result["success"]:

@@ -504,7 +504,37 @@ def test_preview_rejects_unknown_judge_backend(tmp_path: Path, monkeypatch: pyte
     assert response.json()["detail"] == "Unsupported judge_backend: unsupported"
 
 
-@pytest.mark.parametrize("judge_backend", ["vllm", "api"])
+def test_webui_rejects_local_run_mode_and_points_to_safe_wrapper():
+    client = _client()
+    assert _login(client).status_code == 200
+    payload = _eval_payload()
+    payload["run_mode"] = "local"
+
+    response = client.post("/eval/preview", json=payload)
+
+    assert response.status_code == 400
+    assert "WebUI only supports DLC" in response.json()["detail"]
+    assert "qwen35_local_eval.sh" in response.json()["detail"]
+
+
+def test_webui_rejects_imported_local_yaml():
+    client = _client()
+    assert _login(client).status_code == 200
+
+    response = client.post(
+        "/eval/import-yaml",
+        json={"yaml_content": "run_mode: local\nmodel: /tmp/raw-checkpoint\n"},
+    )
+
+    assert response.status_code == 400
+    assert "WebUI only supports DLC" in response.json()["detail"]
+
+
+@pytest.mark.parametrize(
+    "judge_backend",
+    ["vllm", "api"],
+    ids=["local-vllm-judge", "remote-openai-judge"],
+)
 def test_dlc_yaml_roundtrip_preserves_judge_backend(
     judge_backend: str,
     tmp_path: Path,
@@ -529,6 +559,8 @@ def test_dlc_yaml_roundtrip_preserves_judge_backend(
     assert export_response.status_code == 200
     yaml_content = export_response.json()["yaml_content"]
     assert f"judge_backend: {judge_backend}" in yaml_content
+    assert "source_path:" in yaml_content
+    assert "processor_compat: required" in yaml_content
 
     import_response = client.post("/eval/import-yaml", json={"yaml_content": yaml_content})
 
@@ -564,6 +596,133 @@ def test_dlc_yaml_roundtrip_preserves_optional_api_model_name():
 
     assert import_response.status_code == 200
     assert import_response.json()["api_model"] == "kimi-for-coding"
+
+
+def test_dlc_yaml_roundtrip_preserves_blank_optional_api_model_name():
+    client = _client()
+    assert _login(client).status_code == 200
+
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "sk-roundtrip-blank"
+    payload["api_model"] = "   "
+
+    export_response = client.post("/eval/export-yaml", json=payload)
+
+    assert export_response.status_code == 200
+    yaml_content = export_response.json()["yaml_content"]
+    assert "api_model: ''" in yaml_content
+
+    import_response = client.post("/eval/import-yaml", json={"yaml_content": yaml_content})
+
+    assert import_response.status_code == 200
+    assert import_response.json()["api_model"] == ""
+
+
+def test_import_legacy_api_runtime_yaml_recovers_model_path_as_api_model():
+    payload = _eval_payload()
+    payload["eval_inference_mode"] = "api"
+    payload["api_url"] = "https://api.example.invalid/v1"
+    payload["api_key"] = "sk-legacy-runtime"
+    payload["api_model"] = "legacy-runtime-model"
+    config = server._build_eval_config(server.ExportYamlRequest(**payload))
+    config["run_mode"] = "dlc"
+
+    client = _client()
+    assert _login(client).status_code == 200
+    response = client.post(
+        "/eval/import-yaml",
+        json={"yaml_content": server.yaml.safe_dump(config, sort_keys=False)},
+    )
+
+    assert response.status_code == 200
+    imported = response.json()
+    assert imported["eval_inference_mode"] == "api"
+    assert imported["api_model"] == "legacy-runtime-model"
+
+
+def test_import_runtime_yaml_prefers_source_model_over_resolved_view():
+    payload = _eval_payload()
+    source_model = "/mnt/cpfsB/user/checkpoint-227"
+    resolved_model = "/mnt/cpfsB/user/views/checkpoint-227-video-compat"
+    config = server._build_eval_config(server.ExportYamlRequest(**payload))
+    config["model"]["source_path"] = source_model
+    config["model"]["path"] = resolved_model
+    config["model"]["resolved_path"] = resolved_model
+    config["run_mode"] = "dlc"
+
+    client = _client()
+    assert _login(client).status_code == 200
+    response = client.post(
+        "/eval/import-yaml",
+        json={"yaml_content": server.yaml.safe_dump(config, sort_keys=False)},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["model"] == source_model
+
+
+def test_ckpt_webui_config_records_submit_time_preflight_contract():
+    payload = _eval_payload()
+    payload["user"] = "test-user"
+    request = server.EvalRequest(**payload)
+
+    config = server._build_eval_config(request)
+
+    assert config["model"]["path"] == payload["model"]
+    assert config["model"]["source_path"] == payload["model"]
+    assert config["model"]["processor_compat"] == "required"
+    assert config["model"]["view_root"] == (
+        "/mnt/cpfsB/test-user/lmms_eval_views"
+    )
+    assert config["model"]["startup_timeout_seconds"] == 1800
+    assert "resolved_path" not in config["model"]
+    assert "preflight" not in config["model"]
+
+
+def test_dlc_job_detail_returns_model_artifact_provenance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    runtime_config = tmp_path / "runtime_config.json"
+    runtime_config.write_text(
+        json.dumps(
+            {
+                "model": {
+                    "source_path": "/source/checkpoint",
+                    "path": "/views/resolved",
+                    "resolved_path": "/views/resolved",
+                    "processor_compat": "required",
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        server,
+        "_get_dlc_job_detail",
+        lambda job_id: {
+            "JobId": job_id,
+            "DisplayName": "eval_model_provenance",
+            "Status": "Running",
+        },
+    )
+    monkeypatch.setattr(
+        server,
+        "_job_runtime_paths",
+        lambda _detail: (runtime_config, None, "/logs/eval"),
+    )
+
+    client = _client()
+    assert _login(client).status_code == 200
+    response = client.get("/dlc/jobs/dlcprovenance")
+
+    assert response.status_code == 200
+    detail = response.json()
+    assert detail["model_source_path"] == "/source/checkpoint"
+    assert detail["model_resolved_path"] == "/views/resolved"
+    assert detail["processor_compat"] == "required"
 
 
 def test_ckpt_reasoning_task_syncs_judge_key_into_eval_env():

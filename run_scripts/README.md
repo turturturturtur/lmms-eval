@@ -79,7 +79,8 @@ run_scripts/
     "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
     "hf_token": "",
     "venv_path": "/mnt/cpfsB/<USER>/lmms-eval/.venv",
-    "lmms_eval_datasets_cache": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface/datasets",
+    "lmms_eval_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
     "hf_datasets_offline": true,
     "transformers_offline": true,
     "api_type": "openai",
@@ -123,7 +124,8 @@ run_scripts/
 | `env.hf_home` | string | HuggingFace 缓存根目录 |
 | `env.hf_token` | string | HuggingFace Token（可选） |
 | `env.venv_path` | string | Python 虚拟环境路径 |
-| `env.lmms_eval_datasets_cache` | string | 显式 datasets cache；生产配置指向 CPFSB public 持久缓存 |
+| `env.lmms_eval_datasets_cache` | string | 显式 datasets cache；固定指向已有 benchmark cache `/mnt/cpfsB/evaluation_cache/lmms_eval` |
+| `env.hf_datasets_cache` | string | 任务工具使用的 HF datasets cache；必须与 `env.lmms_eval_datasets_cache` 相同 |
 | `env.hf_datasets_offline` | bool | 是否离线加载 datasets |
 | `env.transformers_offline` | bool | 是否离线加载 transformers |
 | `env.api_type` | string | Judge API 类型（如 openai） |
@@ -191,7 +193,7 @@ run_scripts/
 | `dlc.priority` | int | 作业优先级 |
 | `dlc.running_timeout` | int | 运行超时时间（秒） |
 | `dlc.worker_image` | string | Worker 容器镜像 |
-| `dlc.data_source_uris` | string | 数据挂载 URI（CPFS / NAS / OSS 等），必须包含 `nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB` |
+| `dlc.data_source_uris` | string | 数据挂载 URI（CPFS / NAS / OSS 等），必须包含 CPFS 挂载到 `/mnt/cpfsB` 的 URI，以及 `nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB` |
 | `dlc.resource_id` | string | 固定资源配额 ID，必须为 `quotaev2tl4w6aw0` |
 | `dlc.workspace_id` | string | 工作空间 ID |
 | `dlc.vpc_id` / `switch_id` / `security_group_id` | string | 网络与安全组配置 |
@@ -203,6 +205,8 @@ run_scripts/
 {
   "env": {
     "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
+    "lmms_eval_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
     "hf_token": "",
     "venv_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv"
   },
@@ -274,9 +278,9 @@ bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json
 bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json /path/to/another/model
 ```
 
-### 强制开启数据集缓存 staging（默认本地不开启）
+### 复用已有 benchmark cache（默认）
 
-本地运行时**不会**自动 staging 数据集缓存（避免不必要的 100G+ 数据拷贝）。如果你确实需要：
+本地和 DLC 运行默认直接读取 `/mnt/cpfsB/evaluation_cache/lmms_eval`，不会复制 100G+ 的共享 cache。只有明确需要把 cache 复制到另一个目录时才开启 staging；如果 source 和 destination 相同，即使开启也会自动跳过。
 
 ```bash
 LMMS_EVAL_STAGE_DATASETS=1 bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json
@@ -308,8 +312,8 @@ launch_vllm_backends() → 启动 NUM_BACKENDS 个 vLLM 进程
       ├─── wait_for_backends() ───┐
       │      轮询 health check     │
       │                            │
-      ├─── stage_datasets() ───────┤（仅在 LMMS_EVAL_STAGE_DATASETS=1 时后台执行）
-      │      并行拷贝数据集缓存      │
+      ├─── stage_datasets() ───────┤（默认关闭；同 benchmark 路径时直接跳过）
+      │      仅对不同目标执行拷贝      │
       │                            │
       └──── wait 数据集拷贝完成 ◄──┘
              │
@@ -343,7 +347,7 @@ bash run_scripts/qwen3_vl_submit.sh run_scripts/config_dlc.json run_scripts/conf
       ▼
 构建 DLC command:
    export LMMS_EVAL_LOG_DIR=<FIXED_LOG_DIR>;
-   export LMMS_EVAL_STAGE_DATASETS=1;
+   export LMMS_EVAL_STAGE_DATASETS=0;
    bash qwen3_vl_worker.sh <runtime_config.json>
       │
       ▼
@@ -354,7 +358,8 @@ dlc submit pytorchjob --command="..."
 
 - **统一时间戳**：由 submitter 生成并写入 `runtime_config.json`，确保所有 worker 的输出目录一致。
 - **强制非调试**：集群运行自动设置 `debug=false`，退出时会清理 vLLM 进程。
-- **自动 staging**：DLC 提交自动设置 `LMMS_EVAL_STAGE_DATASETS=1`，worker 启动时会并行拷贝数据集缓存。
+- **直接复用 benchmark cache**：DLC 提交固定 `LMMS_EVAL_STAGE_DATASETS=0`，eval/judge 的 datasets cache 都指向 `/mnt/cpfsB/evaluation_cache/lmms_eval`，避免 CPFS 到 CPFS 的全量复制。
+- **CPFSB 挂载校验**：主任务和 judge 的 `data_source_uris` 必须包含挂载到 `/mnt/cpfsB` 的 CPFS URI；worker 启动时还会检查 benchmark cache 是否真实可见。
 
 ---
 

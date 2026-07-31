@@ -1,7 +1,10 @@
 import ast
 import json
+import math
+import os
 
 from loguru import logger as eval_logger
+from PIL import Image
 
 from lmms_eval.api.metrics import levenshtein_distance
 from lmms_eval.tasks._task_utils.file_utils import generate_submission_file
@@ -15,8 +18,25 @@ def multidocvqa_doc_to_text(doc, lmms_eval_specific_kwargs):
     return f"{pre_prompt}{question}{post_prompt}"
 
 
+def _resize_to_max_pixels(image, max_pixels):
+    image = image.convert("RGB")
+    width, height = image.size
+    if max_pixels <= 0 or width * height <= max_pixels:
+        return image
+
+    scale = math.sqrt(max_pixels / (width * height))
+    resized_width = max(1, int(width * scale))
+    resized_height = max(1, int(height * scale))
+    return image.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
+
+
 def multidocvqa_doc_to_visual(doc):
-    return [doc[f"image_{i}"].convert("RGB") for i in range(1, 21) if doc[f"image_{i}"] is not None]
+    max_pixels = int(os.getenv("MULTIDOCVQA_MAX_PIXELS_PER_IMAGE", "0"))
+    return [
+        _resize_to_max_pixels(doc[f"image_{i}"], max_pixels)
+        for i in range(1, 21)
+        if doc[f"image_{i}"] is not None
+    ]
 
 
 def multidocvqa_process_results(doc, results):

@@ -159,15 +159,26 @@ with open(Path(__file__).parent / "mathvista.yaml", "r") as f:
 
 
 class MathVistaEvaluator:
-    API_TYPE = os.getenv("API_TYPE", "openai")
-    gpt_model = os.getenv("MODEL_VERSION", "gpt-4o-2024-11-20")
-
-    # Initialize llm_judge server
-    server_config = ServerConfig(model_name=gpt_model, temperature=0.0, max_tokens=256, timeout=60, num_retries=5, retry_delay=10)
-    server = get_server(server_name=API_TYPE, config=server_config)
-
     def __init__(self, quick_extract=False):
         self.quick_extract = quick_extract
+        self.api_type = os.getenv("API_TYPE", "openai")
+        self.gpt_model = os.getenv("MODEL_VERSION", "gpt-4o-2024-11-20")
+        self._server = None
+
+    def _get_server(self):
+        if self._server is None:
+            self._server = get_server(
+                server_name=self.api_type,
+                config=ServerConfig(
+                    model_name=self.gpt_model,
+                    temperature=0.0,
+                    max_tokens=256,
+                    timeout=60,
+                    num_retries=5,
+                    retry_delay=10,
+                ),
+            )
+        return self._server
 
     def get_chat_response(self, prompt, temperature=0, max_tokens=256, n=1, patience=5, sleep_time=0):
         # Create a custom server config for this specific request with different parameters
@@ -179,7 +190,7 @@ class MathVistaEvaluator:
                 # Use the core evaluate method with a Request object for direct text generation
                 request = Request(messages=[{"role": "user", "content": prompt}], config=request_config)
 
-                response = self.server.evaluate(request)
+                response = self._get_server().evaluate(request)
 
                 if response.success:
                     prediction = response.content.strip()

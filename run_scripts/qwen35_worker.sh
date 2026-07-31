@@ -20,6 +20,28 @@ JUDGE_CONFIG="${3:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+export LMMS_EVAL_JUDGE_STAGE="generation"
+
+validate_benchmark_cache_mount() {
+    if [[ ! -d "/mnt/cpfsB" ]]; then
+        echo "[ERROR] CPFSB mount is missing: /mnt/cpfsB" >&2
+        return 2
+    fi
+    if [[ ! -d "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] Benchmark cache is missing from CPFSB: ${LMMS_EVAL_BENCHMARK_CACHE}" >&2
+        return 2
+    fi
+    if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] Eval must use benchmark cache ${LMMS_EVAL_BENCHMARK_CACHE}, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+    if [[ "${HF_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache ${LMMS_EVAL_BENCHMARK_CACHE}, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
+        return 2
+    fi
+}
+
+validate_benchmark_cache_mount
 MODEL_BACKEND="$(cfg '.model.backend // "vllm"')"
 MODEL_BACKEND="$(printf '%s' "${MODEL_BACKEND}" | tr '[:upper:]' '[:lower:]')"
 if [[ "${MODEL_BACKEND}" != "vllm" && "${MODEL_BACKEND}" != "openai" ]]; then
@@ -247,6 +269,66 @@ print("[INFO] lmms-eval venv dependency check passed.")
 PY
 }
 
+validate_qwen35_model_compat() {
+    [[ "${MODEL_BACKEND}" == "vllm" ]] || return 0
+
+    local processor_compat
+    processor_compat="$(cfg '.model.processor_compat // "required"')"
+    case "${processor_compat}" in
+        auto|required) ;;
+        off)
+            echo "[ERROR][Machine ${MACHINE_RANK}] qwen35_worker.sh does not allow model.processor_compat=off for a local Qwen3.5 vLLM model." >&2
+            return 2
+            ;;
+        *)
+            echo "[ERROR][Machine ${MACHINE_RANK}] model.processor_compat must be auto, required, or off; got: ${processor_compat}" >&2
+            return 2
+            ;;
+    esac
+
+    local configured_resolved
+    configured_resolved="$(cfg '.model.resolved_path // ""')"
+    if [[ -n "${configured_resolved}" && "${configured_resolved}" != "null" ]]; then
+        if [[ "$(readlink -f "${configured_resolved}")" != "$(readlink -f "${MODEL}")" ]]; then
+            echo "[ERROR][Machine ${MACHINE_RANK}] model.path must equal model.resolved_path in worker runtime config: path=${MODEL}, resolved_path=${configured_resolved}" >&2
+            return 2
+        fi
+    fi
+
+    local result_path="${LOG_DIR}/model_worker_preflight.json"
+    local stderr_path="${LOG_DIR}/model_worker_preflight.stderr.log"
+    local rc
+    set +e
+    INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 \
+        PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}" \
+        "${VENV_PATH}/bin/python" \
+        "${LMMS_EVAL_ROOT}/lmms_eval/models/model_utils/qwen35_model_compat.py" \
+        check \
+        --model "${MODEL}" \
+        > "${result_path}" \
+        2> "${stderr_path}"
+    rc=$?
+    set -e
+    if [[ -s "${stderr_path}" ]]; then
+        sed "s/^/[MODEL_PREFLIGHT][Machine ${MACHINE_RANK}] /" "${stderr_path}" >&2
+    fi
+    if (( rc != 0 )); then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Qwen3.5 model check failed before vLLM launch (exit_code=${rc})." >&2
+        echo "[ERROR][Machine ${MACHINE_RANK}] model.path=${MODEL}" >&2
+        echo "[ERROR][Machine ${MACHINE_RANK}] Re-run qwen35_submit.sh or qwen35_local_eval.sh to prepare a verified compatibility view." >&2
+        return "${rc}"
+    fi
+    if ! jq -e --arg model "$(readlink -f "${MODEL}")" '
+        (.resolved_path == $model)
+        and (.processor_class | type == "string" and length > 0)
+        and (.transformers_version | type == "string" and length > 0)
+    ' "${result_path}" >/dev/null; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Invalid Qwen3.5 worker preflight result: ${result_path}" >&2
+        return 2
+    fi
+    echo "[INFO][Machine ${MACHINE_RANK}] Qwen3.5 model preflight passed: model=${MODEL} processor=$(jq -r '.processor_class' "${result_path}") transformers=$(jq -r '.transformers_version' "${result_path}")"
+}
+
 resolve_qwen35_stop_token_ids() {
     local _vllm_pythonpath
     _vllm_pythonpath="$(innovator_vllm_pythonpath)"
@@ -358,6 +440,14 @@ build_vllm_backend_model_args() {
     fi
     local args
     args="base_url=${BACKEND_URLS},model=${MODEL_NAME},api_key=EMPTY,timeout=${VLLM_REQUEST_TIMEOUT_SECONDS},num_concurrent=${CONCURRENCY},adaptive_max_concurrency=${CONCURRENCY},max_new_tokens=${MAX_NEW_TOKENS},max_pixels=${MAX_PIXELS},min_pixels=78400,is_qwen3_vl=${MODEL_IS_QWEN3_VL},shuffle_requests=True,stop_token_ids=${MODEL_STOP_TOKEN_IDS_JSON}"
+    if [[ -n "${EVAL_MODEL_STOP_STRINGS_JSON:-}" ]]; then
+        if ! jq -e 'type == "array" and length > 0 and all(.[]; type == "string" and length > 0)' \
+            <<< "${EVAL_MODEL_STOP_STRINGS_JSON}" >/dev/null; then
+            echo "[ERROR][Machine ${MACHINE_RANK}] EVAL_MODEL_STOP_STRINGS_JSON must be a non-empty JSON array of non-empty strings" >&2
+            return 2
+        fi
+        args="${args},stop_strings=${EVAL_MODEL_STOP_STRINGS_JSON}"
+    fi
     if [[ -n "${MODEL_ENABLE_THINKING}" ]]; then
         args="${args},enable_thinking=${MODEL_ENABLE_THINKING}"
     fi
@@ -428,7 +518,13 @@ write_task_manifest_row() {
 }
 
 launch_vllm_backends() {
+    if ! command -v setsid >/dev/null 2>&1; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] setsid is required for owned vLLM process-group cleanup." >&2
+        return 2
+    fi
     BACKEND_URLS=""
+    PIDS=()
+    BACKEND_LOGS=()
     for (( i=0; i<NUM_BACKENDS; i++ )); do
         PORT=$(( MODEL_BASE_PORT + i ))
         START_GPU=$(( i * MODEL_TP ))
@@ -452,7 +548,7 @@ launch_vllm_backends() {
 
         INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 \
         PYTHONPATH="$(innovator_vllm_pythonpath)" \
-        CUDA_VISIBLE_DEVICES=${GPUS} "${VENV_PATH}/bin/python" -m vllm.entrypoints.openai.api_server \
+        CUDA_VISIBLE_DEVICES=${GPUS} setsid "${VENV_PATH}/bin/python" -m vllm.entrypoints.openai.api_server \
             --model                  "${MODEL}" \
             --served-model-name      "${MODEL_NAME}" \
             --tensor-parallel-size   "${MODEL_TP}" \
@@ -467,7 +563,8 @@ launch_vllm_backends() {
             "${eager_args[@]}" \
             "${reasoning_args[@]}" \
             > "${MODEL_LOG}" 2>&1 &
-        PIDS+=($!)
+        PIDS+=("$!")
+        BACKEND_LOGS+=("${MODEL_LOG}")
         BACKEND_URLS="${BACKEND_URLS}http://localhost:${PORT}/v1;"
     done
     BACKEND_URLS=${BACKEND_URLS%;}
@@ -554,6 +651,14 @@ run_lmms_eval_task() {
     classification="$(classify_lmms_eval_task_status "${rc}" "${TASK_TIMEOUT_SECONDS}")"
     local task_status="${classification%%$'\t'*}"
     local status_reason="${classification#*$'\t'}"
+    if [[ "${task_status}" == "success" && "${_MACHINE_RANK}" == "0" ]]; then
+        local validation_error
+        if ! validation_error="$(validate_lmms_eval_task_outputs "${task_output_path}" 2>&1)"; then
+            task_status="failed"
+            status_reason="missing_eval_outputs: ${validation_error}"
+            rc=1
+        fi
+    fi
 
     if [[ "${task_status}" == "success" ]]; then
         echo "[INFO][Machine ${_MACHINE_RANK}] lmms-eval task completed: ${task}"
@@ -618,6 +723,37 @@ wait_for_eval_gpu_release() {
     return 1
 }
 
+validate_inline_judge_inputs() {
+    local input_path
+    local tasks
+    local task
+    local matches
+    input_path="$(jq -er '.eval.input_result_path' "${JUDGE_CONFIG}")"
+    tasks="$(jq -er '.eval.tasks' "${JUDGE_CONFIG}")"
+    if [[ -z "${input_path}" || "${input_path}" == "null" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Judge input_result_path is empty." >&2
+        return 2
+    fi
+    if [[ ! -d "${input_path}" && ! -f "${input_path}" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Judge input path does not exist: ${input_path}" >&2
+        return 2
+    fi
+    IFS=',' read -ra _JUDGE_TASK_ARRAY <<< "${tasks}"
+    for task in "${_JUDGE_TASK_ARRAY[@]}"; do
+        task="$(trim_whitespace "${task}")"
+        [[ -z "${task}" ]] && continue
+        if [[ -f "${input_path}" ]]; then
+            matches="${input_path}"
+        else
+            matches="$(find "${input_path}" -type f -name "*samples_${task}.jsonl" -print)"
+        fi
+        if [[ -z "${matches}" ]]; then
+            echo "[ERROR][Machine ${MACHINE_RANK}] Missing judge samples for task=${task} under ${input_path}." >&2
+            return 1
+        fi
+    done
+}
+
 run_inline_local_judge() {
     if [[ -z "${JUDGE_CONFIG}" ]]; then
         return 0
@@ -631,6 +767,10 @@ run_inline_local_judge() {
     if (( gpu_count != 8 )); then
         echo "[ERROR] Inline local judge requires exactly 8 visible GPUs, got: ${gpu_count}" >&2
         return 2
+    fi
+    if ! validate_inline_judge_inputs; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Refusing to start local judge because judge inputs are incomplete." >&2
+        return 1
     fi
 
     if [[ "${MODEL_BACKEND}" == "vllm" ]]; then
@@ -656,10 +796,9 @@ if [[ "${MODEL_BACKEND}" == "openai" ]]; then
     stage_datasets &
     DATASET_STAGE_PID=$!
     if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
-        wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+        wait "${DATASET_STAGE_PID}"
     fi
 
-    run_lmms_eval
 else
     compute_resources
     setup_logging
@@ -668,6 +807,7 @@ else
     prepend_pythonpath_bins
     setup_native_libs
     check_runtime_deps
+    validate_qwen35_model_compat
     resolve_qwen35_stop_token_ids
     setup_cleanup_trap
 
@@ -676,13 +816,43 @@ else
     stage_datasets &
     DATASET_STAGE_PID=$!
 
-    wait_for_backends
-
-    if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
-        wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+    if ! wait_for_backends; then
+        if [[ -n "${DATASET_STAGE_PID:-}" ]] && kill -0 "${DATASET_STAGE_PID}" 2>/dev/null; then
+            kill -TERM "${DATASET_STAGE_PID}" 2>/dev/null || true
+        fi
+        [[ -n "${DATASET_STAGE_PID:-}" ]] && wait "${DATASET_STAGE_PID}" 2>/dev/null || true
+        exit 1
     fi
 
-    run_lmms_eval
+    if [[ -n "${DATASET_STAGE_PID:-}" ]]; then
+        wait "${DATASET_STAGE_PID}"
+    fi
+
 fi
 
-run_inline_local_judge
+EVAL_RC=0
+if run_lmms_eval; then
+    EVAL_RC=0
+else
+    EVAL_RC=$?
+fi
+
+JUDGE_RC=0
+if [[ -n "${JUDGE_CONFIG}" ]]; then
+    if run_inline_local_judge; then
+        JUDGE_RC=0
+    else
+        JUDGE_RC=$?
+    fi
+fi
+
+if (( EVAL_RC != 0 )); then
+    echo "[ERROR][Machine ${MACHINE_RANK}] Evaluation phase failed with rc=${EVAL_RC}." >&2
+fi
+if (( JUDGE_RC != 0 )); then
+    echo "[ERROR][Machine ${MACHINE_RANK}] Judge phase failed with rc=${JUDGE_RC}." >&2
+fi
+if (( EVAL_RC != 0 )); then
+    exit "${EVAL_RC}"
+fi
+exit "${JUDGE_RC}"

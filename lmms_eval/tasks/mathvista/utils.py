@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -17,6 +18,12 @@ with open(Path(__file__).parent / "mathvista.yaml", "r") as f:
 
 
 mathvista_evaluator = MathVistaEvaluator()
+
+
+def _is_post_eval_stage(doc):
+    if os.getenv("LMMS_EVAL_JUDGE_STAGE", "generation") == "post_eval":
+        return True
+    return isinstance(doc, dict) and "__sample_context__" in doc
 
 
 def mathvista_doc_to_visual(doc):
@@ -47,6 +54,25 @@ def mathvista_doc_to_text(doc, lmms_eval_specific_kwargs=None):
 
 def mathvista_process_results(doc, results):
     prediction = results[0].strip()
+    if not _is_post_eval_stage(doc):
+        # Keep the complete judge envelope in the generation output.  The
+        # standalone judge will perform extraction and semantic scoring after
+        # the local vLLM judge has been started.
+        result = {
+            "question_id": doc["pid"],
+            "query": doc["query"],
+            "choices": doc["choices"],
+            "answer": doc.get("answer"),
+            "extraction": "",
+            "prediction": prediction,
+            "true_false": False,
+            "needs_llm_judge": True,
+            "question_type": doc["question_type"],
+            "answer_type": doc["answer_type"],
+            "precision": doc.get("precision", 0),
+            "metadata": doc["metadata"],
+        }
+        return {"llm_as_judge_eval": result, "submission": result}
     problem = {
         "question_type": doc["question_type"],
         "answer_type": doc["answer_type"],
