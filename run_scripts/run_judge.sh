@@ -570,6 +570,7 @@ export JUDGE_MODEL="${JUDGE_MODEL}"
 export JUDGE_API_KEY="${JUDGE_API_KEY}"
 export JUDGE_BASE_URL="${JUDGE_BASE_URL}"
 export JUDGE_MAX_CONCURRENT="${JUDGE_PARALLEL}"
+export LMMS_EVAL_JUDGE_STAGE="post_eval"
 export LOGURU_LEVEL="INFO"
 
 # 执行 lmms-eval judge

@@ -10,30 +10,39 @@ from lmms_eval.llm_judge import ServerConfig, get_server
 
 
 class MathVerseEvaluator:
-    API_TYPE = os.getenv("API_TYPE", "openai")
-    if API_TYPE == "openai":
-        API_URL = os.getenv("OPENAI_API_URL", "https://api.openai.com/v1/chat/completions")
-        API_KEY = os.getenv("OPENAI_API_KEY", "YOUR_API_KEY")
-        headers = {
-            "Authorization": f"Bearer {API_KEY}",
-            "Content-Type": "application/json",
-        }
-        client = OpenAI(api_key=API_KEY, base_url=API_URL.rstrip("chat/completions"))
-        gpt_model = os.getenv("MODEL_VERSION", "gpt-4o-2024-11-20")
-
-    elif API_TYPE == "azure":
-        API_URL = os.getenv("AZURE_ENDPOINT", "https://api.cognitive.microsoft.com/sts/v1.0/issueToken")
-        API_KEY = os.getenv("AZURE_API_KEY", "YOUR_API_KEY")
-        API_VERSION = os.getenv("AZURE_API_VERSION", "2023-07-01-preview")
-        client = AzureOpenAI(azure_endpoint=API_URL, api_version=API_VERSION, api_key=API_KEY)
-        gpt_model = os.getenv("MODEL_VERSION", "gpt-4o-2024-11-20")
-    server_config = ServerConfig(
-        model_name=gpt_model,
-    )
-    server = get_server(server_name=API_TYPE, config=server_config)
-
     def __init__(self, quick_extract=False):
         self.quick_extract = quick_extract
+        self.api_type = os.getenv("API_TYPE", "openai")
+        self.gpt_model = os.getenv("MODEL_VERSION", "gpt-4o-2024-11-20")
+        self._client = None
+        self._server = None
+
+    def _get_client(self):
+        if self._client is None:
+            if self.api_type == "openai":
+                api_url = os.getenv("OPENAI_API_URL", "https://api.openai.com/v1/chat/completions")
+                api_key = os.getenv("OPENAI_API_KEY", "")
+                if not api_key:
+                    raise RuntimeError("MathVerse judge requires OPENAI_API_KEY")
+                self._client = OpenAI(api_key=api_key, base_url=api_url.rstrip("chat/completions"))
+            elif self.api_type == "azure":
+                api_url = os.getenv("AZURE_ENDPOINT", "")
+                api_key = os.getenv("AZURE_API_KEY", "")
+                api_version = os.getenv("AZURE_API_VERSION", "2023-07-01-preview")
+                if not api_url or not api_key:
+                    raise RuntimeError("MathVerse Azure judge requires AZURE_ENDPOINT and AZURE_API_KEY")
+                self._client = AzureOpenAI(azure_endpoint=api_url, api_version=api_version, api_key=api_key)
+            else:
+                raise ValueError(f"Unsupported MathVerse API_TYPE: {self.api_type}")
+        return self._client
+
+    def _get_server(self):
+        if self._server is None:
+            self._server = get_server(
+                server_name=self.api_type,
+                config=ServerConfig(model_name=self.gpt_model),
+            )
+        return self._server
 
     def get_chat_response(self, prompt, temperature=0, max_tokens=256, n=1, patience=5, sleep_time=0):
         messages = [
@@ -44,7 +53,7 @@ class MathVerseEvaluator:
         while patience > 0:
             patience -= 1
             try:
-                response = self.client.chat.completions.create(**payload)
+                response = self._get_client().chat.completions.create(**payload)
                 if n == 1:
                     prediction = response.choices[0].message.content.strip()
                     if prediction and prediction != "":
@@ -94,7 +103,12 @@ class MathVerseEvaluator:
             return model_response == answer
 
         try:
-            result = self.server.evaluate_binary(question=question, answer=str(answer), prediction=model_response, output_format="0/1")
+            result = self._get_server().evaluate_binary(
+                question=question,
+                answer=str(answer),
+                prediction=model_response,
+                output_format="0/1",
+            )
 
             if result["success"]:
                 judge_response = result["result"]

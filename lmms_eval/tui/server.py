@@ -33,6 +33,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from lmms_eval.llm_judge.task_policy import requires_post_eval_judge, resolve_post_eval_judge_tasks
 from lmms_eval.tui.discovery import get_discovery_cache
 
 app = FastAPI(title="LMMs-Eval Web UI", version="0.1.0")
@@ -816,16 +817,11 @@ def _contains_user_placeholder(value: Any) -> bool:
 
 
 def _task_requires_llm_judge(task: str) -> bool:
-    normalized = task.strip().lower()
-    if not normalized:
-        return False
-    if normalized in LLM_AS_JUDGE_EXACT_TASKS:
-        return True
-    return any(re.search(pattern, normalized) for pattern in LLM_AS_JUDGE_TASK_PATTERNS)
+    return requires_post_eval_judge(task)
 
 
 def _llm_as_judge_tasks(tasks: list[str]) -> list[str]:
-    return [task for task in tasks if _task_requires_llm_judge(task)]
+    return resolve_post_eval_judge_tasks(tasks)
 
 
 def _sync_judge_api_to_eval_env(

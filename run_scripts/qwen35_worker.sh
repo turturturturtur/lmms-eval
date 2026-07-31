@@ -20,6 +20,7 @@ JUDGE_CONFIG="${3:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+export LMMS_EVAL_JUDGE_STAGE="generation"
 
 validate_benchmark_cache_mount() {
     if [[ ! -d "/mnt/cpfsB" ]]; then
@@ -722,6 +723,37 @@ wait_for_eval_gpu_release() {
     return 1
 }
 
+validate_inline_judge_inputs() {
+    local input_path
+    local tasks
+    local task
+    local matches
+    input_path="$(jq -er '.eval.input_result_path' "${JUDGE_CONFIG}")"
+    tasks="$(jq -er '.eval.tasks' "${JUDGE_CONFIG}")"
+    if [[ -z "${input_path}" || "${input_path}" == "null" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Judge input_result_path is empty." >&2
+        return 2
+    fi
+    if [[ ! -d "${input_path}" && ! -f "${input_path}" ]]; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Judge input path does not exist: ${input_path}" >&2
+        return 2
+    fi
+    IFS=',' read -ra _JUDGE_TASK_ARRAY <<< "${tasks}"
+    for task in "${_JUDGE_TASK_ARRAY[@]}"; do
+        task="$(trim_whitespace "${task}")"
+        [[ -z "${task}" ]] && continue
+        if [[ -f "${input_path}" ]]; then
+            matches="${input_path}"
+        else
+            matches="$(find "${input_path}" -type f -name "*samples_${task}.jsonl" -print)"
+        fi
+        if [[ -z "${matches}" ]]; then
+            echo "[ERROR][Machine ${MACHINE_RANK}] Missing judge samples for task=${task} under ${input_path}." >&2
+            return 1
+        fi
+    done
+}
+
 run_inline_local_judge() {
     if [[ -z "${JUDGE_CONFIG}" ]]; then
         return 0
@@ -735,6 +767,10 @@ run_inline_local_judge() {
     if (( gpu_count != 8 )); then
         echo "[ERROR] Inline local judge requires exactly 8 visible GPUs, got: ${gpu_count}" >&2
         return 2
+    fi
+    if ! validate_inline_judge_inputs; then
+        echo "[ERROR][Machine ${MACHINE_RANK}] Refusing to start local judge because judge inputs are incomplete." >&2
+        return 1
     fi
 
     if [[ "${MODEL_BACKEND}" == "vllm" ]]; then
@@ -763,7 +799,6 @@ if [[ "${MODEL_BACKEND}" == "openai" ]]; then
         wait "${DATASET_STAGE_PID}"
     fi
 
-    run_lmms_eval
 else
     compute_resources
     setup_logging
@@ -793,7 +828,31 @@ else
         wait "${DATASET_STAGE_PID}"
     fi
 
-    run_lmms_eval
 fi
 
-run_inline_local_judge
+EVAL_RC=0
+if run_lmms_eval; then
+    EVAL_RC=0
+else
+    EVAL_RC=$?
+fi
+
+JUDGE_RC=0
+if [[ -n "${JUDGE_CONFIG}" ]]; then
+    if run_inline_local_judge; then
+        JUDGE_RC=0
+    else
+        JUDGE_RC=$?
+    fi
+fi
+
+if (( EVAL_RC != 0 )); then
+    echo "[ERROR][Machine ${MACHINE_RANK}] Evaluation phase failed with rc=${EVAL_RC}." >&2
+fi
+if (( JUDGE_RC != 0 )); then
+    echo "[ERROR][Machine ${MACHINE_RANK}] Judge phase failed with rc=${JUDGE_RC}." >&2
+fi
+if (( EVAL_RC != 0 )); then
+    exit "${EVAL_RC}"
+fi
+exit "${JUDGE_RC}"
