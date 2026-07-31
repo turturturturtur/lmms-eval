@@ -1,0 +1,56 @@
+dataset_path: ZehuaZhao/SUPERChem
+dataset_name: default
+task: "superchem_official_multimodal"
+test_split: "test"
+dataset_kwargs:
+  data_files:
+    test: "*.parquet"
+
+output_type: "generate_until"
+
+doc_to_visual: !function utils.doc_to_visual_multimodal
+doc_to_text: !function utils.doc_to_text_multimodal
+doc_to_target: !function utils.doc_to_target
+
+generation_kwargs:
+  until: []
+  do_sample: true
+  temperature: 1.0
+  max_new_tokens: 32768
+  reasoning_effort: high
+  stream: true
+  stream_options:
+    include_usage: true
+  official_request: superchem
+  request_timeout: 600
+  request_max_retries: 5
+  # Official eval.sh: N_PROCS=4, N_THREADS=10. This is per lmms-eval rank.
+  request_concurrency: 10
+
+repeats: 8
+
+filter_list:
+  - name: official_all
+    filter:
+      - function: take_first_k
+        k: 8
+
+process_results: !function utils.process_results
+
+metric_list:
+  - metric: superchem_official_pass1_first
+    aggregation: mean
+    higher_is_better: true
+  - metric: superchem_official_mean_reliability
+    aggregation: mean
+    higher_is_better: true
+  - metric: superchem_official_pass8
+    aggregation: mean
+    higher_is_better: true
+  - metric: superchem_official_valid_rate
+    aggregation: mean
+    higher_is_better: true
+
+metadata:
+  version: 1.0
+  protocol: SUPERChem official multimodal

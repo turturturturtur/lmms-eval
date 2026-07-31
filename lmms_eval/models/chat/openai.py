@@ -21,6 +21,11 @@ from lmms_eval.models.model_utils.usage_metrics import (
     is_budget_exceeded,
     log_usage,
 )
+from lmms_eval.models.model_utils.superchem_official import (
+    build_request as build_superchem_request,
+    has_boxed_answer,
+    parse_stream,
+)
 from lmms_eval.models.simple.openai import OpenAICompatible as OpenAICompatibleSimple
 from lmms_eval.protocol import ChatMessages
 
@@ -55,6 +60,22 @@ class OpenAICompatible(OpenAICompatibleSimple):
             return []
 
         reordered_requests = list(requests)
+        official_flags = [
+            isinstance(req.args[2], dict)
+            and req.args[2].get("official_request") == "superchem"
+            for req in reordered_requests
+        ]
+        if any(official_flags) and not all(official_flags):
+            raise ValueError(
+                "SUPERChem official requests cannot be mixed with non-official "
+                "requests in one OpenAI batch."
+            )
+        official_mode = bool(official_flags and all(official_flags))
+        official_concurrency = None
+        if official_mode:
+            official_concurrency = int(
+                reordered_requests[0].args[2]["request_concurrency"]
+            )
         # Flag to print generation config only once
         _gen_config_printed = False
         pbar = tqdm(
@@ -66,9 +87,13 @@ class OpenAICompatible(OpenAICompatibleSimple):
         responses: List[Union[GenerationResult, None]] = [None] * len(reordered_requests)
         total_latency = 0.0
         total_tokens = 0
-        current_concurrency = min(
-            self.num_concurrent,
-            self.adaptive_config.max_concurrency,
+        current_concurrency = (
+            official_concurrency
+            if official_concurrency is not None
+            else min(
+                self.num_concurrent,
+                self.adaptive_config.max_concurrency,
+            )
         )
         dispatch_order = list(range(len(reordered_requests)))
         if self.prefix_aware_queue:
@@ -95,32 +120,87 @@ class OpenAICompatible(OpenAICompatibleSimple):
 
         def process_single_request(local_index: int, payload: dict | None, preproc_time: float):
             if payload is None:
-                return "", local_index, False, False, 0.0, 0, 0, 0
+                return "", local_index, False, False, 0.0, 0, 0, 0, "", None
+            official_options = payload.pop("_superchem_official_options", None)
+            retry_limit = (
+                official_options.max_retries
+                if official_options is not None
+                else self.max_retries
+            )
+            retry_wait = (
+                official_options.retry_initial_wait
+                if official_options is not None
+                else self.retry_backoff_s
+            )
             started_at = time.time()
             rate_limited = False
             last_error_msg = "unknown error"
             client_idx = local_index % len(self.clients)
             client = self.clients[client_idx]
-            for attempt in range(self.max_retries):
+            for attempt in range(retry_limit):
                 try:
                     api_start = time.time()
-                    response = client.chat.completions.create(**payload)
+                    if official_options is not None:
+                        response = client.chat.completions.create(
+                            timeout=official_options.timeout,
+                            **payload,
+                        )
+                        parsed_response = parse_stream(response)
+                        response_text = parsed_response.content
+                        reasoning_content = parsed_response.reasoning_content
+                        finish_reason = parsed_response.finish_reason
+                        input_tokens = parsed_response.prompt_tokens
+                        completion_tokens = parsed_response.completion_tokens
+                        output_tokens = completion_tokens
+                        reasoning_tokens = parsed_response.reasoning_tokens
+                        if (
+                            official_options.require_boxed
+                            and not has_boxed_answer(response_text)
+                        ):
+                            raise ValueError(
+                                "Could not find the answer in the required "
+                                r"$\boxed{...}$ format."
+                            )
+                    else:
+                        response = client.chat.completions.create(**payload)
+                        response_text = (
+                            response.choices[0].message.content or ""
+                        )
+                        reasoning_content = ""
+                        finish_reason = getattr(
+                            response.choices[0],
+                            "finish_reason",
+                            None,
+                        )
+                        input_tokens = 0
+                        output_tokens = 0
+                        reasoning_tokens = 0
+                        if hasattr(response, "usage") and response.usage:
+                            input_tokens = (
+                                getattr(response.usage, "prompt_tokens", 0) or 0
+                            )
+                            output_tokens = (
+                                getattr(response.usage, "completion_tokens", 0) or 0
+                            )
+                            if (
+                                hasattr(response.usage, "completion_tokens_details")
+                                and response.usage.completion_tokens_details
+                            ):
+                                reasoning_tokens = (
+                                    getattr(
+                                        response.usage.completion_tokens_details,
+                                        "reasoning_tokens",
+                                        0,
+                                    )
+                                    or 0
+                                )
+                            completion_tokens = output_tokens
+                        else:
+                            completion_tokens = len(response_text.split())
+                            output_tokens = completion_tokens
                     api_latency = time.time() - api_start
                     eval_logger.debug(f"Request {local_index}: Preprocessing={preproc_time:.3f}s, API_Inference={api_latency:.3f}s")
                     elapsed = time.time() - started_at
-                    response_text = response.choices[0].message.content
-                    input_tokens = 0
-                    output_tokens = 0
-                    reasoning_tokens = 0
-                    if hasattr(response, "usage") and response.usage:
-                        input_tokens = getattr(response.usage, "prompt_tokens", 0) or 0
-                        output_tokens = getattr(response.usage, "completion_tokens", 0) or 0
-                        if hasattr(response.usage, "completion_tokens_details") and response.usage.completion_tokens_details:
-                            reasoning_tokens = getattr(response.usage.completion_tokens_details, "reasoning_tokens", 0) or 0
-                        completion_tokens = output_tokens
-                    else:
-                        completion_tokens = len(response_text.split())
-                        output_tokens = completion_tokens
                     log_usage(
                         model_name=self.model_version,
                         task_name=None,
@@ -138,21 +218,36 @@ class OpenAICompatible(OpenAICompatibleSimple):
                         completion_tokens,
                         input_tokens,
                         reasoning_tokens,
+                        reasoning_content,
+                        finish_reason,
                     )
                 except Exception as exc:
                     error_msg = str(exc)
                     last_error_msg = error_msg
                     rate_limited = rate_limited or is_rate_limit_error(error_msg)
-                    eval_logger.info(f"Attempt {attempt + 1}/{self.max_retries} failed with error: {error_msg}")
-                    if attempt == self.max_retries - 1:
-                        eval_logger.error(f"All {self.max_retries} attempts failed. Last error: {error_msg}")
+                    eval_logger.info(f"Attempt {attempt + 1}/{retry_limit} failed with error: {error_msg}")
+                    if attempt == retry_limit - 1:
+                        eval_logger.error(f"All {retry_limit} attempts failed. Last error: {error_msg}")
                     else:
-                        time.sleep(self.retry_backoff_s)
+                        time.sleep(retry_wait)
+                        if official_options is not None:
+                            retry_wait += official_options.retry_increment * (attempt + 1)
 
             elapsed = time.time() - started_at
             error_preview = last_error_msg.replace("\n", " ")[:200]
-            failure_content = f"[LMMS_EVAL_REQUEST_FAILED after {self.max_retries} retries] {error_preview}"
-            return failure_content, local_index, False, rate_limited, elapsed, 0, 0, 0
+            failure_content = f"[LMMS_EVAL_REQUEST_FAILED after {retry_limit} retries] {error_preview}"
+            return (
+                failure_content,
+                local_index,
+                False,
+                rate_limited,
+                elapsed,
+                0,
+                0,
+                0,
+                "",
+                None,
+            )
 
         def maybe_update_concurrency(force: bool = False) -> None:
             nonlocal current_concurrency
@@ -161,7 +256,9 @@ class OpenAICompatible(OpenAICompatibleSimple):
             nonlocal latencies
             nonlocal completed_since_adapt
 
-            if not self.adaptive_concurrency:
+            # The official launcher has a fixed N_PROCS x N_THREADS budget.
+            # Never let lmms-eval's adaptive controller change that protocol.
+            if official_mode or not self.adaptive_concurrency:
                 return
 
             sample_threshold = max(4, current_concurrency)
@@ -201,7 +298,17 @@ class OpenAICompatible(OpenAICompatibleSimple):
             chat_messages_raw = doc_to_messages(self.task_dict[task][split][doc_id])
             chat_messages: ChatMessages = ChatMessages(**{"messages": chat_messages_raw})
             request_gen_kwargs = dict(gen_kwargs)
-            max_new_tokens = min(request_gen_kwargs.get("max_new_tokens", 1024), self.max_new_tokens)
+            is_superchem_official = (
+                request_gen_kwargs.get("official_request") == "superchem"
+            )
+            max_new_tokens = (
+                int(request_gen_kwargs["max_new_tokens"])
+                if is_superchem_official
+                else min(
+                    request_gen_kwargs.get("max_new_tokens", 1024),
+                    self.max_new_tokens,
+                )
+            )
             temperature = request_gen_kwargs.get("temperature", 0)
             top_p = request_gen_kwargs.get("top_p")
             top_k = request_gen_kwargs.get("top_k")
@@ -221,6 +328,28 @@ class OpenAICompatible(OpenAICompatibleSimple):
                 messages = chat_messages.to_qwen3_vl_openai_messages(video_kwargs=video_kwargs)
             else:
                 messages = chat_messages.to_openai_messages(video_kwargs=video_kwargs)
+
+            if is_superchem_official:
+                payload, options = build_superchem_request(
+                    model=self.model_version,
+                    messages=messages,
+                    generation_kwargs=request_gen_kwargs,
+                )
+                payload["_superchem_official_options"] = options
+                if self.rank == 0 and not _gen_config_printed:
+                    eval_logger.info(
+                        "[Generate Config] "
+                        f"task={task}, official_request=superchem, "
+                        f"max_tokens={payload['max_tokens']}, "
+                        f"temperature={payload['temperature']}, "
+                        f"reasoning_effort={payload['reasoning_effort']}, "
+                        f"stream={payload['stream']}, "
+                        f"stream_options={payload['stream_options']}, "
+                        f"request_timeout={options.timeout}, "
+                        f"request_max_retries={options.max_retries}"
+                    )
+                    _gen_config_printed = True
+                return payload
 
             payload = {
                 "messages": messages,
@@ -257,11 +386,22 @@ class OpenAICompatible(OpenAICompatibleSimple):
                 payload = build_payload_for_index(local_index)
                 pre_time = time.time() - pre_start
                 if payload is None:
-                    return None, local_index, False, False, 0.0, 0, 0, 0
+                    return None, local_index, False, False, 0.0, 0, 0, 0, "", None
                 return process_single_request(local_index, payload, pre_time)
             except Exception as e:
                 eval_logger.error(f"Error in preprocessing request {local_index}: {e}")
-                return f"[PREPROC_FAILED] {e}", local_index, False, False, time.time() - pre_start, 0, 0, 0
+                return (
+                    f"[PREPROC_FAILED] {e}",
+                    local_index,
+                    False,
+                    False,
+                    time.time() - pre_start,
+                    0,
+                    0,
+                    0,
+                    "",
+                    None,
+                )
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             while cursor < len(dispatch_order) or in_flight:
@@ -297,6 +437,8 @@ class OpenAICompatible(OpenAICompatibleSimple):
                         completion_tokens,
                         input_tokens,
                         reasoning_tokens,
+                        reasoning_content,
+                        finish_reason,
                     ) = future.result()
                     in_flight.pop(future, None)
                     if response_text == "[LMMS_EVAL_BUDGET_EXCEEDED]" or success is False and response_text == "":
@@ -310,6 +452,8 @@ class OpenAICompatible(OpenAICompatibleSimple):
                             output_tokens=completion_tokens,
                             reasoning_tokens=reasoning_tokens,
                         ),
+                        reasoning_content=reasoning_content,
+                        finish_reason=finish_reason,
                     )
                     total_latency += elapsed
                     total_tokens += completion_tokens

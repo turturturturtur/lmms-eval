@@ -41,7 +41,11 @@ import lmms_eval.api
 import lmms_eval.api.metrics
 import lmms_eval.api.registry
 from lmms_eval import models
-from lmms_eval.api.instance import Instance, unwrap_generation_output
+from lmms_eval.api.instance import (
+    GenerationResult,
+    Instance,
+    unwrap_generation_output,
+)
 from lmms_eval.api.model import lmms
 from lmms_eval.api.reasoning import parse_reasoning_tags_config, strip_reasoning_tags
 from lmms_eval.api.task import Task
@@ -1109,6 +1113,12 @@ def evaluate(
             text, tc = unwrap_generation_output(x)
             req.resps.append(text)
             req.token_counts.append(tc)
+            if isinstance(x, GenerationResult):
+                req.reasoning_resps.append(x.reasoning_content)
+                req.finish_reasons.append(x.finish_reason)
+            else:
+                req.reasoning_resps.append(None)
+                req.finish_reasons.append(None)
 
         if is_budget_exceeded():
             eval_logger.warning("Token budget reached after '{}' requests. Skipping remaining request types.", reqtype)
@@ -1268,6 +1278,8 @@ def evaluate(
                         "arguments": filtered_arguments,
                         "resps": [req.raw_filtered_resps.get(filter_key, req.resps) for req in requests],
                         "filtered_resps": [req.filtered_resps[filter_key] for req in requests],
+                        "reasoning_resps": [req.reasoning_resps for req in requests],
+                        "finish_reasons": [req.finish_reasons for req in requests],
                         "token_counts": per_sample_tc,
                         "doc_hash": hash_string(
                             json.dumps(

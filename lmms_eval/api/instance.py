@@ -36,6 +36,8 @@ class GenerationResult:
 
     text: str
     token_counts: Optional[TokenCounts] = None
+    reasoning_content: Optional[str] = None
+    finish_reason: Optional[str] = None
 
 
 GenerationOutput = Union[str, GenerationResult]
@@ -77,6 +79,8 @@ class Instance:
     raw_filtered_resps: dict = field(default_factory=dict)
 
     token_counts: List[Optional[TokenCounts]] = field(default_factory=list)
+    reasoning_resps: List[Optional[str]] = field(default_factory=list)
+    finish_reasons: List[Optional[str]] = field(default_factory=list)
 
     # initialized after init
     task_name: str = None
