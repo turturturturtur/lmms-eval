@@ -831,7 +831,7 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
             metrics["llm_judge_score"] = sample["api_judge_accuracy"]
             metrics["needs_llm_judge"] = True
         # Nested metric objects (e.g. wemath_loose / wemath_strict)
-        for key in ["wemath_loose", "wemath_strict", "scivqr_acc", "scivqr_open", "scivqr_reasoning", "ocrbench_accuracy"]:
+        for key in ["wemath_loose", "wemath_strict", "scivqr_acc", "scivqr_open", "scivqr_reasoning", "ocrbench_accuracy", "mmmu_acc", "mmmu_acc_pass_at_k"]:
             if key in sample:
                 metrics[key] = sample[key]
         # SFE-specific fields needed for standalone judge and aggregation
@@ -889,6 +889,9 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
             answer = ocrbench.get("ground_truth")
             if answer is not None:
                 return str(answer)
+        mmmu = metrics.get('mmmu_acc')
+        if isinstance(mmmu, dict) and mmmu.get('answer') is not None:
+            return str(mmmu['answer'])
         return ""
 
     @staticmethod

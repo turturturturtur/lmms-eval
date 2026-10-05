@@ -328,6 +328,8 @@ def smol_aggregate_results(results):
         task_groups[t]["preds"].append([data["pred"]])
         task_groups[t]["golds"].append([data["gold"]])
 
+    if len(task_groups) != 1:
+        raise ValueError('Smol aggregation requires exactly one task with nonempty samples.')
     final_scores = {}
     score = 0.0 
     for task, data in task_groups.items():
@@ -394,11 +396,11 @@ def smol_aggregate_results(results):
             else:
                 score = 0.0
 
+            if not math.isfinite(float(score)):
+                raise ValueError(f'non-finite score: {score}')
             final_scores[f"{task}_score"] = score
         except Exception as e:
-            logger.error(f"Error calculating metric for {task}: {e}")
-            final_scores[f"{task}_score"] = 0.0
+            raise RuntimeError(f"Error calculating metric for {task}: {e}") from e
     return float(score)
-
 
 

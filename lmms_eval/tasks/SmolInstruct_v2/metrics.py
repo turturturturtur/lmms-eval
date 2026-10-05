@@ -75,6 +75,10 @@ def judge_exact_match(pred_can_smiles_list, gold_can_smiles_list):
 
 def calculate_fingerprint_similarity(pred_mol_list, gold_mols_list, morgan_r=2):
     assert len(pred_mol_list) == len(gold_mols_list)
+    # No valid predictions earn zero similarity. np.mean([]) instead emits NaN
+    # and poisons the task and group result even though evaluation completed.
+    if not pred_mol_list:
+        return 0.0, 0.0, 0.0
     MACCS_sims = []
     morgan_sims = []
     RDK_sims = []
@@ -138,6 +142,13 @@ def calculate_smiles_metrics(
     assert num_all > 0
     assert num_all == len(golds_smiles_list)
     k = len(preds_smiles_list[0])
+
+    # SmolInstruct reaction labels use semicolons between reactants. Normalize
+    # both sides before canonicalization, as the task's prediction filter does.
+    preds_smiles_list = [None if row is None else
+                        [x.replace(';', '.') if isinstance(x, str) else x for x in row]
+                        for row in preds_smiles_list]
+    golds_smiles_list = [[x.replace(';', '.') for x in row] for row in golds_smiles_list]
 
     dk_pred_smiles_list_dict = {}
     dk_pred_no_answer_labels_dict = {}
@@ -257,7 +268,7 @@ def calculate_smiles_metrics(
                 dk_intersection_labels, dk_subset_labels = judge_multiple_match(dk_pred_smiles_list_dict[dk], golds_smiles_list)
                 tk_intersection_labels = tk_intersection_labels | dk_intersection_labels
                 tk_subset_labels = tk_subset_labels | dk_subset_labels
-                metric_results['num_t%d_subset' % (dk + 1)] = tk_intersection_labels.sum().item()
+                metric_results['num_t%d_subset' % (dk + 1)] = tk_subset_labels.sum().item()
                 metric_results['num_t%d_intersection' % (dk + 1)] = tk_intersection_labels.sum().item()
         else:
             raise ValueError(metric)

@@ -117,7 +117,7 @@ def mmbench_cn_cc_aggregate_dev_results_eval_standalone(results):
     class _Args:
         output_path = "."
     _refresh_mmbench_evaluator()
-    return mmbench_cn_cc_aggregate_dev_results_eval(results, _Args())
+    return mmbench_cn_cc_aggregate_dev_results_eval(results, _Args(), respect_generation_skip=False)
 
 
 def mmbench_cn_cc_aggregate_results_standalone(results):
@@ -128,8 +128,8 @@ def mmbench_cn_cc_aggregate_results_standalone(results):
     return mmbench_cn_cc_aggregate_results(results, _Args())
 
 
-def mmbench_cn_cc_aggregate_dev_results_eval(results, args):
-    if os.getenv("SKIP_MMBENCH_DEV_JUDGE", "0") == "1":
+def mmbench_cn_cc_aggregate_dev_results_eval(results, args, *, respect_generation_skip=True):
+    if respect_generation_skip and os.getenv("SKIP_MMBENCH_DEV_JUDGE", "0") == "1":
         eval_logger.info("SKIP_MMBENCH_DEV_JUDGE=1, skipping GPT-based MMBench dev evaluation during generation.")
         return 0.0
     print("============= MMBench-CN(CC) Detailed Results =============")

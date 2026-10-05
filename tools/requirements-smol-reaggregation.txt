@@ -1,0 +1,6 @@
+# Verified with the existing lmm Python 3.11 environment on 2026-10-05.
+# These are supplemental chemistry/metric dependencies, not a full environment.
+rdkit==2025.9.1
+rdchiral==1.1.0
+rouge-score==0.1.2
+absl-py==2.3.1

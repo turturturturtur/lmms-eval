@@ -18,7 +18,7 @@ def _canonicalize_chunk(args):
                 results.append(None if return_none_for_error else "")
                 continue
             results.append(canonicalize_molecule_smiles(item, return_none_for_error=return_none_for_error))
-        except Exception:
+        except (ValueError, RuntimeError):
             if return_none_for_error:
                 results.append(None)
             else:
@@ -30,7 +30,7 @@ def canonicalize_molecule_smiles_parallel(items, return_none_for_error=True, fal
     """
     Batch-canonicalize SMILES strings using a subprocess pool.
     Each chunk runs in a spawned worker so that an RDKit segfault
-    only kills that worker; failed chunks are filled with None/"".
+    only kills that worker; worker failure aborts aggregation explicitly.
     """
     if not items:
         return []
@@ -41,16 +41,13 @@ def canonicalize_molecule_smiles_parallel(items, return_none_for_error=True, fal
     with ctx.Pool(processes=num_workers, maxtasksperchild=100) as pool:
         async_results = [pool.apply_async(_canonicalize_chunk, (arg,)) for arg in args]
         results = []
-        for ar in tqdm(async_results, total=len(async_results), desc="Canonicalizing chunks"):
+        for chunk_index, ar in enumerate(tqdm(async_results, total=len(async_results), desc="Canonicalizing chunks")):
             try:
                 results.extend(ar.get(timeout=timeout_per_chunk))
-            except Exception:
-                # Worker crashed (likely RDKit segfault) or timed out -> fallback
-                chunk_len = len(args[len(results)][0])
-                if return_none_for_error:
-                    results.extend([None] * chunk_len)
-                else:
-                    results.extend([item if fallback_to_original else "" for item in args[len(results)][0]])
+            except Exception as exc:
+                # Infrastructure/programming failures are not invalid molecules.
+                # Refuse a fabricated score or a partial, misaligned result list.
+                raise RuntimeError(f'SMILES canonicalization worker failed for chunk {chunk_index}') from exc
     return results[:len(items)]
 
 
@@ -136,7 +133,7 @@ def canonicalize_molecule_smiles(smiles, return_none_for_error=True, skip_mol=Fa
                 thing_smiles = Chem.MolToSmiles(thing_smiles, kekuleSmiles=False, isomericSmiles=isomeric)
                 assert thing_smiles is not None
                 can_in = thing_smiles
-                can_out = _safe_canonicalize(thing_smiles, isomeric=isomeric)
+                can_out = canonicalize(thing_smiles, isomeric=isomeric)
                 assert can_out is not None, can_in
                 thing_smiles = can_out
                 if kekulization:
@@ -145,7 +142,7 @@ def canonicalize_molecule_smiles(smiles, return_none_for_error=True, skip_mol=Fa
                     thing_smiles = Chem.MolToSmiles(thing_smiles, kekuleSmiles=True, isomericSmiles=isomeric)
             except KeyboardInterrupt:
                 raise
-            except:
+            except (ValueError, RuntimeError):
                 if return_none_for_error:
                     return None
                 else:
