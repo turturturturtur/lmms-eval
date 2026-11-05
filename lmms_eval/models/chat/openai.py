@@ -36,6 +36,13 @@ cpu, _ = optional_import("decord", "cpu")
 load_dotenv(verbose=True)
 
 
+def _validate_single_choice_n(gen_kwargs: dict) -> None:
+    """Reject choice counts that this backend cannot return faithfully."""
+    n = gen_kwargs.get("n")
+    if n is not None and (isinstance(n, bool) or not isinstance(n, int) or n != 1):
+        raise ValueError("generation parameter n must be the integer 1 because this backend consumes exactly one response choice")
+
+
 @register_model("openai")
 class OpenAICompatible(OpenAICompatibleSimple):
     is_simple = False
@@ -63,6 +70,8 @@ class OpenAICompatible(OpenAICompatibleSimple):
             return []
 
         reordered_requests = list(requests)
+        for request in reordered_requests:
+            _validate_single_choice_n(request.args[2])
         official_flags = [
             isinstance(req.args[2], dict)
             and req.args[2].get("official_request") == "superchem"
@@ -353,6 +362,13 @@ class OpenAICompatible(OpenAICompatibleSimple):
                 "max_tokens": max_new_tokens,
                 "temperature": temperature,
             }
+            # seed and n are the only parameters this loop still owns; top_p,
+            # presence_penalty and frequency_penalty are assigned below, and
+            # top_k has to travel through extra_body.
+            for parameter in ("seed", "n"):
+                value = request_gen_kwargs.get(parameter)
+                if value is not None:
+                    payload[parameter] = value
             extra_body = {}
             if self.pass_video_url:
                 extra_body["media_io_kwargs"] = {"video": {"num_frames": int(self.max_frames_num)}}
