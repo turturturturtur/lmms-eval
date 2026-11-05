@@ -216,6 +216,11 @@ load_config() {
         MODEL_NAME=$(basename "${MODEL}")
     fi
     MODEL_STARTUP_TIMEOUT_SECONDS=$(cfg_required_positive_int '.model.startup_timeout_seconds // 1800' 'model.startup_timeout_seconds')
+    MODEL_TASK_NATIVE_MAX_NEW_TOKENS=$(cfg '.model.task_native_max_new_tokens // false')
+    if [[ "${MODEL_TASK_NATIVE_MAX_NEW_TOKENS}" != "true" && "${MODEL_TASK_NATIVE_MAX_NEW_TOKENS}" != "false" ]]; then
+        echo "[ERROR] model.task_native_max_new_tokens must be true or false, got: ${MODEL_TASK_NATIVE_MAX_NEW_TOKENS}" >&2
+        exit 2
+    fi
 
     # eval
     TASKS=$(cfg '.eval.tasks')
