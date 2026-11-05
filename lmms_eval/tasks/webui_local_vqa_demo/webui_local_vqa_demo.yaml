@@ -1,7 +1,7 @@
 dataset_path: json
 dataset_kwargs:
   data_files:
-    test: /mnt/cpfsB/tianleniu/Innovator-Tune/lmms-eval/local/webui_local_vqa_demo/demo_vqa.jsonl
+    test: /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/webui_local_vqa_demo/demo_vqa.jsonl
 task: webui_local_vqa_demo
 test_split: test
 output_type: generate_until

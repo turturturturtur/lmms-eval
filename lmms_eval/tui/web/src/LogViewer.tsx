@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { makeInitialHistoryWindow, makePreviousHistoryWindow, mergeJobsById } from './historyWindow.js'
 
 const API_BASE = ''
@@ -47,6 +48,8 @@ interface DlcJobsResponse {
 
 interface DlcJobDetailResponse {
   job: Record<string, unknown>
+  requires_llm_judge?: boolean
+  llm_judge_tasks?: string[]
   result_root?: string | null
   runtime_config_path?: string | null
   log_dir?: string | null
@@ -73,6 +76,7 @@ interface DlcMetricRow {
   result_json?: string | null
   sample_jsonls: string[]
   value_source: string
+  judge_model?: string
 }
 
 interface DlcMetricsResponse {
@@ -129,6 +133,10 @@ interface ChoiceAnswerStats {
   correct_answer_total: number
   target_answer_total: number
 }
+
+type SampleFilter = 'all' | 'wrong' | 'unknown'
+const SAMPLE_FILTERS: SampleFilter[] = ['all', 'wrong', 'unknown']
+const SAMPLE_FILTER_LABELS = ['All', 'Wrong only', 'Unknown']
 
 type JobColumnKey = 'job_stage' | 'name' | 'user_name' | 'job_id' | 'status' | 'resource_id' | 'create_time' | 'duration_seconds'
 type JobTableColumnKey = JobColumnKey | 'action'
@@ -226,9 +234,9 @@ function statusClass(status: string): string {
   const normalized = status.toLowerCase()
   if (normalized === 'running') return 'border-green-300 bg-green-50 text-green-800'
   if (normalized === 'succeeded' || normalized === 'success') return 'border-blue-300 bg-blue-50 text-blue-800'
-  if (normalized === 'failed') return 'border-red-300 bg-red-50 text-red-800'
+  if (normalized === 'failed' || normalized === 'judge_failed') return 'border-red-300 bg-red-50 text-red-800'
   if (normalized === 'stopped') return 'border-neutral-300 bg-neutral-100 text-neutral-700'
-  if (normalized === 'queuing' || normalized === 'envpreparing') return 'border-amber-300 bg-amber-50 text-amber-800'
+  if (normalized === 'queuing' || normalized === 'envpreparing' || normalized === 'pending_judge') return 'border-amber-300 bg-amber-50 text-amber-800'
   return 'border-neutral-200 bg-white text-neutral-600'
 }
 
@@ -312,7 +320,7 @@ function defaultSampleColumnWidth(key: string): number {
   if (normalized.includes('token')) return 180
   if (normalized.includes('reason')) return 380
   if (
-    ['input', 'target', 'filtered_resps', 'response', 'model_output', 'prediction', 'pred', 'extracted_answer'].includes(normalized)
+    ['input', 'target', 'resps', 'filtered_resps', 'response', 'model_output', 'prediction', 'pred', 'extracted_answer'].includes(normalized)
   ) {
     return 380
   }
@@ -669,21 +677,20 @@ function AnswerPieChart({
 }
 
 function AnswerStatsPanel({ stats }: { stats: ChoiceAnswerStats }) {
-  if (!stats.is_multiple_choice) return null
   return (
     <div className="border border-neutral-200 bg-neutral-50 p-3" data-testid="choice-answer-stats">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs font-semibold text-neutral-800">Choice Distribution</div>
+        <div className="text-xs font-semibold text-neutral-800">{stats.is_multiple_choice ? 'Choice Distribution' : 'Sample Summary'}</div>
         <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-neutral-500">
           <span>Total {stats.total}</span>
           <span>Wrong {stats.wrong_total}</span>
           {stats.unknown_correctness_total > 0 && <span>Unknown {stats.unknown_correctness_total}</span>}
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+      {stats.is_multiple_choice && <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         <AnswerPieChart title="Correct Answer" buckets={stats.correct_answers} total={stats.correct_answer_total} />
         <AnswerPieChart title="Target Answer" buckets={stats.target_answers} total={stats.target_answer_total} />
-      </div>
+      </div>}
     </div>
   )
 }
@@ -703,6 +710,12 @@ export default function LogViewer() {
   const [killInFlightJobId, setKillInFlightJobId] = useState<string | null>(null)
   const [killError, setKillError] = useState('')
   const [killMessage, setKillMessage] = useState('')
+  const [judgeRetrySubmitting, setJudgeRetrySubmitting] = useState(false)
+  const [judgeRetryError, setJudgeRetryError] = useState('')
+  const [judgeRetryMessage, setJudgeRetryMessage] = useState('')
+  const [judgeRetry, setJudgeRetry] = useState<{ job_id: string; job_name: string } | null>(() => {
+    try { return JSON.parse(localStorage.getItem('lmms_eval_judge_retry') || 'null') } catch { return null }
+  })
 
   const [selectedJob, setSelectedJob] = useState<DlcJobSummary | null>(null)
   const [jobDetail, setJobDetail] = useState<DlcJobDetailResponse | null>(null)
@@ -713,7 +726,7 @@ export default function LogViewer() {
   const [selectedMetric, setSelectedMetric] = useState<DlcMetricRow | null>(null)
   const [samples, setSamples] = useState<DlcMetricSamplesResponse | null>(null)
   const [sampleOffset, setSampleOffset] = useState(0)
-  const [onlyWrongSamples, setOnlyWrongSamples] = useState(false)
+  const [sampleFilter, setSampleFilter] = useState<SampleFilter>('all')
   const [samplesLoading, setSamplesLoading] = useState(false)
   const [samplesError, setSamplesError] = useState('')
   const [jobListPanelWidth, setJobListPanelWidth] = useState(initialJobListPanelWidth)
@@ -825,7 +838,7 @@ export default function LogViewer() {
     setSelectedMetric(null)
     setSamples(null)
     setSampleOffset(0)
-    setOnlyWrongSamples(false)
+    setSampleFilter('all')
     setPreviewMedia(null)
     setDetailError('')
     setDetailLoading(Boolean(job))
@@ -860,7 +873,7 @@ export default function LogViewer() {
     }
   }
 
-  const loadSamples = async (metric: DlcMetricRow, offset = 0, onlyWrong = onlyWrongSamples) => {
+  const loadSamples = async (metric: DlcMetricRow, offset = 0, filter = sampleFilter) => {
     if (!selectedJob) return
     setSelectedMetric(metric)
     setSampleOffset(offset)
@@ -871,7 +884,7 @@ export default function LogViewer() {
       const params = new URLSearchParams({
         offset: String(offset),
         limit: String(SAMPLE_PAGE_SIZE),
-        only_wrong: String(onlyWrong),
+        sample_filter: filter,
       })
       const response = await fetch(
         `${API_BASE}/dlc/jobs/${encodeURIComponent(selectedJob.job_id)}/metrics/${encodeURIComponent(metric.metric_id)}/samples?${params.toString()}`,
@@ -888,6 +901,62 @@ export default function LogViewer() {
       setSamplesLoading(false)
     }
   }
+
+  const retryJudge = async (job: DlcJobSummary) => {
+    if (judgeRetrySubmitting || judgeRetry) return
+    setJudgeRetrySubmitting(true)
+    setJudgeRetryError('')
+    setJudgeRetryMessage('Validating completed inference…')
+    try {
+      const response = await fetch(`${API_BASE}/dlc/jobs/${encodeURIComponent(job.job_id)}/retry-judge`, { method: 'POST' })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.detail || response.statusText)
+      localStorage.setItem('lmms_eval_judge_retry', JSON.stringify(data))
+      setJudgeRetry(data)
+      setJudgeRetryMessage(`Submitting ${data.job_name} on 8 GPUs. Completed inference will be reused.`)
+    } catch (error) {
+      setJudgeRetryMessage('')
+      setJudgeRetryError(error instanceof Error ? error.message : 'Failed to retry judge')
+    } finally {
+      setJudgeRetrySubmitting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!judgeRetry) return
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout>
+    const poll = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/eval/${encodeURIComponent(judgeRetry.job_id)}`)
+        const data = await response.json()
+        if (cancelled) return
+        if (!response.ok) throw new Error(data.detail || response.statusText)
+        if (data.dlc_jobs?.eval) {
+          setJudgeRetryMessage(`Judge retry submitted: ${data.dlc_jobs.eval}. Results are in ${judgeRetry.job_name}.`)
+          setJobQuery(judgeRetry.job_name)
+          const refreshed = await fetchJobs()
+          if (cancelled) return
+          const submitted = refreshed.find(job => job.job_id === data.dlc_jobs.eval)
+          if (submitted) setSelectedJob(submitted)
+          localStorage.removeItem('lmms_eval_judge_retry')
+          setJudgeRetry(null)
+          return
+        }
+        if (data.finished) throw new Error(data.error || `Judge retry submission ended with status ${data.status}.`)
+      } catch (error) {
+        if (cancelled) return
+        setJudgeRetryMessage('')
+        setJudgeRetryError(error instanceof Error ? error.message : 'Failed to monitor judge retry')
+        localStorage.removeItem('lmms_eval_judge_retry')
+        setJudgeRetry(null)
+        return
+      }
+      timer = setTimeout(poll, 3000)
+    }
+    void poll()
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [judgeRetry])
 
   const killDlcJob = async (job: DlcJobSummary) => {
     if (!job.can_kill || killInFlightJobId) return
@@ -924,13 +993,13 @@ export default function LogViewer() {
     if (selectedJob) {
       void loadJob(selectedJob)
     }
-  }, [selectedJob?.job_id])
+  }, [selectedJob])
 
   useEffect(() => {
     if (selectedMetric) {
-      void loadSamples(selectedMetric, sampleOffset, onlyWrongSamples)
+      void loadSamples(selectedMetric, sampleOffset, sampleFilter)
     }
-  }, [sampleOffset, onlyWrongSamples])
+  }, [sampleOffset, sampleFilter])
 
   useEffect(() => {
     const finishResize = () => {
@@ -1341,7 +1410,7 @@ export default function LogViewer() {
                   setSamples(null)
                   setSamplesError('')
                   setSampleOffset(0)
-                  setOnlyWrongSamples(false)
+                  setSampleFilter('all')
                   setPreviewMedia(null)
                 }}
                 className="mb-2 text-[10px] uppercase tracking-wider text-neutral-500 hover:text-black"
@@ -1356,28 +1425,36 @@ export default function LogViewer() {
               </div>
             </div>
             <div className="flex w-full min-w-0 flex-wrap items-center gap-2 lg:w-auto lg:justify-end">
-              <div className="flex min-w-0 items-center gap-2">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-label="Only Wrong"
-                  aria-checked={onlyWrongSamples}
-                  onClick={() => {
-                    setOnlyWrongSamples(prev => !prev)
+              <div className="w-60 shrink-0" title="Unknown includes unparseable answers and samples whose correctness cannot be determined">
+                <input
+                  type="range"
+                  min={0}
+                  max={2}
+                  step={1}
+                  aria-label="Sample filter"
+                  aria-valuetext={SAMPLE_FILTER_LABELS[SAMPLE_FILTERS.indexOf(sampleFilter)]}
+                  value={SAMPLE_FILTERS.indexOf(sampleFilter)}
+                  onChange={event => {
+                    setSampleFilter(SAMPLE_FILTERS[Number(event.target.value)])
                     setSampleOffset(0)
                   }}
                   disabled={samplesLoading}
-                  className={`relative flex h-8 w-24 shrink-0 items-center border px-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                    onlyWrongSamples ? 'border-black bg-black text-white' : 'border-neutral-200 bg-white text-neutral-500 hover:border-black'
-                  }`}
-                  title="Only Wrong"
-                >
-                  <span className={`absolute text-[10px] font-semibold ${onlyWrongSamples ? 'left-2 text-white' : 'right-2 text-neutral-500'}`}>
-                    {onlyWrongSamples ? 'On' : 'Off'}
-                  </span>
-                  <span className={`relative z-10 h-5 w-5 bg-current transition-transform ${onlyWrongSamples ? 'translate-x-16' : 'translate-x-0'}`} />
-                </button>
-                <span className="whitespace-nowrap text-[10px] font-semibold text-neutral-500">Only Wrong</span>
+                  className="w-full cursor-pointer accent-black disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <div className="flex justify-between text-[10px] font-semibold">
+                  {SAMPLE_FILTERS.map((filter, index) => (
+                    <button
+                      key={filter}
+                      type="button"
+                      aria-pressed={sampleFilter === filter}
+                      disabled={samplesLoading}
+                      onClick={() => { setSampleFilter(filter); setSampleOffset(0) }}
+                      className={sampleFilter === filter ? 'text-black' : 'text-neutral-400'}
+                    >
+                      {SAMPLE_FILTER_LABELS[index]}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <button
@@ -1448,8 +1525,11 @@ export default function LogViewer() {
             </div>
           )}
         </div>
-        {previewMedia && (
+        {previewMedia && createPortal(
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Sample image preview"
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
             onClick={() => setPreviewMedia(null)}
           >
@@ -1478,7 +1558,8 @@ export default function LogViewer() {
                 />
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     )
@@ -1517,6 +1598,8 @@ export default function LogViewer() {
           {jobsError && <div className="border border-red-200 bg-red-50 p-2 text-[11px] font-mono text-red-700">{jobsError}</div>}
           {killError && <div className="border border-red-200 bg-red-50 p-2 text-[11px] font-mono text-red-700">{killError}</div>}
           {killMessage && <div className="border border-emerald-200 bg-emerald-50 p-2 text-[11px] font-mono text-emerald-800">{killMessage}</div>}
+          {judgeRetryError && <div role="alert" className="border border-red-200 bg-red-50 p-2 text-[11px] font-mono text-red-700">{judgeRetryError}</div>}
+          {judgeRetryMessage && <div role="status" className="border border-emerald-200 bg-emerald-50 p-2 text-[11px] font-mono text-emerald-800">{judgeRetryMessage}</div>}
           <div className="flex items-center gap-2">
             <input
               value={jobQuery}
@@ -1686,6 +1769,15 @@ export default function LogViewer() {
                   <div className="mt-1 font-mono text-[11px] text-neutral-500">{selectedJob.job_id}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  {(jobDetail?.requires_llm_judge || selectedJob.requires_llm_judge) && ['succeeded', 'failed', 'stopped'].includes(selectedJob.status.toLowerCase()) && (
+                    <button
+                      type="button"
+                      onClick={() => void retryJudge(selectedJob)}
+                      disabled={judgeRetrySubmitting || Boolean(judgeRetry)}
+                      title="Create an 8-GPU judge run using all completed inference samples. Original results are preserved."
+                      className="border border-emerald-600 px-2 py-1 text-[10px] text-emerald-800 disabled:opacity-40"
+                    >{judgeRetrySubmitting || judgeRetry ? 'Submitting judge…' : 'Retry judge (8 GPUs)'}</button>
+                  )}
                   <button
                     type="button"
                     onClick={() => void killDlcJob(selectedJob)}
@@ -1703,9 +1795,9 @@ export default function LogViewer() {
                   <span className={`inline-flex border px-2 py-1 text-[10px] font-mono ${statusClass(selectedJob.status)}`}>{selectedJob.status}</span>
                 </div>
               </div>
-              {selectedJob.requires_llm_judge && (
+              {(jobDetail?.requires_llm_judge || selectedJob.requires_llm_judge) && (
                 <div className="mt-3 border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-900">
-                  LLM-as-judge tasks: <span className="font-mono">{listText(selectedJob.llm_judge_tasks) || 'unknown'}</span>. Read this eval together with the judge output.
+                  LLM-as-judge tasks: <span className="font-mono">{listText(jobDetail?.llm_judge_tasks || selectedJob.llm_judge_tasks) || 'unknown'}</span>. Read this eval together with the judge output.
                 </div>
               )}
               <div className="mt-3 grid grid-cols-2 xl:grid-cols-4 gap-2">
@@ -1798,6 +1890,7 @@ export default function LogViewer() {
                         <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Status</th>
                         <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Metric</th>
                         <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Value</th>
+                        <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Source</th>
                         <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Eval Time</th>
                         <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Wall</th>
                         <th className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-neutral-500 border-b border-neutral-200">Samples</th>
@@ -1805,7 +1898,7 @@ export default function LogViewer() {
                     </thead>
                     <tbody>
                       {metrics.length === 0 ? (
-                        <tr><td colSpan={7} className="px-3 py-8 text-center text-neutral-400 italic">No local metrics found.</td></tr>
+                        <tr><td colSpan={8} className="px-3 py-8 text-center text-neutral-400 italic">No local metrics found.</td></tr>
                       ) : (
                         metrics.map(metric => (
                           <tr
@@ -1819,7 +1912,11 @@ export default function LogViewer() {
                             <td className="px-3 py-2 font-mono text-neutral-800">{metric.display_name}</td>
                             <td className="px-3 py-2"><span className={`inline-flex border px-2 py-0.5 text-[10px] font-mono ${statusClass(metric.status)}`}>{metric.status}</span></td>
                             <td className="px-3 py-2 font-mono text-neutral-600">{metric.metric_name || 'N/A'}</td>
-                            <td className="px-3 py-2 font-mono text-neutral-900">{metric.value_text}</td>
+                            <td className="px-3 py-2 font-mono text-neutral-900">{metric.status === 'pending_judge' ? (metric.value_source === 'judged_samples' ? 'Awaiting aggregate' : 'Pending judge') : metric.status === 'judge_failed' ? 'Judge failed' : metric.value_text}</td>
+                            <td className="px-3 py-2 text-neutral-600" title={metric.result_json || metric.sample_jsonls.join('\n')}>
+                              {metric.value_source === 'judge_results' ? 'Judge' : metric.value_source === 'judged_samples' ? 'Judge samples only' : 'Eval'}
+                              {metric.judge_model && <div className="text-[10px] text-neutral-400">{metric.judge_model}</div>}
+                            </td>
                             <td className="px-3 py-2 font-mono text-neutral-500">{formatDuration(metric.total_evaluation_time_seconds)}</td>
                             <td className="px-3 py-2 font-mono text-neutral-500">{formatDuration(metric.wall_seconds)}</td>
                             <td className="px-3 py-2 font-mono text-neutral-500">{compactText(metric.n_samples, 80) || 'N/A'}</td>

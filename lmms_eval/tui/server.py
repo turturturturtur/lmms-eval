@@ -4,10 +4,13 @@ LMMs-Eval Web UI Server - FastAPI backend with static file serving.
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import copy
+import hashlib
 import io
 import json
+import math
 import mimetypes
 import os
 import platform
@@ -17,13 +20,15 @@ import signal
 import shlex
 import socket
 import subprocess
+import tempfile
 import time
 import uuid
 from collections import Counter
+from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 from importlib.metadata import version as pkg_version
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote, unquote
 
 import yaml
@@ -34,7 +39,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from lmms_eval.llm_judge.task_policy import requires_post_eval_judge, resolve_post_eval_judge_tasks
+from lmms_eval.llm_judge.retry import validate_source as validate_judge_retry_source
 from lmms_eval.tui.discovery import get_discovery_cache
+from lmms_eval.storage_policy import BENCHMARK_CACHE, HF_HOME, data_sources, readable_path, validate_paths
 
 app = FastAPI(title="LMMs-Eval Web UI", version="0.1.0")
 
@@ -49,10 +56,10 @@ DEFAULT_JUDGE_CONFIG_PATH = RUN_SCRIPTS_DIR / "config_judge.json"
 DEFAULT_RUN_MODE = "dlc"
 DEFAULT_DLC_WORKERS = 1
 DEFAULT_DLC_WORKER_GPU = 8
-DEFAULT_DLC_WORKSPACE_ID = "240810"
-DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
-REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
-REQUIRED_CPFSB_MOUNT_PATH = "/mnt/cpfsB"
+DEFAULT_DLC_WORKSPACE_ID = "247143"
+DEFAULT_DLC_RESOURCE_ID = "quota1cauvwqouvn"
+REQUIRED_NAS_MOUNT_URI = "nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasA"
+REQUIRED_CPFSA_MOUNT_PATH = "/mnt/cpfsA/user/tianleniu"
 DEFAULT_DLC_POOL_TOTAL_GPU = 256
 DEFAULT_DLC_POOL_GPU_PER_NODE = 8
 DEFAULT_DLC_POOL_CPU_PER_NODE = 124
@@ -72,7 +79,7 @@ DEFAULT_API_EVAL_MODEL = "/mnt/data/jingyichai/sft/checkpoints/qwen36_kimi_e2b_3
 DEFAULT_JUDGE_BACKEND = "vllm"
 DEFAULT_JUDGE_API_URL = "http://8.130.30.251:8801/v1"
 DEFAULT_JUDGE_MODEL = "deepseek-v4-flash"
-DEFAULT_LOCAL_JUDGE_MODEL_PATH = "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B"
+DEFAULT_LOCAL_JUDGE_MODEL_PATH = "/mnt/nasA/tianleniu/models/Qwen3.5-9B"
 DEFAULT_LOCAL_JUDGE_MODEL = "Qwen3.5-9B"
 DEFAULT_LOCAL_JUDGE_TP = 8
 DEFAULT_LOCAL_JUDGE_MAX_MODEL_LEN = 40960
@@ -86,7 +93,7 @@ AUTH_VALIDATION_TIMEOUT_SECONDS = 20
 AUTH_IDENTITY_TIMEOUT_SECONDS = 20
 USER_PLACEHOLDER = "<USER>"
 USER_PLACEHOLDER_ALIASES = (USER_PLACEHOLDER, "<USERNAME>")
-DEFAULT_DLC_BINARY = "/mnt/cpfsB/<USER>/dlc"
+DEFAULT_DLC_BINARY = "/mnt/cpfsA/user/<USER>/Innovator-Tune/bin/dlc"
 DEFAULT_DLC_PATH_TEMPLATE = DEFAULT_DLC_BINARY
 QWEN35_WORKER_BASENAME = "qwen35_worker.sh"
 DEFAULT_AUTH_FILE_PATH = LMMS_EVAL_ROOT / "local" / "webui_users.json"
@@ -103,6 +110,7 @@ AUTH_PROTECTED_PREFIXES = (
     "/auth/me",
     "/auth/logout",
     "/defaults",
+    "/storage",
     "/models",
     "/tasks",
     "/eval",
@@ -112,6 +120,7 @@ AUTH_PROTECTED_PREFIXES = (
 EVAL_JOB_NAME_PREFIX = "eval_"
 DEFAULT_EVAL_JOB_NAME = "eval_qwen35_9b_feishu20"
 JUDGE_JOB_NAME_PREFIX = "judge_"
+JUDGE_RETRY_JOB_NAME_PREFIX = "eval_judge_retry_"
 VIEW_LOG_JOB_NAME_PREFIXES = (EVAL_JOB_NAME_PREFIX, JUDGE_JOB_NAME_PREFIX)
 MASKED_SECRET = "********"
 DLC_ACCESS_ID_FLAG = "--access_id"
@@ -177,10 +186,15 @@ _jobs: dict[str, dict[str, Any]] = {}
 _task_manager: Any | None = None
 _dataset_cache: dict[tuple[str, str | None, str], Any] = {}
 _dlc_jobs_cache: dict[tuple[Any, ...], tuple[float, list[dict[str, Any]]]] = {}
-_dlc_pool_usage_cache: tuple[float, dict[str, Any]] | None = None
-_paistudio_user_name_cache: tuple[float, dict[str, str]] | None = None
-_aiworkspace_member_name_cache: tuple[float, dict[str, str]] | None = None
+_dlc_pool_usage_cache: tuple[float, dict[str, Any], str] | None = None
+_paistudio_user_name_cache: tuple[float, dict[str, str], str] | None = None
+_aiworkspace_member_name_cache: tuple[float, dict[str, str], str] | None = None
 _auth_sessions: dict[str, dict[str, Any]] = {}
+_cloud_auth: ContextVar[dict[str, Any] | None] = ContextVar("webui_cloud_auth", default=None)
+
+
+def _cloud_identity() -> str:
+    return str((_cloud_auth.get() or {}).get("access_key_id", ""))
 
 
 def _auth_file_path() -> Path:
@@ -449,7 +463,11 @@ async def _webui_auth_middleware(request: Request, call_next):
             return JSONResponse(status_code=401, content={"detail": "Authentication required"})
         request.state.auth_user = session
 
-    return await call_next(request)
+    token = _cloud_auth.set(getattr(request.state, "auth_user", None))
+    try:
+        return await call_next(request)
+    finally:
+        _cloud_auth.reset(token)
 
 
 def _get_task_manager() -> TaskManager:
@@ -715,7 +733,7 @@ def _default_dlc_config() -> dict[str, Any]:
         )
     dlc["submit"] = True
     dlc["job_name"] = DEFAULT_EVAL_JOB_NAME
-    dlc["run_script"] = f"/mnt/cpfsB/{USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/run_scripts/{QWEN35_WORKER_BASENAME}"
+    dlc["run_script"] = f"/mnt/cpfsA/user/{USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/run_scripts/{QWEN35_WORKER_BASENAME}"
     dlc["workers"] = DEFAULT_DLC_WORKERS
     dlc["worker_gpu"] = DEFAULT_DLC_WORKER_GPU
     dlc["workspace_id"] = DEFAULT_DLC_WORKSPACE_ID
@@ -735,15 +753,10 @@ def _require_default_config_nas_mount(data_source_uris: Any, *, field: str) -> s
     if not isinstance(data_source_uris, str) or not data_source_uris.strip():
         raise RuntimeError(f"Missing {field} in {DEFAULT_DLC_CONFIG_PATH}")
     normalized = data_source_uris.strip()
-    if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
-        raise RuntimeError(f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include {REQUIRED_NAS_MOUNT_URI}")
-    if not any(
-        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
-        for item in normalized.split(",")
-    ):
-        raise RuntimeError(
-            f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}"
-        )
+    try:
+        data_sources(normalized)
+    except ValueError as exc:
+        raise RuntimeError(f"{field}: {exc}") from exc
     return normalized
 
 
@@ -781,11 +794,11 @@ def _default_env_vars() -> str:
 
 
 def _default_user() -> str:
-    configured_user = os.getenv("LMMS_EVAL_WEBUI_USER") or os.getenv("LMMS_EVAL_USER")
+    configured_user = os.getenv("LMMS_EVAL_WEBUI_USER") or os.getenv("LMMS_EVAL_WEB_UI_USER") or os.getenv("LMMS_EVAL_USER")
     if configured_user and configured_user.strip():
         return configured_user.strip()
 
-    match = re.match(r"^/mnt/(?:cpfsB|cpfs)/([^/]+)/Innovator-Tune/lmms-eval$", str(LMMS_EVAL_ROOT))
+    match = re.match(r"^/mnt/cpfsA/user/([^/]+)/Innovator-Tune/lmms-eval$", str(LMMS_EVAL_ROOT))
     if match:
         return match.group(1)
     return ""
@@ -1179,6 +1192,9 @@ class DlcPoolUsageResponse(BaseModel):
 
 class DlcJobDetailResponse(BaseModel):
     job: dict[str, Any]
+    lmms_tasks: list[str] = Field(default_factory=list)
+    llm_judge_tasks: list[str] = Field(default_factory=list)
+    requires_llm_judge: bool = False
     result_root: str | None = None
     runtime_config_path: str | None = None
     log_dir: str | None = None
@@ -1211,6 +1227,7 @@ class DlcMetricRow(BaseModel):
     result_json: str | None = None
     sample_jsonls: list[str] = Field(default_factory=list)
     value_source: str = ""
+    judge_model: str = ""
 
 
 class DlcMetricsResponse(BaseModel):
@@ -1259,7 +1276,7 @@ class DlcMetricSamplesResponse(BaseModel):
 
 
 def _resolve_logs_root(logs_path: str) -> Path:
-    return Path(logs_path).expanduser().resolve()
+    return readable_path(logs_path)
 
 
 def _ensure_path_within_base(base_path: Path, target_path: Path) -> None:
@@ -1284,13 +1301,7 @@ def _resolve_run_results_path(logs_path: str, run_id: str) -> Path:
 
 
 def _infer_cpfs_user() -> str:
-    candidates = [Path.cwd(), LMMS_EVAL_ROOT]
-    for candidate in candidates:
-        parts = candidate.resolve().parts
-        for idx, part in enumerate(parts[:-1]):
-            if part in {"cpfs", "cpfsB"} and idx > 0 and parts[idx - 1] == "mnt":
-                return parts[idx + 1]
-    return os.environ.get("LMMS_EVAL_WEB_UI_USER", "")
+    return _default_user()
 
 
 def _replace_default_user(value: Any) -> Any:
@@ -1327,23 +1338,10 @@ def _resolve_dlc_binary() -> str:
 
 
 def _run_dlc_command(args: list[str], *, timeout: int = 30) -> str:
-    binary = _resolve_dlc_binary()
-    command = [binary, *args, "--region", DLC_REGION, "--endpoint", DLC_ENDPOINT]
-    try:
-        completed = subprocess.run(
-            command,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    except subprocess.TimeoutExpired as exc:
-        raise HTTPException(status_code=504, detail=f"DLC command timed out: {' '.join(command)}") from exc
-
-    if completed.returncode != 0:
-        detail = completed.stderr.strip() or completed.stdout.strip() or f"exit code {completed.returncode}"
-        raise HTTPException(status_code=502, detail=f"DLC command failed: {detail}")
-    return completed.stdout
+    user = _cloud_auth.get()
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentication required for DLC queries")
+    return _run_authenticated_dlc_command(args, user, timeout=timeout)
 
 
 def _run_authenticated_dlc_command(args: list[str], auth_user: dict[str, Any], *, timeout: int = 30) -> str:
@@ -1384,7 +1382,15 @@ def _run_authenticated_dlc_command(args: list[str], auth_user: dict[str, Any], *
 
 
 def _run_paistudio_command(args: list[str], *, timeout: int = 30) -> str:
-    command = ["aliyun", PAISTUDIO_PRODUCT, *args, "--region", DLC_REGION]
+    return _run_authenticated_aliyun_command(PAISTUDIO_PRODUCT, args, timeout=timeout)
+
+
+def _run_authenticated_aliyun_command(product: str, args: list[str], *, timeout: int = 30) -> str:
+    user = _cloud_auth.get()
+    if user is None:
+        raise HTTPException(status_code=401, detail="Authentication required for cloud queries")
+    command = ["aliyun", product, *args, "--region", DLC_REGION, "--mode", "AK",
+               "--access-key-id", user["access_key_id"], "--access-key-secret", user["secret_access_key"]]
     try:
         completed = subprocess.run(
             command,
@@ -1396,33 +1402,19 @@ def _run_paistudio_command(args: list[str], *, timeout: int = 30) -> str:
     except FileNotFoundError as exc:
         raise HTTPException(status_code=500, detail="aliyun CLI not found; cannot query PAI quota") from exc
     except subprocess.TimeoutExpired as exc:
-        raise HTTPException(status_code=504, detail=f"PaiStudio quota command timed out: {' '.join(command)}") from exc
+        raise HTTPException(status_code=504, detail=f"{product} query timed out") from exc
 
     if completed.returncode != 0:
         detail = completed.stderr.strip() or completed.stdout.strip() or f"exit code {completed.returncode}"
+        for key in ("access_key_id", "secret_access_key"):
+            if user.get(key):
+                detail = detail.replace(user[key], MASKED_SECRET)
         raise HTTPException(status_code=502, detail=f"PaiStudio quota command failed: {detail}")
     return completed.stdout
 
 
 def _run_aiworkspace_command(args: list[str], *, timeout: int = 30) -> str:
-    command = ["aliyun", AIWORKSPACE_PRODUCT, *args, "--region", DLC_REGION]
-    try:
-        completed = subprocess.run(
-            command,
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=500, detail="aliyun CLI not found; cannot query PAI workspace members") from exc
-    except subprocess.TimeoutExpired as exc:
-        raise HTTPException(status_code=504, detail=f"AIWorkspace command timed out: {' '.join(command)}") from exc
-
-    if completed.returncode != 0:
-        detail = completed.stderr.strip() or completed.stdout.strip() or f"exit code {completed.returncode}"
-        raise HTTPException(status_code=502, detail=f"AIWorkspace command failed: {detail}")
-    return completed.stdout
+    return _run_authenticated_aliyun_command(AIWORKSPACE_PRODUCT, args, timeout=timeout)
 
 
 def _parse_dlc_table(output: str) -> list[dict[str, str]]:
@@ -1557,7 +1549,7 @@ def _is_eval_job_name(name: Any) -> bool:
 
 
 def _is_judge_job_name(name: Any) -> bool:
-    return isinstance(name, str) and name.startswith(JUDGE_JOB_NAME_PREFIX)
+    return isinstance(name, str) and name.startswith((JUDGE_JOB_NAME_PREFIX, JUDGE_RETRY_JOB_NAME_PREFIX))
 
 
 def _is_view_log_job_name(name: Any) -> bool:
@@ -1741,7 +1733,7 @@ def _quota_workload_rows(quota_id: str, *, page_size: int = 100, max_pages: int 
 def _paistudio_user_name_map() -> dict[str, str]:
     global _paistudio_user_name_cache
     now = time.time()
-    if _paistudio_user_name_cache and now - _paistudio_user_name_cache[0] < PAISTUDIO_USER_USAGE_CACHE_TTL_SECONDS:
+    if _paistudio_user_name_cache and _paistudio_user_name_cache[2] == _cloud_identity() and now - _paistudio_user_name_cache[0] < PAISTUDIO_USER_USAGE_CACHE_TTL_SECONDS:
         return copy.deepcopy(_paistudio_user_name_cache[1])
 
     quota_id = _default_dlc_resource_id()
@@ -1777,14 +1769,14 @@ def _paistudio_user_name_map() -> dict[str, str]:
         if len(usages) < page_size:
             break
 
-    _paistudio_user_name_cache = (now, copy.deepcopy(user_names))
+    _paistudio_user_name_cache = (now, copy.deepcopy(user_names), _cloud_identity())
     return user_names
 
 
 def _aiworkspace_member_name_map() -> dict[str, str]:
     global _aiworkspace_member_name_cache
     now = time.time()
-    if _aiworkspace_member_name_cache and now - _aiworkspace_member_name_cache[0] < AIWORKSPACE_MEMBER_CACHE_TTL_SECONDS:
+    if _aiworkspace_member_name_cache and _aiworkspace_member_name_cache[2] == _cloud_identity() and now - _aiworkspace_member_name_cache[0] < AIWORKSPACE_MEMBER_CACHE_TTL_SECONDS:
         return copy.deepcopy(_aiworkspace_member_name_cache[1])
 
     page_size = 100
@@ -1817,7 +1809,7 @@ def _aiworkspace_member_name_map() -> dict[str, str]:
         if len(members) < page_size:
             break
 
-    _aiworkspace_member_name_cache = (now, copy.deepcopy(user_names))
+    _aiworkspace_member_name_cache = (now, copy.deepcopy(user_names), _cloud_identity())
     return user_names
 
 
@@ -1971,11 +1963,11 @@ def _list_dlc_pool_job_rows(
 def _build_dlc_pool_usage() -> dict[str, Any]:
     global _dlc_pool_usage_cache
     now = time.time()
-    if _dlc_pool_usage_cache and now - _dlc_pool_usage_cache[0] < DLC_POOL_USAGE_CACHE_TTL_SECONDS:
+    if _dlc_pool_usage_cache and _dlc_pool_usage_cache[2] == _cloud_identity() and now - _dlc_pool_usage_cache[0] < DLC_POOL_USAGE_CACHE_TTL_SECONDS:
         return copy.deepcopy(_dlc_pool_usage_cache[1])
 
     result = _build_dlc_pool_usage_from_quota()
-    _dlc_pool_usage_cache = (now, copy.deepcopy(result))
+    _dlc_pool_usage_cache = (now, copy.deepcopy(result), _cloud_identity())
     return result
 
 
@@ -2049,7 +2041,7 @@ def _build_dlc_pool_usage_from_active_jobs() -> dict[str, Any]:
         "fetched_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "source": f"{_resolve_dlc_binary()} workspace={DEFAULT_DLC_WORKSPACE_ID} resource={resource_id}",
     }
-    _dlc_pool_usage_cache = (now, copy.deepcopy(result))
+    _dlc_pool_usage_cache = (now, copy.deepcopy(result), _cloud_identity())
     return result
 
 
@@ -2066,7 +2058,7 @@ def _list_dlc_jobs_from_cli(
     max_pages = max(1, min(max_pages, 20))
     start_time, end_time = _resolve_dlc_history_window(start_time, end_time)
     display_name_filters = _split_display_name_filters(display_name)
-    cache_key = (page_size, max_pages, status, tuple(display_name_filters), start_time, end_time)
+    cache_key = (_cloud_identity(), page_size, max_pages, status, tuple(display_name_filters), start_time, end_time)
     cached = _dlc_jobs_cache.get(cache_key)
     now = time.time()
     if cached and now - cached[0] < DLC_JOBS_CACHE_TTL_SECONDS:
@@ -2110,8 +2102,14 @@ def _list_dlc_jobs_from_cli(
             if len(page_rows) < page_size:
                 break
 
-    user_names = _paistudio_user_name_map()
-    user_names.update(_aiworkspace_member_name_map())
+    user_names = {}
+    for name_lookup in (_paistudio_user_name_map, _aiworkspace_member_name_map):
+        try:
+            user_names.update(name_lookup())
+        except HTTPException:
+            # A DLC user may lack quota/member-directory permissions.
+            # Optional display names must not prevent listing their jobs.
+            pass
     for row in rows:
         user_id = str(row.get("user_id") or "")
         if user_id in user_names:
@@ -2173,7 +2171,7 @@ def _runtime_config_path_from_detail(detail: dict[str, Any]) -> Path | None:
     runtime_path = _extract_command_path(command, "runtime_config.json")
     if not runtime_path:
         return None
-    path = Path(runtime_path).expanduser()
+    path = readable_path(runtime_path)
     return path if path.is_file() else None
 
 
@@ -2257,8 +2255,10 @@ def _result_root_from_runtime_config(runtime_config_path: Path | None) -> Path |
     if not isinstance(output_path, str) or not output_path:
         return None
     output_path = str(_replace_default_user(output_path))
-    root = Path(output_path).expanduser()
-    if isinstance(timestamp, str) and timestamp and timestamp != "null":
+    root = readable_path(output_path)
+    # run_judge.sh writes directly to output_path, even if an inherited eval
+    # timestamp remains in the config. qwen35_worker.sh appends the timestamp.
+    if not isinstance(data.get("judge"), dict) and isinstance(timestamp, str) and timestamp and timestamp != "null":
         root = root / timestamp
     return root if root.exists() and root.is_dir() else None
 
@@ -2268,10 +2268,11 @@ def _result_root_from_command_output_path(detail: dict[str, Any]) -> Path | None
     if not isinstance(command, str) or not command:
         return None
     command = str(_replace_default_user(command))
-    output_path = _extract_cli_option_value(command, "--output_path")
+    output_path = next((value for option in ("--output-dir", "--output_dir", "--output_path")
+                        if (value := _extract_cli_option_value(command, option))), None)
     if not output_path:
         return None
-    root = Path(output_path).expanduser()
+    root = readable_path(output_path)
     return root if root.exists() and root.is_dir() else None
 
 
@@ -2325,6 +2326,36 @@ def _has_metric_value(value: Any) -> bool:
     return True
 
 
+def _task_result_status(result_data: dict[str, Any], task_name: str) -> str:
+    judge = result_data.get("judge")
+    if isinstance(judge, dict) and _numeric_score(judge.get("failed_samples", 0)) not in (None, 0):
+        return "judge_failed"
+    task_metrics = result_data.get("results", {}).get(task_name, {})
+    if isinstance(judge, dict) and isinstance(task_metrics, dict):
+        # Historical writers could publish failed native aggregates alongside
+        # a plausible generic total. Neither that total nor transport success
+        # makes the native score valid.
+        for key, value in task_metrics.items():
+            key = key.removesuffix(",none")
+            score = _numeric_score(value)
+            if key in {"accuracy", "overall_accuracy", "exact_match", "total_acc"} and score is not None:
+                if not math.isfinite(score) or score < 0:
+                    return "judge_failed"
+            if key in {"llm_judge_failed", "judge_failed"} and score not in (None, 0):
+                return "judge_failed"
+            if key == "llm_judge_success" and score is not None and score < 1:
+                return "judge_failed"
+    if isinstance(task_metrics, dict) and any(
+        isinstance(value, dict) and value.get("mode") == "generation_only"
+        for value in task_metrics.values()
+    ):
+        return "pending_judge"
+    # Old runs may lack execution_stage. Require evidence of completed judging.
+    if requires_post_eval_judge(task_name) and not judge and result_data.get("execution_stage") != "post_eval":
+        return "pending_judge"
+    return "success"
+
+
 def _primary_metrics(result_data: dict[str, Any]) -> list[tuple[str, str, Any, Any | None]]:
     results = result_data.get("results")
     if not isinstance(results, dict):
@@ -2334,8 +2365,32 @@ def _primary_metrics(result_data: dict[str, Any]) -> list[tuple[str, str, Any, A
     for task_name, task_metrics in results.items():
         if not isinstance(task_metrics, dict):
             continue
-        for metric_name, metric_value in task_metrics.items():
+        if _task_result_status(result_data, str(task_name)) != "success":
+            metric_name = next((str(key).replace(",none", "") for key in task_metrics
+                                if key != "alias" and "stderr" not in key), "judge_score")
+            metrics.append((str(task_name), metric_name, None, None))
+            continue
+        metric_items = list(task_metrics.items())
+        preferred = {
+            "mmstar": ["average"],
+            "seedbench_2_plus": ["seedbench_2_plus_all"],
+        }.get(str(task_name), [])
+        if result_data.get("judge"):
+            # Judge transport success is not model accuracy. Task aggregators
+            # append their final accuracy after per-sample operational metrics.
+            preferred = ["overall_accuracy", "accuracy", "exact_match", "total_acc",
+                         "gpt_eval_score", "llm_judge_score", "score", "acc_score"]
+        # Overall Metrics must not pick the first category merely because the
+        # task serialized it before the task-wide aggregate.
+        if preferred:
+            metric_items.sort(key=lambda item: preferred.index(item[0].removesuffix(",none"))
+                              if item[0].removesuffix(",none") in preferred else len(preferred))
+        for metric_name, metric_value in metric_items:
             if metric_name == "alias" or "stderr" in metric_name:
+                continue
+            if result_data.get("judge") and metric_name.removesuffix(",none") in {
+                "llm_judge_success", "llm_judge_failed", "llm_judge_skipped"
+            }:
                 continue
             if not _has_metric_value(metric_value):
                 continue
@@ -2387,6 +2442,24 @@ def _metric_value_text(value: Any) -> str:
         return str(value)
 
 
+def _result_sample_jsonls(result_json: Path, result_data: dict[str, Any], task_name: str) -> list[str]:
+    judge = result_data.get("judge")
+    declared = judge.get("samples_file") if isinstance(judge, dict) else None
+    if isinstance(declared, str) and declared:
+        # A standalone judge aggregate describes one task. Do not attach one
+        # declared sample file to every task in an unrelated multi-task result.
+        if len(result_data.get("results", {})) == 1:
+            raw = Path(declared)
+            try:
+                path = readable_path(raw if raw.is_absolute() else result_json.parent / raw)
+                path.relative_to(result_json.parent.resolve())
+                if path.is_file():
+                    return [str(path)]
+            except (OSError, ValueError):
+                pass
+    return _candidate_sample_jsonls(str(result_json), task_name=task_name)
+
+
 def _result_json_metric_rows(
     *,
     idx_start: int,
@@ -2402,12 +2475,15 @@ def _result_json_metric_rows(
     rows: list[DlcMetricRow] = []
     for offset, (task_name, metric_name, value, stderr) in enumerate(primary_metrics):
         task_n_samples = n_samples.get(task_name) if isinstance(n_samples, dict) else n_samples
+        status = _task_result_status(result_data, task_name)
+        if status != "success":
+            value, stderr = None, None
         rows.append(
             DlcMetricRow(
                 metric_id=str(idx_start + offset),
                 display_name=task_name,
                 lmms_tasks=task_name,
-                status="success",
+                status=status,
                 value=value,
                 value_text=_metric_value_text(value),
                 metric_name=metric_name,
@@ -2415,7 +2491,9 @@ def _result_json_metric_rows(
                 total_evaluation_time_seconds=result_data.get("total_evaluation_time_seconds"),
                 n_samples=task_n_samples,
                 result_json=str(result_json),
-                sample_jsonls=_candidate_sample_jsonls(str(result_json), task_name=task_name),
+                sample_jsonls=_result_sample_jsonls(result_json, result_data, task_name),
+                value_source="judge_results" if result_data.get("judge") else "generation" if status == "pending_judge" else "",
+                judge_model=str(result_data["judge"].get("model") or "") if isinstance(result_data.get("judge"), dict) else "",
             )
         )
     return rows
@@ -2447,6 +2525,7 @@ def _aggregate_judged_sample_jsonl(path: Path) -> tuple[dict[str, Any], int]:
     metric_values: dict[str, list[float]] = {}
     total = 0
     judged_rows = 0
+    invalid_rows = 0
     try:
         with path.open("r", encoding="utf-8") as f:
             for raw_line in f:
@@ -2456,14 +2535,17 @@ def _aggregate_judged_sample_jsonl(path: Path) -> tuple[dict[str, Any], int]:
                 try:
                     item = json.loads(line)
                 except json.JSONDecodeError:
+                    invalid_rows += 1
                     continue
                 if not isinstance(item, dict):
+                    invalid_rows += 1
                     continue
                 total += 1
                 if not _sample_has_judge_metrics(item):
                     continue
                 judged_rows += 1
                 metrics = item.get("metrics")
+                _append_numeric_metric(metric_values, "judge_failed", item.get("judge_mode") == "error" or _has_unresolved_sample_metrics(metrics))
                 if not isinstance(metrics, dict):
                     continue
                 for key, value in metrics.items():
@@ -2477,8 +2559,12 @@ def _aggregate_judged_sample_jsonl(path: Path) -> tuple[dict[str, Any], int]:
 
     if judged_rows == 0:
         return {}, total
+    if invalid_rows:
+        _append_numeric_metric(metric_values, "judge_failed", True)
     summary = {key: round(sum(values) / len(values), 4) for key, values in metric_values.items() if values}
-    return summary, total
+    # Even one failed sample in a large file must survive rounding.
+    summary["judge_failed"] = any(metric_values.get("judge_failed", []))
+    return summary, total + invalid_rows
 
 
 def _preferred_judged_sample_metric(summary: dict[str, Any]) -> str:
@@ -2488,34 +2574,39 @@ def _preferred_judged_sample_metric(summary: dict[str, Any]) -> str:
         "exact_match",
         "ocrbench_accuracy.score",
         "llm_judge_score",
-        "llm_judge_success",
     ):
         if key in summary:
             return key
     for key, value in summary.items():
+        if key.rsplit(".", 1)[-1] in {"llm_judge_success", "llm_judge_failed", "llm_judge_skipped", "judge_failed"}:
+            continue
         if isinstance(value, (int, float)):
             return key
     return ""
 
 
-def _judged_sample_metric_rows(*, idx_start: int, result_root: Path) -> list[DlcMetricRow]:
+def _judged_sample_metric_rows(*, idx_start: int, result_root: Path, exclude_paths: set[str] | None = None) -> list[DlcMetricRow]:
     rows: list[DlcMetricRow] = []
     for sample_jsonl in sorted(result_root.rglob("*_samples_*.jsonl")):
+        if exclude_paths and str(sample_jsonl.resolve()) in exclude_paths:
+            continue
         summary, n_samples = _aggregate_judged_sample_jsonl(sample_jsonl)
         metric_name = _preferred_judged_sample_metric(summary)
-        if not metric_name:
+        if not summary:
             continue
         task_name = _task_name_from_sample_jsonl(sample_jsonl) or sample_jsonl.stem
-        value = summary[metric_name]
+        judge_failed = any(value for key, value in summary.items() if key.endswith(("llm_judge_failed", "judge_failed")))
+        # Samples are saved before native aggregation and also survive errors.
+        # A mean of these rows cannot stand in for e.g. MMBench circular accuracy.
         rows.append(
             DlcMetricRow(
                 metric_id=str(idx_start + len(rows)),
                 display_name=task_name,
                 lmms_tasks=task_name,
-                status="success",
-                value=value,
-                value_text=_metric_value_text(value),
-                metric_name=metric_name,
+                status="judge_failed" if judge_failed else "pending_judge",
+                value=None,
+                value_text="N/A",
+                metric_name=metric_name or "judge_score",
                 n_samples=n_samples,
                 sample_jsonls=[str(sample_jsonl)],
                 value_source="judged_samples",
@@ -2534,7 +2625,7 @@ def _build_metric_rows(result_root: Path) -> tuple[list[DlcMetricRow], list[str]
         summary_files.append(str(summary_jsonl))
         for item in _load_summary_jsonl(summary_jsonl):
             result_json_raw = item.get("result_json")
-            result_json = Path(str(result_json_raw)) if isinstance(result_json_raw, str) and result_json_raw else None
+            result_json = readable_path(result_json_raw) if isinstance(result_json_raw, str) and result_json_raw else None
             if result_json is None or not result_json.is_file():
                 continue
             try:
@@ -2550,9 +2641,10 @@ def _build_metric_rows(result_root: Path) -> tuple[list[DlcMetricRow], list[str]
                 row.n_samples = item.get("n_samples") or row.n_samples
             rows.extend(result_rows)
 
-    if not rows:
-        result_jsons = sorted(result_root.rglob("*_results.json"))
-        for result_json in result_jsons:
+    # Summary files can lag behind benchmarks and the judge stage.
+    seen_results = {str(Path(row.result_json).resolve()) for row in rows if row.result_json}
+    for result_json in sorted(result_root.rglob("*_results.json")):
+        if str(result_json.resolve()) not in seen_results:
             rows.extend(_result_json_metric_rows(idx_start=len(rows), result_json=result_json))
 
     existing_sample_jsonls = {
@@ -2560,7 +2652,7 @@ def _build_metric_rows(result_root: Path) -> tuple[list[DlcMetricRow], list[str]
         for row in rows
         for sample_jsonl in row.sample_jsonls
     }
-    for judged_row in _judged_sample_metric_rows(idx_start=len(rows), result_root=result_root):
+    for judged_row in _judged_sample_metric_rows(idx_start=len(rows), result_root=result_root, exclude_paths=existing_sample_jsonls):
         judged_paths = {str(Path(sample_jsonl).resolve()) for sample_jsonl in judged_row.sample_jsonls}
         if judged_paths & existing_sample_jsonls:
             continue
@@ -2572,6 +2664,13 @@ def _build_metric_rows(result_root: Path) -> tuple[list[DlcMetricRow], list[str]
     if summary_json.is_file():
         summary_files.append(str(summary_json))
 
+    judged_tasks = {row.lmms_tasks for row in rows if row.value_source in {"judge_results", "judged_samples"}}
+    rows = [row for row in rows if not (row.value_source == "generation" and row.lmms_tasks in judged_tasks)]
+    for row in rows:
+        # New task or judge files must not retarget a sample link the browser
+        # obtained before its next refresh.
+        identity = json.dumps([row.result_json, sorted(row.sample_jsonls), row.lmms_tasks, row.metric_name])
+        row.metric_id = hashlib.sha256(identity.encode()).hexdigest()[:24]
     return rows, summary_files
 
 
@@ -2665,7 +2764,7 @@ def _local_image_path(value: str, sample_dir: Path) -> tuple[Path, str] | None:
         path = Path(raw_path).expanduser()
         if not path.is_absolute():
             path = sample_dir / path
-        path = path.resolve()
+        path = readable_path(path)
     except (OSError, RuntimeError, ValueError):
         return None
     try:
@@ -2786,14 +2885,33 @@ def _choice_target(row: dict[str, Any]) -> str | None:
 
 
 def _choice_prediction(row: dict[str, Any]) -> str | None:
+    def extracted(value: Any) -> tuple[bool, Any]:
+        if not isinstance(value, dict):
+            return False, None
+        for key in ("extracted_answer", "parsed_pred"):
+            if key in value:
+                return True, value[key]
+        for key, child in value.items():
+            if key == "doc":
+                continue
+            found, prediction = extracted(child)
+            if found:
+                return found, prediction
+        return False, None
+
+    # Judged extraction takes precedence over the original generation record.
+    for value in (row.get("metrics"), row):
+        found, prediction = extracted(value)
+        if found:
+            return _extract_choice_answer(prediction)
     return _extract_choice_answer(
         _first_present_value(
             row,
             (
-                "filtered_resps",
                 "extracted_answer",
                 "prediction",
                 "pred",
+                "filtered_resps",
                 "model_output",
                 "response",
                 "resps",
@@ -2831,7 +2949,7 @@ def _correctness_from_score_value(value: Any) -> bool | None:
 def _correctness_from_metrics(value: Any) -> bool | None:
     if not isinstance(value, dict):
         return None
-    for key in ("exact_match", "score", "judge_score", "llm_judge_score"):
+    for key in ("exact_match", "score", "judge_score", "llm_judge_score", "hit", "correct", "accuracy", "acc_score"):
         if key in value:
             result = _correctness_from_score_value(value[key])
             if result is not None:
@@ -2844,11 +2962,35 @@ def _correctness_from_metrics(value: Any) -> bool | None:
     return None
 
 
+def _has_unresolved_sample_metrics(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+    if value.get("judge_failed") or value.get("llm_judge_failed"):
+        return True
+    if any(value.get(key) is False for key in ("extraction_success", "extract_flag", "llm_judge_success")):
+        return True
+    return any(_has_unresolved_sample_metrics(child) for key, child in value.items() if key != "doc")
+
+
 def _sample_correctness(
     row: dict[str, Any], metric_name: str, target_choice: str | None, prediction_choice: str | None
 ) -> bool | None:
+    if row.get("_parse_error") or row.get("judge_mode") == "error":
+        return None
+    if _has_unresolved_sample_metrics(row.get("metrics", row)):
+        return None
+    # Failed extraction often carries a placeholder zero; it is not a parsed
+    # wrong answer. A successful judge may still score a free-form response.
+    if target_choice is not None and prediction_choice is None and not _sample_has_judge_metrics(row):
+        return None
+    # Judge metrics supersede provisional values stored during Eval.
+    result = _correctness_from_metrics(row.get("metrics"))
+    if result is not None:
+        return result
     if metric_name in row:
         result = _correctness_from_score_value(row[metric_name])
+        if result is None:
+            result = _correctness_from_metrics(row[metric_name])
         if result is not None:
             return result
     for key in ("exact_match", "score", "judge_score", "llm_judge_score"):
@@ -2856,9 +2998,6 @@ def _sample_correctness(
             result = _correctness_from_score_value(row[key])
             if result is not None:
                 return result
-    result = _correctness_from_metrics(row.get("metrics"))
-    if result is not None:
-        return result
     if target_choice is not None and prediction_choice is not None:
         return target_choice == prediction_choice
     return None
@@ -2904,6 +3043,7 @@ def _preferred_sample_columns(rows: list[dict[str, Any]]) -> list[str]:
         "doc_id",
         "input",
         "target",
+        "resps",
         "filtered_resps",
         "response",
         "model_output",
@@ -2944,6 +3084,7 @@ def _read_sample_jsonls(
     offset: int,
     limit: int,
     only_wrong: bool,
+    sample_filter: str = "all",
 ) -> tuple[list[dict[str, Any]], int, ChoiceAnswerStats]:
     rows: list[dict[str, Any]] = []
     total = 0
@@ -2958,16 +3099,16 @@ def _read_sample_jsonls(
             continue
         try:
             with path.open("r", encoding="utf-8") as f:
-                for raw_line in f:
+                for line_number, raw_line in enumerate(f, 1):
                     line = raw_line.strip()
                     if not line:
                         continue
                     try:
                         item = json.loads(line)
                     except json.JSONDecodeError:
-                        continue
+                        item = {"_raw_line": line, "_parse_error": "Invalid JSON", "_line_number": line_number}
                     if not isinstance(item, dict):
-                        continue
+                        item = {"_raw_line": line, "_parse_error": "Expected a JSON object", "_line_number": line_number}
                     total += 1
                     target_choice = _choice_target(item)
                     prediction_choice = _choice_prediction(item)
@@ -2982,7 +3123,10 @@ def _read_sample_jsonls(
                     elif correctness is None:
                         unknown_correctness_total += 1
 
-                    if only_wrong and correctness is not False:
+                    active_filter = "wrong" if only_wrong and sample_filter == "all" else sample_filter
+                    if active_filter == "wrong" and correctness is not False:
+                        continue
+                    if active_filter == "unknown" and correctness is not None:
                         continue
                     if filtered_total >= offset and len(rows) < limit:
                         row = {str(key): _stringify_sample_value(value) for key, value in item.items()}
@@ -3040,13 +3184,14 @@ def _exact_result_resolution_error(detail: dict[str, Any]) -> str:
     if isinstance(command, str) and command:
         command = str(_replace_default_user(command))
         runtime_path = _extract_command_path(command, "runtime_config.json")
-        output_path = _extract_cli_option_value(command, "--output_path")
+        output_path = next((value for option in ("--output-dir", "--output_dir", "--output_path")
+                            if (value := _extract_cli_option_value(command, option))), None)
         if runtime_path:
             evidence.append(f"runtime_config.json path is not readable or its output path does not exist: {runtime_path}")
         if output_path:
-            evidence.append(f"--output_path does not exist or is not a directory: {output_path}")
+            evidence.append(f"--output_path/--output-dir does not exist or is not a directory: {output_path}")
         if not runtime_path and not output_path:
-            evidence.append("UserCommand contains neither a runtime_config.json path nor --output_path")
+            evidence.append("UserCommand contains neither a runtime_config.json path nor --output_path/--output-dir")
     else:
         evidence.append("DLC detail has no UserCommand")
     return (
@@ -3059,7 +3204,8 @@ def _no_metric_rows_error(result_root: Path) -> str:
     return (
         f"No metric rows found in exact local result directory: {result_root}. "
         "Expected at least one *_results.json with a non-empty results object, "
-        "or a summary.jsonl entry whose result_json points inside this exact directory."
+        "a summary.jsonl entry whose result_json points inside this exact directory, "
+        "or a *_samples_*.jsonl containing judge records."
     )
 
 
@@ -3163,6 +3309,26 @@ async def get_defaults() -> DefaultsResponse:
     )
 
 
+@app.get("/storage")
+async def get_storage() -> dict[str, Any]:
+    """Current shared paths, checked by the running server."""
+    config = _replace_user_placeholder(_default_eval_config(), _default_user())
+    locations = {
+        "Code (CPFS A)": str(LMMS_EVAL_ROOT),
+        "Benchmark cache (NAS A)": BENCHMARK_CACHE,
+        "Hugging Face cache (NAS A)": HF_HOME,
+        "Model (NAS A)": config["model"]["path"],
+        "Results (NAS A)": str(Path(config["eval"]["output_path"]).parent),
+        "Logs (NAS A)": str(Path(config["log"]["dir"]).parent),
+    }
+    return {
+        "quota": DEFAULT_DLC_RESOURCE_ID,
+        "mounts": ["CPFS A", "NAS A"],
+        "paths": [{"label": label, "path": path, "readable": os.access(path, os.R_OK),
+                   "writable": os.access(path, os.W_OK)} for label, path in locations.items()],
+    }
+
+
 @app.get("/models", response_model=list[ModelInfo])
 async def get_models() -> list[ModelInfo]:
     """Get available models."""
@@ -3241,6 +3407,10 @@ def _validate_task_yaml(task_id: str, yaml_content: str) -> None:
 def _validate_task_python(python_content: str) -> None:
     if not python_content.strip():
         raise HTTPException(status_code=400, detail="python_content is required")
+    try:
+        ast.parse(python_content, filename="utils.py")
+    except SyntaxError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid Python at line {exc.lineno}: {exc.msg}") from exc
 
 
 @app.post("/tasks/create", response_model=TaskCreateResponse)
@@ -3409,16 +3579,10 @@ def _require_dlc_nas_mount(data_source_uris: Any, *, field: str) -> str:
     if not isinstance(data_source_uris, str) or not data_source_uris.strip():
         raise HTTPException(status_code=400, detail=f"Missing {field} in dlc_config")
     normalized = data_source_uris.strip()
-    if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
-        raise HTTPException(status_code=400, detail=f"{field} must include {REQUIRED_NAS_MOUNT_URI}")
-    if not any(
-        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
-        for item in normalized.split(",")
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail=f"{field} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}",
-        )
+    try:
+        data_sources(normalized)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"{field}: {exc}") from exc
     return normalized
 
 
@@ -3458,6 +3622,10 @@ def _apply_api_eval_dlc_resources(dlc: dict[str, Any]) -> None:
 
 
 def _request_dlc_config(request: EvalRequest | PreviewRequest | ExportYamlRequest) -> dict[str, Any]:
+    try:
+        validate_paths(request.model_dump(), "request")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     config = copy.deepcopy(request.dlc_config) if request.dlc_config else _default_dlc_config()
     config = _replace_user_placeholder(config, request.user)
     dlc = config.get("dlc")
@@ -3555,7 +3723,7 @@ def _build_vllm_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRe
     config["model"]["path"] = request.model
     config["model"]["source_path"] = request.model
     config["model"]["processor_compat"] = "required"
-    config["model"]["view_root"] = f"/mnt/cpfsB/{request.user}/lmms_eval_views"
+    config["model"]["view_root"] = f"/mnt/nasA/{request.user}/Innovator-Tune/lmms-eval/eval_model_views"
     config["model"]["startup_timeout_seconds"] = 1800
     config["model"].pop("resolved_path", None)
     config["model"].pop("preflight", None)
@@ -3716,10 +3884,11 @@ def _build_dlc_command(
     *,
     auth_user: dict[str, Any],
     mask_secrets: bool = False,
+    eval_config_override: dict[str, Any] | None = None,
 ) -> str:
     dlc_config = _request_dlc_config(request)
     credential_args = _build_dlc_credential_args(auth_user, mask_secrets=mask_secrets)
-    eval_config = _build_eval_config(request)
+    eval_config = copy.deepcopy(eval_config_override) if eval_config_override is not None else _build_eval_config(request)
     judge_config = _build_judge_config(request, eval_config)
     unresolved_values = [dlc_config, eval_config]
     if judge_config is not None:
@@ -4011,109 +4180,260 @@ async def import_yaml(request: ImportYamlRequest) -> ImportYamlResponse:
     )
 
 
+def _owned_eval_job(job_id: str, request: Request) -> dict[str, Any]:
+    user = _require_authenticated_user(request)
+    job = _jobs.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job["owner"] != user["access_key_id"]:
+        raise HTTPException(status_code=403, detail="This evaluation belongs to another user")
+    return job
+
+
+async def _append_job_event(job: dict[str, Any], event: dict[str, Any]) -> None:
+    async with job["condition"]:
+        job["events"].append(event)
+        job["condition"].notify_all()
+
+
+async def _stop_remote_jobs(job: dict[str, Any]) -> None:
+    # Keep draining the submitter: a CreateJob already in flight can return a
+    # receipt after Stop. Killing it before that receipt would orphan the job.
+    async with job["stop_lock"]:
+        for remote_id in list(job["dlc_jobs"].values()):
+            if remote_id in job["stop_sent"]:
+                continue
+            detail = await asyncio.to_thread(_get_dlc_job_detail, remote_id)
+            if _dlc_job_status(detail).lower() not in {"succeeded", "failed", "stopped"}:
+                await asyncio.to_thread(
+                    _run_authenticated_dlc_command,
+                    ["stop", "job", remote_id, "--force", "--quiet"],
+                    job["auth_user"], timeout=DLC_STOP_TIMEOUT_SECONDS,
+                )
+            job["stop_sent"].add(remote_id)
+    _clear_dlc_runtime_caches()
+
+
+async def _confirm_remote_jobs_stopped(job: dict[str, Any]) -> None:
+    await _stop_remote_jobs(job)
+    deadline = time.monotonic() + DLC_STOP_TIMEOUT_SECONDS
+    while job["dlc_jobs"]:
+        details = await asyncio.gather(*(
+            asyncio.to_thread(_get_dlc_job_detail, remote_id)
+            for remote_id in job["dlc_jobs"].values()
+        ))
+        if all(_dlc_job_status(d).lower() in {"succeeded", "failed", "stopped"} for d in details):
+            return
+        if time.monotonic() >= deadline:
+            raise RuntimeError("DLC stop was requested but is not yet confirmed; retry Stop or check View Logs")
+        await asyncio.sleep(2)
+
+
+async def _run_eval_job(job_id: str) -> None:
+    """Own the process for the entire workflow, independently of subscribers."""
+    job = _jobs[job_id]
+    token = _cloud_auth.set(job["auth_user"])
+    try:
+        if job["stop_requested"]:
+            job["status"] = "stopped"
+            await _append_job_event(job, {"type": "stopped"})
+            return
+        env = os.environ.copy()
+        env["LMMS_EVAL_WEB_UI_RUN_DIR"] = str(job["run_dir"])
+        env["LMMS_EVAL_WEBUI_CANCEL_FILE"] = str(job["cancel_file"])
+        process = await asyncio.create_subprocess_shell(
+            job["command"], stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT, start_new_session=True,
+            executable="/bin/bash", env=env,
+        )
+        job["process"] = process
+        job["status"] = "stopping" if job["stop_requested"] else "running"
+        if process.stdout:
+            async for line in process.stdout:
+                decoded = line.decode("utf-8", errors="replace").rstrip()
+                for secret in (job["auth_user"].get("access_key_id"), job["auth_user"].get("secret_access_key"),
+                               job["request"].api_key, job["request"].judge_api_key):
+                    if secret:
+                        decoded = decoded.replace(secret, MASKED_SECRET)
+                receipt = re.fullmatch(r"\[WEBUI_DLC_JOB\] (eval|judge) (dlc[a-z0-9]+)", decoded)
+                if receipt:
+                    stage, remote_id = receipt.groups()
+                    job["dlc_jobs"][stage] = remote_id
+                    _clear_dlc_runtime_caches()
+                    await _append_job_event(job, {"type": "submitted", "stage": stage, "dlc_job_id": remote_id})
+                    if job["stop_requested"]:
+                        try:
+                            await _stop_remote_jobs(job)
+                        except HTTPException as exc:
+                            await _append_job_event(job, {"type": "output", "line": f"DLC stop failed: {exc.detail}; retrying after submitter exits"})
+                await _append_job_event(job, {"type": "output", "line": decoded})
+        exit_code = await process.wait()
+        if job["stop_requested"]:
+            await _confirm_remote_jobs_stopped(job)
+            job["status"] = "stopped"
+            await _append_job_event(job, {"type": "stopped"})
+        else:
+            job["status"] = "completed" if exit_code == 0 else "error"
+            await _append_job_event(job, {"type": "done", "exit_code": exit_code})
+    except asyncio.CancelledError:
+        # Application shutdown must not leave a local polling process behind.
+        process = job.get("process")
+        if process is not None and process.returncode is None:
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+        raise
+    except Exception as exc:
+        job["status"] = "error"
+        message = str(exc.detail) if isinstance(exc, HTTPException) else str(exc)
+        await _append_job_event(job, {"type": "error", "message": message})
+    finally:
+        job["process"] = None
+        job["finished"] = True
+        async with job["condition"]:
+            job["condition"].notify_all()
+        _cloud_auth.reset(token)
+
+
 @app.post("/eval/start", response_model=EvalStartResponse)
 async def start_eval(request: EvalRequest, http_request: Request) -> EvalStartResponse:
-    """Start an evaluation job."""
+    """Start a workflow once; opening its log stream never executes it."""
     if not request.tasks:
         raise HTTPException(status_code=400, detail="No tasks specified")
-
-    job_id = str(uuid.uuid4())
     auth_user = _require_authenticated_user(http_request)
     command = _build_command(request, auth_user=auth_user)
     shell_command = _build_shell_command(request, auth_user=auth_user)
+    return _start_eval_workflow(request, auth_user, command, shell_command)
 
-    _jobs[job_id] = {
-        "status": "starting",
-        "command": shell_command,
-        "process": None,
-        "request": request,
+
+def _start_eval_workflow(request: EvalRequest, auth_user: dict[str, Any], command: str, shell_command: str) -> EvalStartResponse:
+    """Register a workflow before scheduling it, independently of SSE readers."""
+    job_id = str(uuid.uuid4())
+    run_dir = Path(tempfile.mkdtemp(prefix="lmms_eval_webui."))
+    job = {
+        "status": "starting", "command": shell_command, "process": None,
+        "request": request, "owner": auth_user["access_key_id"],
+        "auth_user": copy.deepcopy(auth_user), "events": [],
+        "condition": asyncio.Condition(), "stop_lock": asyncio.Lock(),
+        "dlc_jobs": {}, "stop_sent": set(), "stop_requested": False,
+        "finished": False, "run_dir": run_dir, "cancel_file": run_dir / "cancel",
     }
-
+    _jobs[job_id] = job
+    job["task"] = asyncio.create_task(_run_eval_job(job_id))
     return EvalStartResponse(job_id=job_id, command=command)
 
 
-async def _stream_output(job_id: str):
-    """Stream subprocess output as SSE events."""
-    job = _jobs.get(job_id)
-    if not job:
-        yield f"data: {json.dumps({'type': 'error', 'message': 'Job not found'})}\n\n"
-        return
-
-    shell_command = job["command"]
-
+@app.post("/dlc/jobs/{job_id}/retry-judge")
+async def retry_dlc_judge(job_id: str, http_request: Request) -> dict[str, Any]:
+    """Create an 8-GPU scoring run from a terminal job's complete inference."""
+    auth_user = _require_authenticated_user(http_request)
+    detail = await asyncio.to_thread(_get_dlc_job_detail, job_id)
+    if not _is_eval_job_name(_dlc_job_display_name(detail)):
+        raise HTTPException(status_code=400, detail="Judge retry requires an eval job")
+    if _normalize_dlc_status(_dlc_job_status(detail)) not in {"succeeded", "failed", "stopped"}:
+        raise HTTPException(status_code=409, detail="Wait for the source DLC job to stop before retrying judge")
+    if auth_user.get("role") != AUTH_ADMIN_ROLE and (
+        not auth_user.get("aliyun_user_id")
+        or str(auth_user["aliyun_user_id"]) != _dlc_job_owner_user_id(detail)
+    ):
+        raise HTTPException(status_code=403, detail="Only the source job owner or an admin can retry judge")
+    runtime, _, _ = _job_runtime_paths(detail)
+    if runtime is None:
+        raise HTTPException(status_code=400, detail="Source runtime configuration is unavailable")
     try:
-        process = await asyncio.create_subprocess_shell(
-            shell_command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-            start_new_session=True,
-            executable="/bin/bash",
-        )
-        job["process"] = process
-        job["status"] = "running"
+        source, _, _ = await asyncio.to_thread(validate_judge_retry_source, runtime)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail=f"Cannot reuse source inference: {exc}") from exc
+    tasks = source["eval"]["tasks"].split(",")
+    if not _llm_as_judge_tasks(tasks):
+        raise HTTPException(status_code=400, detail="Source tasks do not require post-evaluation judging")
+    # A double click or request retry must not create another active workflow.
+    for workflow_id, workflow in _jobs.items():
+        if (workflow.get("judge_source_job_id") == job_id
+                and workflow["owner"] == auth_user["access_key_id"] and not workflow["finished"]):
+            return {"job_id": workflow_id, "job_name": workflow["request"].job_name, "reused_workflow": True}
+    name = f"eval_judge_retry_{job_id}_{uuid.uuid4().hex[:8]}"
+    request = EvalRequest(
+        user=_default_user(), job_name=name, run_mode="dlc", judge_backend="vllm",
+        model=source["model"].get("source_path") or source["model"]["path"],
+        tasks=tasks, limit=source["eval"].get("limit"),
+        output_path=str(Path(source["eval"]["output_path"]).parent / name),
+        gen_kwargs=source["eval"].get("gen_kwargs", ""),
+    )
+    config = _build_eval_config(request)
+    # Preserve the generation recipe for provenance; this worker only scores it.
+    config["model"].update({key: source["model"][key] for key in (
+        "enable_thinking", "tp", "max_model_len", "gpu_memory_utilization", "max_num_seqs"
+    ) if key in source["model"]})
+    config["eval"].update({key: value for key, value in source["eval"].items()
+                           if key not in {"output_path", "timestamp", "debug", "judge_only_source_config", "judge_only_source_job_id"}})
+    config["eval"].update(judge_only_source_config=str(runtime), judge_only_source_job_id=job_id)
+    command = _build_dlc_command(request, auth_user=auth_user, mask_secrets=True, eval_config_override=config)
+    shell_command = _build_dlc_command(request, auth_user=auth_user, eval_config_override=config)
+    result = _start_eval_workflow(request, auth_user, command, shell_command)
+    _jobs[result.job_id]["judge_source_job_id"] = job_id
+    return {"job_id": result.job_id, "job_name": name, "reused_workflow": False}
 
-        if process.stdout:
-            async for line in process.stdout:
-                if job.get("stopped"):
-                    break
-                decoded = line.decode("utf-8", errors="replace").rstrip()
-                yield f"data: {json.dumps({'type': 'output', 'line': decoded})}\n\n"
 
-        await process.wait()
-        exit_code = process.returncode
+@app.get("/eval/{job_id}")
+async def get_eval_status(job_id: str, http_request: Request) -> dict[str, Any]:
+    job = _owned_eval_job(job_id, http_request)
+    error = None
+    if job["status"] == "error":
+        lines = [event.get("message") or event.get("line") for event in job["events"] if event.get("type") in {"error", "output"}]
+        error = "\n".join(str(line) for line in lines[-8:] if line)
+    return {"job_id": job_id, "status": job["status"], "dlc_jobs": job["dlc_jobs"], "finished": job["finished"], "error": error}
 
-        if job.get("stopped"):
-            yield f"data: {json.dumps({'type': 'stopped'})}\n\n"
-        else:
-            yield f"data: {json.dumps({'type': 'done', 'exit_code': exit_code})}\n\n"
 
-        job["status"] = "completed"
-
-    except Exception as e:
-        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
-        job["status"] = "error"
-
-    finally:
-        job["process"] = None
+async def _stream_output(job_id: str, after: int = 0):
+    """Replay buffered events and subscribe to new ones; never start a process."""
+    job = _jobs[job_id]
+    cursor = min(after, len(job["events"]))
+    while True:
+        async with job["condition"]:
+            if cursor == len(job["events"]) and not job["finished"]:
+                try:
+                    await asyncio.wait_for(job["condition"].wait(), timeout=15)
+                except asyncio.TimeoutError:
+                    pass
+            events = job["events"][cursor:]
+            finished = job["finished"]
+        for event in events:
+            cursor += 1
+            yield f"id: {cursor}\ndata: {json.dumps(event)}\n\n"
+        if finished:
+            return
+        if not events:
+            yield ": heartbeat\n\n"
 
 
 @app.get("/eval/{job_id}/stream")
-async def stream_eval(job_id: str):
-    """Stream evaluation output via SSE."""
-    if job_id not in _jobs:
-        raise HTTPException(status_code=404, detail="Job not found")
-
+async def stream_eval(job_id: str, http_request: Request):
+    _owned_eval_job(job_id, http_request)
+    try:
+        after = max(0, int(http_request.headers.get("Last-Event-ID", "0")))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid Last-Event-ID")
     return StreamingResponse(
-        _stream_output(job_id),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
+        _stream_output(job_id, after), media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
     )
 
 
 @app.post("/eval/{job_id}/stop")
-async def stop_eval(job_id: str) -> dict[str, str]:
-    """Stop a running evaluation job."""
-    job = _jobs.get(job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    job["stopped"] = True
-    process = job.get("process")
-
-    if process:
-        try:
-            os.killpg(os.getpgid(process.pid), signal.SIGTERM)
-        except (ProcessLookupError, OSError):
-            try:
-                process.terminate()
-            except Exception:
-                pass
-
-    return {"status": "stopped"}
+async def stop_eval(job_id: str, http_request: Request) -> dict[str, str]:
+    job = _owned_eval_job(job_id, http_request)
+    if job["status"] in {"completed", "stopped"}:
+        return {"status": job["status"]}
+    job["stop_requested"] = True
+    job["cancel_file"].touch()
+    job["status"] = "stopping"
+    await _stop_remote_jobs(job)
+    if job["finished"]:
+        await _confirm_remote_jobs_stopped(job)
+        job["status"] = "stopped"
+    return {"status": job["status"]}
 
 
 @app.get("/dlc/jobs", response_model=DlcJobsResponse)
@@ -4186,8 +4506,13 @@ async def get_dlc_job(job_id: str) -> DlcJobDetailResponse:
     model_source_path = None
     model_resolved_path = None
     processor_compat = None
+    lmms_tasks: list[str] = []
     if runtime_config is not None:
         runtime_payload = _load_json_path(runtime_config)
+        if isinstance(runtime_payload, dict) and isinstance(runtime_payload.get("eval"), dict):
+            raw_tasks = runtime_payload["eval"].get("tasks", "")
+            if isinstance(raw_tasks, str):
+                lmms_tasks = [task.strip() for task in raw_tasks.split(",") if task.strip()]
         model_payload = runtime_payload.get("model") if isinstance(runtime_payload, dict) else None
         if isinstance(model_payload, dict):
             raw_source = model_payload.get("source_path")
@@ -4201,6 +4526,9 @@ async def get_dlc_job(job_id: str) -> DlcJobDetailResponse:
                 processor_compat = raw_compat.strip()
     return DlcJobDetailResponse(
         job=detail,
+        lmms_tasks=lmms_tasks,
+        llm_judge_tasks=_llm_as_judge_tasks(lmms_tasks),
+        requires_llm_judge=bool(_llm_as_judge_tasks(lmms_tasks)),
         result_root=str(result_root) if result_root else None,
         runtime_config_path=str(runtime_config) if runtime_config else None,
         log_dir=log_dir,
@@ -4243,6 +4571,7 @@ async def get_dlc_metric_samples(
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
     only_wrong: bool = Query(False),
+    sample_filter: Literal["all", "wrong", "unknown"] = "all",
 ) -> DlcMetricSamplesResponse:
     detail = await asyncio.to_thread(_get_dlc_job_detail, job_id)
     if not _is_view_log_job_name(detail.get("DisplayName")):
@@ -4269,6 +4598,7 @@ async def get_dlc_metric_samples(
         offset=offset,
         limit=limit,
         only_wrong=only_wrong,
+        sample_filter=sample_filter,
     )
     columns = _preferred_sample_columns(rows)
     return DlcMetricSamplesResponse(

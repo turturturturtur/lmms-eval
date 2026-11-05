@@ -7,12 +7,32 @@ const API_BASE = ''
 const USER_PLACEHOLDER = '<USERNAME>'
 const LEGACY_USER_PLACEHOLDER = '<USER>'
 const USER_PLACEHOLDERS = [USER_PLACEHOLDER, LEGACY_USER_PLACEHOLDER]
-const DEFAULT_DLC_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/dlc`
-const DEFAULT_MODEL_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/Innovator-Tune/models/Qwen3.5-9B`
-const DEFAULT_OUTPUT_PATH_TEMPLATE = `/mnt/cpfsB/${USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/eval_result/qwen35_9b_feishu20`
-const DEFAULT_LOCAL_JUDGE_MODEL_PATH = '/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B'
+const DEFAULT_DLC_PATH_TEMPLATE = `/mnt/cpfsA/user/${USER_PLACEHOLDER}/Innovator-Tune/bin/dlc`
+const DEFAULT_MODEL_PATH_TEMPLATE = `/mnt/nasA/${USER_PLACEHOLDER}/models/Qwen3.5-9B`
+const DEFAULT_OUTPUT_PATH_TEMPLATE = `/mnt/nasA/${USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/eval_result/qwen35_9b_feishu20`
+const DEFAULT_LOCAL_JUDGE_MODEL_PATH = '/mnt/nasA/tianleniu/models/Qwen3.5-9B'
 const DEFAULT_JUDGE_API_URL = 'http://8.130.30.251:8801/v1'
 const DEFAULT_API_EVAL_URL = 'http://gw-k6isjixc1ij25ms7q4.cn-shanghai.pai-eas.aliyuncs.com/api/predict/router_fs_eval/v1'
+function StorageStatus() {
+  const [storage, setStorage] = useState<{ quota: string; paths: { label: string; path: string; readable: boolean }[] } | null>(null)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    fetch(`${API_BASE}/storage`).then(async response => {
+      if (!response.ok) throw new Error('Storage check failed')
+      setStorage(await response.json())
+    }).catch(error => setError(String(error)))
+  }, [])
+  return <details className="border border-neutral-200 p-3 text-xs">
+    <summary className="cursor-pointer font-medium">CPFS A · NAS A{storage ? ` · ${storage.quota}` : ''}</summary>
+    {error && <p className="mt-2 text-red-600">{error}</p>}
+    {!storage && !error && <p className="mt-2">Checking paths…</p>}
+    {storage?.paths.map(item => <div key={item.label} className="mt-2">
+      <span className={item.readable ? 'text-emerald-700' : 'text-red-600'}>{item.readable ? '✓' : '✕'} {item.label}</span>
+      <div className="break-all font-mono text-neutral-500">{item.path}</div>
+    </div>)}
+  </details>
+}
+
 const PAGES = ['evaluate', 'logs', 'tasks'] as const
 
 type Page = typeof PAGES[number]
@@ -334,7 +354,7 @@ function restoreUserPlaceholder(text: string, previousUser: string) {
   const previous = previousUser.trim()
   if (!previous) return updated
 
-  for (const root of ['/mnt/cpfs/', '/mnt/cpfsB/']) {
+  for (const root of ['/mnt/cpfsA/user/', '/mnt/nasA/']) {
     const previousPathSegment = new RegExp(`(${escapeRegExp(root)})${escapeRegExp(previous)}(/)`, 'g')
     updated = updated.replace(previousPathSegment, `$1${USER_PLACEHOLDER}$2`)
   }
@@ -348,7 +368,7 @@ function applyUserToText(text: string, nextUser: string, previousUser: string) {
   let updated = replaceUserPlaceholders(text, user)
   const previous = previousUser.trim()
   if (previous && previous !== user) {
-    for (const root of ['/mnt/cpfs/', '/mnt/cpfsB/']) {
+    for (const root of ['/mnt/cpfsA/user/', '/mnt/nasA/']) {
       const previousPathSegment = new RegExp(`(${escapeRegExp(root)})${escapeRegExp(previous)}(/)`, 'g')
       updated = updated.replace(previousPathSegment, `$1${user}$2`)
     }
@@ -502,7 +522,7 @@ interface AuthUser {
   expires_at: number
 }
 
-type Status = 'ready' | 'running' | 'stopped' | 'completed' | 'error'
+type Status = 'ready' | 'running' | 'stopping' | 'stopped' | 'completed' | 'error'
 
 interface GitInfo {
   branch: string
@@ -781,9 +801,12 @@ export default function App() {
   const [yamlPreview, setYamlPreview] = useState<YamlPreview | null>(null)
 
   const outputRef = useRef<HTMLDivElement>(null)
+  const streamRef = useRef<EventSource | null>(null)
   const activePageIndex = PAGES.indexOf(page)
 
   const handleAuthExpired = () => {
+    streamRef.current?.close()
+    streamRef.current = null
     setAuthUser(null)
     setAuthStatus('anonymous')
     setDefaultsLoaded(false)
@@ -1096,7 +1119,7 @@ export default function App() {
 
   const isApiEval = evalInferenceMode === 'api'
   const requiresJudgeConfig = selectedJudgeTasks.length > 0
-  const startDisabled = status === 'running' || !defaultsLoaded
+  const startDisabled = status === 'running' || status === 'stopping' || !defaultsLoaded
 
   const updateEvalInferenceMode = (nextMode: string) => {
     if (nextMode !== 'ckpt' && nextMode !== 'api') return
@@ -1139,6 +1162,69 @@ export default function App() {
     setCollapsedGroups(newSet)
   }
 
+  const activeJobStorageKey = `lmms-eval-active:${authUser?.access_key_id || ''}`
+
+  const connectEvalStream = (id: string) => {
+    streamRef.current?.close()
+    const eventSource = new EventSource(`${API_BASE}/eval/${id}/stream`)
+    streamRef.current = eventSource
+    let reconnectNotice = false
+    const finish = () => {
+      eventSource.close()
+      streamRef.current = null
+      sessionStorage.removeItem(activeJobStorageKey)
+    }
+    eventSource.onopen = () => { reconnectNotice = false }
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.type === 'output') {
+        setOutput(prev => [...prev, data.line])
+      } else if (data.type === 'submitted') {
+        setOutput(prev => [...prev, `${data.stage} submitted: ${data.dlc_job_id}. Waiting for DLC completion…`])
+      } else if (data.type === 'done') {
+        setStatus(data.exit_code === 0 ? 'completed' : 'error')
+        setOutput(prev => [...prev, '', `Evaluation ${data.exit_code === 0 ? 'completed' : 'failed'} (exit: ${data.exit_code})`])
+        finish()
+      } else if (data.type === 'stopped') {
+        setStatus('stopped')
+        setOutput(prev => [...prev, '', 'Evaluation stopped; DLC cancellation confirmed'])
+        finish()
+      } else if (data.type === 'error') {
+        setOutput(prev => [...prev, `Error: ${data.message}`])
+        setStatus('error')
+        finish()
+      }
+    }
+    eventSource.onerror = async () => {
+      // Native SSE reconnects with Last-Event-ID. The workflow keeps running.
+      if (!reconnectNotice) {
+        reconnectNotice = true
+        setOutput(prev => [...prev, 'Log connection interrupted; reconnecting. Evaluation continues.'])
+      }
+      try {
+        const response = await fetch(`${API_BASE}/eval/${id}`)
+        if (response.status === 401) handleAuthExpired()
+        if (response.status === 403 || response.status === 404) {
+          finish()
+          setStatus('error')
+          setOutput(prev => [...prev, 'This submission session is unavailable. Check the DLC job in View Logs.'])
+        }
+      } catch { /* Keep the EventSource retrying transient network failures. */ }
+    }
+  }
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated') return
+    const saved = sessionStorage.getItem(activeJobStorageKey)
+    if (saved) {
+      setJobId(saved)
+      setStatus('running')
+      setOutput(['Restoring evaluation log…'])
+      connectEvalStream(saved)
+    }
+    return () => { streamRef.current?.close(); streamRef.current = null }
+  }, [authStatus, activeJobStorageKey])
+
   const startEval = async () => {
     if (!defaultsLoaded) {
       setOutput([defaultsError || 'DLC defaults are still loading'])
@@ -1174,33 +1260,8 @@ export default function App() {
       }
       setJobId(data.job_id)
 
-      const eventSource = new EventSource(`${API_BASE}/eval/${data.job_id}/stream`)
-
-      eventSource.onmessage = (event) => {
-        const d = JSON.parse(event.data)
-
-        if (d.type === 'output') {
-          setOutput(prev => [...prev, d.line])
-        } else if (d.type === 'done') {
-          setStatus(d.exit_code === 0 ? 'completed' : 'error')
-          setOutput(prev => [...prev, '', `Evaluation ${d.exit_code === 0 ? 'completed' : 'failed'} (exit: ${d.exit_code})`])
-          eventSource.close()
-        } else if (d.type === 'stopped') {
-          setStatus('stopped')
-          setOutput(prev => [...prev, '', 'Evaluation stopped'])
-          eventSource.close()
-        } else if (d.type === 'error') {
-          setOutput(prev => [...prev, `Error: ${d.message}`])
-          setStatus('error')
-          eventSource.close()
-        }
-      }
-
-      eventSource.onerror = () => {
-        setStatus('error')
-        setOutput(prev => [...prev, 'Connection error'])
-        eventSource.close()
-      }
+      sessionStorage.setItem(activeJobStorageKey, data.job_id)
+      connectEvalStream(data.job_id)
     } catch (e) {
       setOutput([`Failed to start: ${e}`])
       setStatus('error')
@@ -1211,11 +1272,14 @@ export default function App() {
     if (!jobId) return
     try {
       const res = await fetch(`${API_BASE}/eval/${jobId}/stop`, { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
       if (res.status === 401) {
         handleAuthExpired()
         return
       }
-      setStatus('stopped')
+      if (!res.ok) throw new Error(data.detail || res.statusText)
+      setStatus(data.status === 'stopped' ? 'stopped' : data.status === 'completed' ? 'completed' : 'stopping')
+      setOutput(prev => [...prev, 'Stop requested; waiting for DLC confirmation…'])
     } catch (e) {
       setOutput(prev => [...prev, `Failed to stop: ${e}`])
     }
@@ -1547,6 +1611,7 @@ export default function App() {
 
             {configExpanded && (
               <div className="p-6 pt-0 space-y-4">
+                <StorageStatus />
                 <div className="group">
                   <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-wider mb-1.5">Run Mode</label>
                   <Select
@@ -1802,6 +1867,11 @@ export default function App() {
                     </div>
                   )}
                 </div>
+
+                <p className="text-[11px] text-neutral-500">
+                  Raw responses are always saved. Each benchmark saves its results as soon as it finishes.
+                  {requiresJudgeConfig && ' Eval automatically starts Judge after all benchmarks succeed. Scores remain hidden until judging completes.'}
+                </p>
 
                 {requiresJudgeConfig && (
                   <div className="space-y-4">
@@ -2075,7 +2145,7 @@ export default function App() {
                       : 'bg-black text-white hover:bg-neutral-800 border border-black shadow-sm'
                   }`}
                 >
-                  {status === 'running' ? 'Running...' : defaultsLoaded ? 'Start' : 'Loading...'}
+                  {status === 'stopping' ? 'Stopping...' : status === 'running' ? 'Running...' : defaultsLoaded ? 'Start' : 'Loading...'}
                 </button>
                 <button
                   onClick={stopEval}

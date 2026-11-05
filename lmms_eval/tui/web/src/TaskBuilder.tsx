@@ -87,7 +87,7 @@ from PIL import Image
 
 def _normalize_answer(value: Any) -> str:
     text = str(value).strip().lower()
-    text = re.sub(r"\\\\s+", " ", text)
+    text = re.sub(r"\\s+", " ", text)
     return text
 
 

@@ -35,6 +35,7 @@ from pydantic import BaseModel, Field
 
 from lmms_eval.llm_judge.task_policy import requires_post_eval_judge, resolve_post_eval_judge_tasks
 from lmms_eval.tui.discovery import get_discovery_cache
+from lmms_eval.storage_policy import BENCHMARK_CACHE, HF_HOME, data_sources, readable_path, validate_paths
 
 app = FastAPI(title="LMMs-Eval Web UI", version="0.1.0")
 
@@ -49,10 +50,10 @@ DEFAULT_JUDGE_CONFIG_PATH = RUN_SCRIPTS_DIR / "config_judge.json"
 DEFAULT_RUN_MODE = "dlc"
 DEFAULT_DLC_WORKERS = 1
 DEFAULT_DLC_WORKER_GPU = 8
-DEFAULT_DLC_WORKSPACE_ID = "240810"
-DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
-REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
-REQUIRED_CPFSB_MOUNT_PATH = "/mnt/cpfsB"
+DEFAULT_DLC_WORKSPACE_ID = "247143"
+DEFAULT_DLC_RESOURCE_ID = "quota1cauvwqouvn"
+REQUIRED_NAS_MOUNT_URI = "nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasA"
+REQUIRED_CPFSA_MOUNT_PATH = "/mnt/cpfsA/user/tianleniu"
 DEFAULT_DLC_POOL_TOTAL_GPU = 256
 DEFAULT_DLC_POOL_GPU_PER_NODE = 8
 DEFAULT_DLC_POOL_CPU_PER_NODE = 124
@@ -72,7 +73,7 @@ DEFAULT_API_EVAL_MODEL = "/mnt/data/jingyichai/sft/checkpoints/qwen36_kimi_e2b_3
 DEFAULT_JUDGE_BACKEND = "vllm"
 DEFAULT_JUDGE_API_URL = "http://8.130.30.251:8801/v1"
 DEFAULT_JUDGE_MODEL = "deepseek-v4-flash"
-DEFAULT_LOCAL_JUDGE_MODEL_PATH = "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B"
+DEFAULT_LOCAL_JUDGE_MODEL_PATH = "/mnt/nasA/tianleniu/models/Qwen3.5-9B"
 DEFAULT_LOCAL_JUDGE_MODEL = "Qwen3.5-9B"
 DEFAULT_LOCAL_JUDGE_TP = 8
 DEFAULT_LOCAL_JUDGE_MAX_MODEL_LEN = 40960
@@ -86,7 +87,7 @@ AUTH_VALIDATION_TIMEOUT_SECONDS = 20
 AUTH_IDENTITY_TIMEOUT_SECONDS = 20
 USER_PLACEHOLDER = "<USER>"
 USER_PLACEHOLDER_ALIASES = (USER_PLACEHOLDER, "<USERNAME>")
-DEFAULT_DLC_BINARY = "/mnt/cpfsB/<USER>/dlc"
+DEFAULT_DLC_BINARY = "/mnt/cpfsA/user/<USER>/Innovator-Tune/bin/dlc"
 DEFAULT_DLC_PATH_TEMPLATE = DEFAULT_DLC_BINARY
 QWEN35_WORKER_BASENAME = "qwen35_worker.sh"
 DEFAULT_AUTH_FILE_PATH = LMMS_EVAL_ROOT / "local" / "webui_users.json"
@@ -103,6 +104,7 @@ AUTH_PROTECTED_PREFIXES = (
     "/auth/me",
     "/auth/logout",
     "/defaults",
+    "/storage",
     "/models",
     "/tasks",
     "/eval",
@@ -715,7 +717,7 @@ def _default_dlc_config() -> dict[str, Any]:
         )
     dlc["submit"] = True
     dlc["job_name"] = DEFAULT_EVAL_JOB_NAME
-    dlc["run_script"] = f"/mnt/cpfsB/{USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/run_scripts/{QWEN35_WORKER_BASENAME}"
+    dlc["run_script"] = f"/mnt/cpfsA/user/{USER_PLACEHOLDER}/Innovator-Tune/lmms-eval/run_scripts/{QWEN35_WORKER_BASENAME}"
     dlc["workers"] = DEFAULT_DLC_WORKERS
     dlc["worker_gpu"] = DEFAULT_DLC_WORKER_GPU
     dlc["workspace_id"] = DEFAULT_DLC_WORKSPACE_ID
@@ -735,15 +737,10 @@ def _require_default_config_nas_mount(data_source_uris: Any, *, field: str) -> s
     if not isinstance(data_source_uris, str) or not data_source_uris.strip():
         raise RuntimeError(f"Missing {field} in {DEFAULT_DLC_CONFIG_PATH}")
     normalized = data_source_uris.strip()
-    if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
-        raise RuntimeError(f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include {REQUIRED_NAS_MOUNT_URI}")
-    if not any(
-        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
-        for item in normalized.split(",")
-    ):
-        raise RuntimeError(
-            f"{field} in {DEFAULT_DLC_CONFIG_PATH} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}"
-        )
+    try:
+        data_sources(normalized)
+    except ValueError as exc:
+        raise RuntimeError(f"{field}: {exc}") from exc
     return normalized
 
 
@@ -781,11 +778,11 @@ def _default_env_vars() -> str:
 
 
 def _default_user() -> str:
-    configured_user = os.getenv("LMMS_EVAL_WEBUI_USER") or os.getenv("LMMS_EVAL_USER")
+    configured_user = os.getenv("LMMS_EVAL_WEBUI_USER") or os.getenv("LMMS_EVAL_WEB_UI_USER") or os.getenv("LMMS_EVAL_USER")
     if configured_user and configured_user.strip():
         return configured_user.strip()
 
-    match = re.match(r"^/mnt/(?:cpfsB|cpfs)/([^/]+)/Innovator-Tune/lmms-eval$", str(LMMS_EVAL_ROOT))
+    match = re.match(r"^/mnt/cpfsA/user/([^/]+)/Innovator-Tune/lmms-eval$", str(LMMS_EVAL_ROOT))
     if match:
         return match.group(1)
     return ""
@@ -1259,7 +1256,7 @@ class DlcMetricSamplesResponse(BaseModel):
 
 
 def _resolve_logs_root(logs_path: str) -> Path:
-    return Path(logs_path).expanduser().resolve()
+    return readable_path(logs_path)
 
 
 def _ensure_path_within_base(base_path: Path, target_path: Path) -> None:
@@ -1284,13 +1281,7 @@ def _resolve_run_results_path(logs_path: str, run_id: str) -> Path:
 
 
 def _infer_cpfs_user() -> str:
-    candidates = [Path.cwd(), LMMS_EVAL_ROOT]
-    for candidate in candidates:
-        parts = candidate.resolve().parts
-        for idx, part in enumerate(parts[:-1]):
-            if part in {"cpfs", "cpfsB"} and idx > 0 and parts[idx - 1] == "mnt":
-                return parts[idx + 1]
-    return os.environ.get("LMMS_EVAL_WEB_UI_USER", "")
+    return _default_user()
 
 
 def _replace_default_user(value: Any) -> Any:
@@ -2173,7 +2164,7 @@ def _runtime_config_path_from_detail(detail: dict[str, Any]) -> Path | None:
     runtime_path = _extract_command_path(command, "runtime_config.json")
     if not runtime_path:
         return None
-    path = Path(runtime_path).expanduser()
+    path = readable_path(runtime_path)
     return path if path.is_file() else None
 
 
@@ -2257,7 +2248,7 @@ def _result_root_from_runtime_config(runtime_config_path: Path | None) -> Path |
     if not isinstance(output_path, str) or not output_path:
         return None
     output_path = str(_replace_default_user(output_path))
-    root = Path(output_path).expanduser()
+    root = readable_path(output_path)
     if isinstance(timestamp, str) and timestamp and timestamp != "null":
         root = root / timestamp
     return root if root.exists() and root.is_dir() else None
@@ -2271,7 +2262,7 @@ def _result_root_from_command_output_path(detail: dict[str, Any]) -> Path | None
     output_path = _extract_cli_option_value(command, "--output_path")
     if not output_path:
         return None
-    root = Path(output_path).expanduser()
+    root = readable_path(output_path)
     return root if root.exists() and root.is_dir() else None
 
 
@@ -2534,7 +2525,7 @@ def _build_metric_rows(result_root: Path) -> tuple[list[DlcMetricRow], list[str]
         summary_files.append(str(summary_jsonl))
         for item in _load_summary_jsonl(summary_jsonl):
             result_json_raw = item.get("result_json")
-            result_json = Path(str(result_json_raw)) if isinstance(result_json_raw, str) and result_json_raw else None
+            result_json = readable_path(result_json_raw) if isinstance(result_json_raw, str) and result_json_raw else None
             if result_json is None or not result_json.is_file():
                 continue
             try:
@@ -2665,7 +2656,7 @@ def _local_image_path(value: str, sample_dir: Path) -> tuple[Path, str] | None:
         path = Path(raw_path).expanduser()
         if not path.is_absolute():
             path = sample_dir / path
-        path = path.resolve()
+        path = readable_path(path)
     except (OSError, RuntimeError, ValueError):
         return None
     try:
@@ -3163,6 +3154,26 @@ async def get_defaults() -> DefaultsResponse:
     )
 
 
+@app.get("/storage")
+async def get_storage() -> dict[str, Any]:
+    """Current shared paths, checked by the running server."""
+    config = _replace_user_placeholder(_default_eval_config(), _default_user())
+    locations = {
+        "Code (CPFS A)": str(LMMS_EVAL_ROOT),
+        "Benchmark cache (NAS A)": BENCHMARK_CACHE,
+        "Hugging Face cache (NAS A)": HF_HOME,
+        "Model (NAS A)": config["model"]["path"],
+        "Results (NAS A)": str(Path(config["eval"]["output_path"]).parent),
+        "Logs (NAS A)": str(Path(config["log"]["dir"]).parent),
+    }
+    return {
+        "quota": DEFAULT_DLC_RESOURCE_ID,
+        "mounts": ["CPFS A", "NAS A"],
+        "paths": [{"label": label, "path": path, "readable": os.access(path, os.R_OK),
+                   "writable": os.access(path, os.W_OK)} for label, path in locations.items()],
+    }
+
+
 @app.get("/models", response_model=list[ModelInfo])
 async def get_models() -> list[ModelInfo]:
     """Get available models."""
@@ -3409,16 +3420,10 @@ def _require_dlc_nas_mount(data_source_uris: Any, *, field: str) -> str:
     if not isinstance(data_source_uris, str) or not data_source_uris.strip():
         raise HTTPException(status_code=400, detail=f"Missing {field} in dlc_config")
     normalized = data_source_uris.strip()
-    if REQUIRED_NAS_MOUNT_URI not in [item.strip() for item in normalized.split(",")]:
-        raise HTTPException(status_code=400, detail=f"{field} must include {REQUIRED_NAS_MOUNT_URI}")
-    if not any(
-        item.strip().startswith("cpfs://") and item.strip().endswith(f"::{REQUIRED_CPFSB_MOUNT_PATH}")
-        for item in normalized.split(",")
-    ):
-        raise HTTPException(
-            status_code=400,
-            detail=f"{field} must include a CPFS URI mounted at {REQUIRED_CPFSB_MOUNT_PATH}",
-        )
+    try:
+        data_sources(normalized)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"{field}: {exc}") from exc
     return normalized
 
 
@@ -3458,6 +3463,10 @@ def _apply_api_eval_dlc_resources(dlc: dict[str, Any]) -> None:
 
 
 def _request_dlc_config(request: EvalRequest | PreviewRequest | ExportYamlRequest) -> dict[str, Any]:
+    try:
+        validate_paths(request.model_dump(), "request")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     config = copy.deepcopy(request.dlc_config) if request.dlc_config else _default_dlc_config()
     config = _replace_user_placeholder(config, request.user)
     dlc = config.get("dlc")
@@ -3555,7 +3564,7 @@ def _build_vllm_eval_config(request: EvalRequest | PreviewRequest | ExportYamlRe
     config["model"]["path"] = request.model
     config["model"]["source_path"] = request.model
     config["model"]["processor_compat"] = "required"
-    config["model"]["view_root"] = f"/mnt/cpfsB/{request.user}/lmms_eval_views"
+    config["model"]["view_root"] = f"/mnt/nasA/{request.user}/Innovator-Tune/lmms-eval/eval_model_views"
     config["model"]["startup_timeout_seconds"] = 1800
     config["model"].pop("resolved_path", None)
     config["model"].pop("preflight", None)
