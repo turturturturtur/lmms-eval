@@ -1,4 +1,18 @@
 import os
+import re
+
+
+# XML 1.0 illegal control characters (excludes tab \x09, LF \x0a, CR \x0d)
+_ILLEGAL_XML_CHARS_RE = re.compile(
+    r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]"
+)
+
+
+def sanitize_for_excel(val):
+    """Remove XML control characters that openpyxl does not support."""
+    if isinstance(val, str):
+        return _ILLEGAL_XML_CHARS_RE.sub("", val)
+    return val
 
 
 def generate_submission_file(file_name, args, subpath="submissions"):

@@ -1,7 +1,5 @@
 include: _default_template_yaml
 task: "vstar_bench_relative_position"
-dataset_kwargs:
-  category: "relative_position"
 metric_list:
   - metric: vstar_relative_position_acc
     aggregation: !function utils.vstar_aggregate_results

@@ -6,7 +6,7 @@ import pandas as pd
 import yaml
 from loguru import logger as eval_logger
 
-from lmms_eval.tasks._task_utils.file_utils import generate_submission_file
+from lmms_eval.tasks._task_utils.file_utils import generate_submission_file, sanitize_for_excel
 from lmms_eval.tasks._task_utils.reasoning_utils import (
     extract_anwser_tag,
     make_reasoning_doc_to_messages,
@@ -100,6 +100,7 @@ def mmbench_process_results_test(doc, results):
 
 def mmbench_aggregate_test_results_cn(results, args):
     df = pd.DataFrame(results)
+    df = df.map(sanitize_for_excel)
     excel_write_path = generate_submission_file("mmbench_cn_test_reasoning_results.xlsx", args)
     with pd.ExcelWriter(excel_write_path) as writer:
         df.to_excel(writer, index=False)
@@ -108,6 +109,7 @@ def mmbench_aggregate_test_results_cn(results, args):
 
 def mmbench_aggregate_test_results_en(results, args):
     df = pd.DataFrame(results)
+    df = df.map(sanitize_for_excel)
     excel_write_path = generate_submission_file("mmbench_en_test_reasoning_results.xlsx", args)
     with pd.ExcelWriter(excel_write_path) as writer:
         df.to_excel(writer, index=False)

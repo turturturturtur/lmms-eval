@@ -14,6 +14,7 @@ import threading
 import time
 from collections import deque
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from loguru import logger
@@ -1066,6 +1067,21 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
         Raises:
             ValueError: If task cannot be loaded
         """
+        if task_name == "simplevqa":
+            try:
+                from lmms_eval.tasks.simplevqa import utils as simplevqa_utils
+
+                return SimpleNamespace(
+                    config=SimpleNamespace(
+                        process_results=simplevqa_utils.simplevqa_process_results,
+                        dataset_path="m-a-p/SimpleVQA",
+                        num_fewshot=0,
+                        metric_list=[{"metric": "exact_match"}],
+                    )
+                )
+            except Exception as e:
+                logger.debug(f"Failed to load lightweight SimpleVQA task: {e}")
+
         try:
             task_manager = _get_task_manager()
             task_dict = task_manager.load_task_or_group(task_name)

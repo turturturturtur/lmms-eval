@@ -8,7 +8,7 @@ import pandas as pd
 import yaml
 from PIL import Image
 
-from lmms_eval.tasks._task_utils.file_utils import generate_submission_file
+from lmms_eval.tasks._task_utils.file_utils import generate_submission_file, sanitize_for_excel
 from lmms_eval.tasks.mmupd.mmupd_evals import MMUPD_Evaluator
 
 with open(Path(__file__).parent / "mmupd.yaml", "r") as f:
@@ -161,6 +161,7 @@ def mmupd_results_eval(results, args, upd_type, question_type):
         json.dump(details_info, f)
 
     file_excel = generate_submission_file(f"mmupd_{upd_type}_{question_type}_dual_results_detail.xlsx", args)
+    dual_results_df = dual_results_df.map(sanitize_for_excel)
     dual_results_df.to_excel(file_excel, index=False)
 
     file_json = generate_submission_file(f"mmupd_{upd_type}_{question_type}_dual_results_detail.json", args)
