@@ -11,6 +11,7 @@ Usage:
 import argparse
 import glob
 import json
+import math
 import os
 import sys
 from collections import Counter, defaultdict
@@ -408,6 +409,34 @@ def _result_json_path_for_output(output_path: Path) -> Path:
     return output_path.with_name(f"{prefix}_results.json")
 
 
+def _failed_judge_sample_count(results: list[dict]) -> int:
+    count = 0
+    for sample in results:
+        metrics = sample.get("metrics", {})
+        if not isinstance(metrics, dict):
+            continue
+        if (metrics.get("judge_failed") is True or metrics.get("llm_judge_failed") is True
+                or metrics.get("llm_judge_success") is False):
+            count += 1
+    return count
+
+
+def _summarize_judged_results(runner, results: list[dict], task_name: str) -> dict:
+    summary = runner.compute_summary(results)
+    # Native aggregation is authoritative: e.g. MMBench circular accuracy
+    # differs from per-row accuracy. Never hide a native aggregation failure.
+    aggregated = Aggregator().aggregate(results, task_name)
+    if aggregated:
+        for key in ("accuracy", "overall_accuracy", "exact_match"):
+            value = aggregated.get(key)
+            if isinstance(value, (int, float)) and (not math.isfinite(value) or value < 0):
+                raise ValueError(f"{task_name}: aggregation returned invalid {key}={value}")
+        if any(key in aggregated for key in ("accuracy", "overall_accuracy", "exact_match")):
+            summary.pop("total_acc", None)
+        summary.update(aggregated)
+    return summary
+
+
 def _write_judge_results_json(
     *,
     output_path: Path,
@@ -417,6 +446,7 @@ def _write_judge_results_json(
     input_file: Path,
     judge_model: str,
     effective_mode: str,
+    failed_samples: int = 0,
 ) -> Path:
     """Write aggregate judge metrics in the same shape as lmms-eval result JSON."""
     result_json = _result_json_path_for_output(output_path)
@@ -438,6 +468,7 @@ def _write_judge_results_json(
             "model": judge_model,
             "input_file": str(input_file),
             "samples_file": str(output_path),
+            "failed_samples": failed_samples,
         },
     }
     with result_json.open("w", encoding="utf-8") as f:
@@ -741,31 +772,30 @@ def run_judge(args: argparse.Namespace) -> None:
             else:
                 # Run judging
                 results = runner.judge_file(input_file, task_name)
+                failed_samples = _failed_judge_sample_count(results)
+                if failed_samples:
+                    error_count += 1
+                    eval_logger.error(f"{task_name}: {failed_samples}/{len(results)} samples failed judging; retaining partial results for diagnosis")
                 if item_counts[task_name] > 1:
                     merged_judge_results[task_name].extend(results)
 
-                # Compute summary
-                summary = runner.compute_summary(results)
+                # Persist costly judgments before aggregation so a native
+                # scoring error cannot discard the evidence needed to repair it.
+                output_path = None
+                if not args.dry_run and not _defer_scivqr_reasoning_save(task_name, args.output, args.output_dir, item_counts):
+                    output_path = _get_output_path(input_file, args.output, args.output_dir, task_name)
+                    runner.save_results(results, output_path)
+                    # A failed rerun must not leave an older successful summary.
+                    _result_json_path_for_output(output_path).unlink(missing_ok=True)
 
-                # For tasks with special aggregation (e.g. MMBench), run the
-                # task-specific aggregator so that metrics like accuracy reflect
-                # the true scoring logic rather than the generic per-sample mean.
-                try:
-                    agg = Aggregator()
-                    agg_summary = agg.aggregate(results, task_name)
-                    if agg_summary:
-                        summary.update(agg_summary)
-                except Exception as e:
-                    eval_logger.debug(f"Task-specific aggregation failed for {task_name}: {e}")
+                summary = _summarize_judged_results(runner, results, task_name)
 
                 if summary:
                     display_name = _display_task_name(task_name, input_file, item_counts)
                     all_summaries.append((display_name, _expand_scivqr_subject_summary(task_name, summary)))
 
                 # Save results
-                if not args.dry_run and not _defer_scivqr_reasoning_save(task_name, args.output, args.output_dir, item_counts):
-                    output_path = _get_output_path(input_file, args.output, args.output_dir, task_name)
-                    runner.save_results(results, output_path)
+                if output_path is not None:
                     if summary:
                         _write_judge_results_json(
                             output_path=output_path,
@@ -775,6 +805,7 @@ def run_judge(args: argparse.Namespace) -> None:
                             input_file=input_file,
                             judge_model=args.judge_model,
                             effective_mode=effective_mode,
+                            failed_samples=failed_samples,
                         )
 
                 success_count += 1
@@ -791,24 +822,19 @@ def run_judge(args: argparse.Namespace) -> None:
             if not merged_results:
                 continue
             try:
-                summary = runner.compute_summary(merged_results)
-                try:
-                    agg = Aggregator()
-                    agg_summary = agg.aggregate(merged_results, task_name)
-                    if agg_summary:
-                        summary.update(agg_summary)
-                except Exception as e:
-                    eval_logger.debug(f"Merged task-specific aggregation failed for {task_name}: {e}")
+                if task_name == "scivqr_reasoning" and not args.dry_run and args.output is None and args.output_dir:
+                    runner._current_task_name = task_name
+                    runner._current_task = runner._load_task(task_name)
+                    output_path = _get_output_path(Path(_scivqr_reasoning_chunk_name()), args.output, args.output_dir, task_name)
+                    runner.save_results(merged_results, output_path)
+                    _result_json_path_for_output(output_path).unlink(missing_ok=True)
+                summary = _summarize_judged_results(runner, merged_results, task_name)
                 metrics_summary = dict(summary)
                 display_summary = _expand_scivqr_subject_summary(task_name, summary)
                 all_summaries.append((task_name, display_summary))
                 if task_name == "scivqr_mcq" and not args.dry_run:
                     _write_scivqr_mcq_metrics_json(args.input_result, args.output_dir, metrics_summary)
                 elif task_name == "scivqr_reasoning" and not args.dry_run and args.output is None and args.output_dir:
-                    runner._current_task_name = task_name
-                    runner._current_task = runner._load_task(task_name)
-                    output_path = _get_output_path(Path(_scivqr_reasoning_chunk_name()), args.output, args.output_dir, task_name)
-                    runner.save_results(merged_results, output_path)
                     if summary:
                         _write_judge_results_json(
                             output_path=output_path,
@@ -818,9 +844,11 @@ def run_judge(args: argparse.Namespace) -> None:
                             input_file=Path(args.input_result),
                             judge_model=args.judge_model,
                             effective_mode=effective_mode,
+                            failed_samples=_failed_judge_sample_count(merged_results),
                         )
             except Exception as e:
-                eval_logger.debug(f"Merged summary failed for {task_name}: {e}")
+                eval_logger.error(f"Merged summary failed for {task_name}: {e}")
+                error_count += 1
 
     # Inject group-level summaries for hierarchical display
     def _load_group_map():

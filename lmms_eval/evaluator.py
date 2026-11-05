@@ -528,6 +528,8 @@ def simple_evaluate(
             cli_args=cli_args,
             eval_server_launcher=eval_launcher,
             response_cache=response_cache,
+            evaluation_tracker=evaluation_tracker,
+            datetime_str=datetime_str,
         )
         eval_succeeded = True
     finally:
@@ -901,6 +903,8 @@ def evaluate(
     eval_server_launcher: Optional[Union[str, Callable]] = None,
     cli_args=None,
     response_cache: Optional[ResponseCache] = None,
+    evaluation_tracker: Optional[EvaluationTracker] = None,
+    datetime_str: Optional[str] = None,
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -1140,6 +1144,16 @@ def evaluate(
             else:
                 raise ValueError(f"Invalid distributed_executor_backend: {distributed_executor_backend}. Choose either 'accelerate' or 'torchrun'.")
 
+    # Preserve outputs independently of filtering, matching, and metric failures.
+    if log_samples and evaluation_tracker is not None:
+        for task_output in eval_tasks:
+            evaluation_tracker.save_raw_responses(
+                task_output.task_name,
+                task_output.task.instances,
+                datetime_str=datetime_str or get_datetime_str(),
+                rank=global_rank,
+            )
+
     # Cleaning lm's cuda memory if you are launching llm as judge in local
     lm.clean()
     RANK = global_rank
@@ -1284,7 +1298,7 @@ def evaluate(
                         "doc": saved_doc,
                         "target": target,
                         "arguments": filtered_arguments,
-                        "resps": [req.raw_filtered_resps.get(filter_key, req.resps) for req in requests],
+                        "resps": [req.resps for req in requests],
                         "filtered_resps": [req.filtered_resps[filter_key] for req in requests],
                         "reasoning_resps": [req.reasoning_resps for req in requests],
                         "finish_reasons": [req.finish_reasons for req in requests],

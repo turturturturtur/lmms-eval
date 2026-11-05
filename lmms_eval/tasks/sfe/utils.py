@@ -20,7 +20,6 @@ from loguru import logger as eval_logger
 from openai import AzureOpenAI, OpenAI
 
 from rouge_score import rouge_scorer
-from bert_score import score
 
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from nltk.translate.meteor_score import meteor_score
@@ -447,6 +446,8 @@ def sfe_process_results(doc, results):
                     rough_scores.append(0.)
 
                 try:
+                    from bert_score import score
+
                     bertscore = score([answer], [pred], lang="multi", device="cuda" if torch.cuda.is_available() else "cpu")[2].item()
                     bertscore_scores.append(bertscore)
                 except:
@@ -774,7 +775,12 @@ def sfe_standalone_aggregate(extracted_data):
     cnt = 0
     for info in extracted_data:
         qt = info.get("question_type", "")
-        if qt in ("mcq", "exact_match"):
+        # BBox records are labelled open_ended in the dataset, but their
+        # task-defined primary score is IoU (as in sfe_process_results).
+        is_bbox = str(info.get("id", "")).split("/")[0].lower() in ("e011", "e012")
+        if is_bbox:
+            score = max(0.0, float(info.get("iou_score", [-1])[0]))
+        elif qt in ("mcq", "exact_match"):
             val = info.get("llm_score", [-1])[0]
             try:
                 match = re.search(r"(\d+)", str(val))

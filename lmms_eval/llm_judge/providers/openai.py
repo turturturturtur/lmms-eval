@@ -84,6 +84,10 @@ class OpenAIProvider(ServerInterface):
                     "enable_thinking": False,
                     "chat_template_kwargs": {"enable_thinking": False},
                 }
+            # Enabled explicitly by the local vLLM launcher; remote APIs retain
+            # their existing payload. Constrain answer extraction, not inference.
+            if request.allowed_outputs and os.getenv("JUDGE_STRUCTURED_OUTPUTS", "").lower() in {"1", "true", "yes"}:
+                extra_body = {**(extra_body or {}), "structured_outputs": {"choice": request.allowed_outputs}}
             if config.temperature is not None:
                 payload["temperature"] = config.temperature
             if config.max_tokens is not None:

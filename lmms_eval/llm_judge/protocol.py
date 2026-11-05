@@ -44,6 +44,7 @@ class Request:
     prediction: Optional[str] = None  # Model prediction
     context: Optional[str] = None  # Additional context
     options: Optional[List[str]] = None  # For multiple choice
+    allowed_outputs: Optional[List[str]] = None  # Exact output choices for a local structured judge
 
     # For comparative evaluation
     response1: Optional[str] = None

@@ -177,7 +177,7 @@ class Aggregator:
         task_lower = task_name.lower()
         # Sort by pattern length descending so more specific patterns match first
         for pattern, config in sorted(self.SPECIAL_AGGREGATIONS.items(), key=lambda x: len(x[0]), reverse=True):
-            if re.search(rf"(^|_){re.escape(pattern)}(_|$)", task_lower):
+            if re.search(rf"(^|[_-]){re.escape(pattern)}([_-]|$)", task_lower):
                 # Check exclusion patterns if defined
                 exclude_patterns = config.get("exclude_patterns", [])
                 if any(exc in task_lower for exc in exclude_patterns):
@@ -211,26 +211,15 @@ class Aggregator:
         extracted_data = []
         
         for sample in samples:
-            data_dict = None
-            
-            if config.get("prefer_metrics") and "metrics" in sample and isinstance(sample["metrics"], dict):
-                if data_key in sample["metrics"]:
-                    data_dict = sample["metrics"][data_key]
-            # First try top-level (where WeMath data is stored)
-            if data_dict is None and data_key in sample:
-                data_dict = sample[data_key]
-            # Then try nested in metrics
-            elif data_dict is None and "metrics" in sample and isinstance(sample["metrics"], dict):
-                if data_key in sample["metrics"]:
-                    data_dict = sample["metrics"][data_key]
-            
-            if data_dict is not None:
-                if isinstance(data_dict, dict):
-                    extracted_data.append(data_dict)
-                else:
-                    logger.warning(f"Unexpected data type for {data_key}: {type(data_dict)}")
-            else:
-                logger.debug(f"Sample missing {data_key}")
+            # JudgeRunner stores final scores under metrics; top-level values
+            # are the immutable generation record and may still be pending.
+            # Fall back to top-level only for legacy files without this metric.
+            metrics = sample.get("metrics", {})
+            data_dict = (metrics[data_key] if isinstance(metrics, dict) and data_key in metrics
+                         else sample.get(data_key))
+            if not isinstance(data_dict, dict):
+                raise ValueError(f"{task_name}: sample {sample.get('doc_id')} missing or invalid {data_key}")
+            extracted_data.append(data_dict)
         
         if not extracted_data:
             logger.warning(f"No data extracted for aggregation from {len(samples)} samples")

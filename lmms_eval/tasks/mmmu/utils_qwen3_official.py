@@ -153,6 +153,7 @@ def get_judge_server():
                 model_name=model_version,
                 temperature=0.0,
                 max_tokens=16,
+                timeout=int(os.getenv("JUDGE_TIMEOUT", "60")),
             )
             _server = get_server(server_name=api_type, config=_server_config)
             eval_logger.info(f"Initialized judge server: model={model_version}, api_type={api_type}")
@@ -470,7 +471,8 @@ def call_judge_for_extraction(
             # Use the judge server via Request/Response protocol
             request = Request(
                 messages=[{"role": "user", "content": prompt}],
-                config=srv_config
+                config=srv_config,
+                allowed_outputs=list(dict.fromkeys([*choices, 'Z'])),
             )
             response = server.evaluate(request)
             ans = response.content.strip()
@@ -483,11 +485,16 @@ def call_judge_for_extraction(
             
             # Try to extract option from judge response
             ret = can_infer(ans, choices)
-            if ret and ret != 'Z':
+            # Z is the prompt's valid "no matching option" result.
+            if ret:
                 log = f'Judge {model_version} extract Succeed. {model_version}:{ans}\n'
                 return ret, log, True
             else:
-                eval_logger.debug(f'Judge output includes 0 / > 1 letter among candidates {set(choices)} and Z: {ans}')
+                eval_logger.warning(
+                    f"Invalid judge extraction for sample {doc.get('doc_id', doc.get('id', 'unknown'))}, "
+                    f"attempt {max_retries - retry + 1}/{max_retries}, response_chars={len(ans)}, "
+                    f"usage={getattr(response, 'usage', None)}, response={ans[:160]!r} ... {ans[-160:]!r}"
+                )
                 retry -= 1
                 time.sleep(wait_time * (2 ** (max_retries - retry)) + random.random())
                 

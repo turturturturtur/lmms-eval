@@ -469,6 +469,16 @@ class JudgeRunner:
                     else:
                         raise rule_err
             
+            # Native MMMU extraction reports exhausted judge requests as "random".
+            # Preserve its diagnostic metrics, but never accept that guess as a
+            # successfully judged sample. Rule-based Z refusals remain valid.
+            if any(isinstance(value, dict) and value.get("extraction_method") == "random"
+                   for value in metrics.values()):
+                result_sample["metrics"] = {**metrics, "judge_failed": True,
+                                            "error": "Native judge extraction exhausted its retries"}
+                result_sample["judge_mode"] = "error"
+                return result_sample
+
             # Step 2: LLM fallback for low-scoring / failed rule-based samples
             if self._needs_llm_judge(metrics):
                 logger.debug(f"Sample {doc_id}: rule-based score low, trying LLM judge")
@@ -668,7 +678,9 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
                 )
                 
                 metrics = fallback_metrics.copy()
-                score = float(judge_result.get("result", 0))
+                # SFE aggregates integer ratings; normalize once so sample and
+                # aggregate scores agree even when the judge returns a decimal.
+                score = int(float(judge_result.get("result", 0)))
                 metrics["llm_judge_score"] = score
                 metrics["llm_judge_raw"] = judge_result.get("raw_response", "")
                 metrics["llm_judge_model"] = judge_result.get("model", self.judge_model)
@@ -679,7 +691,7 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
                 # Update sfe_info so aggregate sees the new LLM score
                 if "sfe_info" in metrics:
                     metrics["sfe_info"] = dict(metrics["sfe_info"])
-                    metrics["sfe_info"]["llm_score"] = [str(int(score))]
+                    metrics["sfe_info"]["llm_score"] = [str(score)]
                 
                 return metrics
                 
@@ -855,7 +867,11 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
         Returns:
             True if LLM judge should be applied
         """
-        # Explicit judge mode means re-judge every sample with LLM-as-judge.
+        # SFE deliberately uses ROUGE/IoU for its non-LLM question types.
+        # Preserve those task-defined scores even in explicit judge mode.
+        if "sfe_info" in metrics and metrics.get("needs_llm_judge") is False:
+            return False
+        # Explicit judge mode means re-judge every eligible sample with LLM-as-judge.
         if self.judge_mode == "judge":
             return True
         # Check explicit flag from tasks that defer LLM judging to standalone phase
@@ -1166,14 +1182,11 @@ Provide a single integer from 0 to 10 to reflect your judgment of the answer's c
                 summary["llm_judge_score_avg"] = round(sum(llm_scores) / len(llm_scores), 4)
             # Unify final metric name across all tasks
             summary["total_acc"] = summary["exact_match"]
-        elif acc_scores and llm_scores:
-            rule_acc = sum(acc_scores) / len(acc_scores)
-            llm_fallback_acc_raw = sum(llm_scores) / len(llm_scores)
-            llm_fallback_acc = (1 - rule_acc) * llm_fallback_acc_raw
-            total_acc = rule_acc + llm_fallback_acc
-            summary["rule_acc"] = round(rule_acc, 4)
-            summary["llm_fallback_acc"] = round(llm_fallback_acc, 4)
-            summary["total_acc"] = round(total_acc, 4)
+        elif acc_scores:
+            # _judge_sample synchronizes fallback scores into the original
+            # metric. These are final scores, not an independent rule pass.
+            # Adding llm_judge_score again inflates accuracy (0.5 -> 0.75).
+            summary["total_acc"] = round(sum(acc_scores) / len(acc_scores), 4)
         elif llm_scores:
             # Pure LLM-judge tasks (e.g. MolParse, OpenRxn) have no rule-based score
             summary["total_acc"] = round(sum(llm_scores) / len(llm_scores), 4)

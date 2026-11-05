@@ -12,6 +12,18 @@ class TaskJudgePolicy:
 
 
 _GROUP_EXPANSIONS = {
+    "mmmu_pro_qwen3_official": (
+        "mmmu_pro_standard_qwen3_official",
+        "mmmu_pro_vision_qwen3_official",
+    ),
+    "mmmu_pro_qwen3_official_cot": (
+        "mmmu_pro_standard_qwen3_official_cot",
+        "mmmu_pro_vision_qwen3_official_cot",
+    ),
+    "mmmu_pro_reasoning_qwen3_official": (
+        "mmmu_pro_standard_reasoning_qwen3_official",
+        "mmmu_pro_vision_reasoning_qwen3_official",
+    ),
     "mathvista_testmini": (
         "mathvista_testmini_cot",
         "mathvista_testmini_solution",
@@ -32,7 +44,12 @@ _POST_EVAL_TASKS = {
     "mmbench_en_dev",
     "mmbench_cn_cc",
     "mmmu_val_qwen3_official",
-    "mmmu_pro_qwen3_official",
+    "mmmu_pro_standard_qwen3_official",
+    "mmmu_pro_vision_qwen3_official",
+    "mmmu_pro_standard_qwen3_official_cot",
+    "mmmu_pro_vision_qwen3_official_cot",
+    "mmmu_pro_standard_reasoning_qwen3_official",
+    "mmmu_pro_vision_reasoning_qwen3_official",
     "sfe-en",
     "sfe-zh",
     "scivqr_open",

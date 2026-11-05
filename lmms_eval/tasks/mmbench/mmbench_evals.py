@@ -1,6 +1,5 @@
 import math
 import os
-import random as rd
 import string
 import time
 
@@ -137,15 +136,20 @@ class MMBench_Evaluator:
                 "Authorization": f"Bearer {self.API_KEY}",
                 "Content-Type": "application/json",
             }
-        response = requests.post(self.API_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(self.API_URL, headers=headers, json=payload,
+                                 timeout=float(os.getenv("JUDGE_TIMEOUT", "30")))
         response.raise_for_status()
         return response.json()
 
-    def get_chat_response(self, prompt, temperature=0, max_tokens=256, n=1, patience=5, sleep_time=3):
+    def get_chat_response(self, prompt, temperature=0, max_tokens=256, n=1, patience=5, sleep_time=3, allowed_outputs=None):
         messages = [
             {"role": "user", "content": prompt},
         ]
         payload = {"model": self.model_version, "messages": messages, "temperature": temperature, "max_tokens": max_tokens, "n": n}
+        if os.getenv("JUDGE_DISABLE_THINKING") == "1":
+            payload.update(enable_thinking=False, chat_template_kwargs={"enable_thinking": False})
+        if allowed_outputs and os.getenv("JUDGE_STRUCTURED_OUTPUTS") == "1":
+            payload["structured_outputs"] = {"choice": list(allowed_outputs)}
 
         while patience > 0:
             patience -= 1
@@ -180,7 +184,8 @@ class MMBench_Evaluator:
             return ret, item["prediction"]
 
         while retry:
-            ans = self.get_chat_response(prompt)
+            # One request per outer attempt: do not multiply the retry budget.
+            ans = self.get_chat_response(prompt, patience=1, allowed_outputs=[*choices, "E"])
             if "Failed to obtain answer via API" in ans:
                 msg = "GPT API failed to answer. "
                 eval_logger.info(msg)
@@ -190,17 +195,11 @@ class MMBench_Evaluator:
                 if ret:
                     return ret, ans
                 else:
-                    eval_logger.info(f'GPT output includes 0 / >1 letter in "ABCD": {ans}')
+                    eval_logger.warning(f"MMBench sample {item.get('index')}: invalid native extraction output: {ans[:400]!r}")
                     retry -= 1
 
             if retry == 0:
-                num_options = sum([ch in item for ch in "ABCD"])
-                if num_options >= 2:
-                    chars = string.ascii_uppercase[:num_options]
-                    chars = chars + "E"
-                    num_options += 1
-                    tmp = rd.randint(0, num_options - 1)
-                    return chars[tmp], "Failed to predict, thus randomly generate one. "
+                raise RuntimeError(f"MMBench native judge failed for sample {item.get('index')} after 3 attempts")
 
     # Extract answer from multiple rolling records
     def eval_sub_data(self, sub_data, answer_map, static_only=False):
@@ -249,7 +248,6 @@ class MMBench_Evaluator:
 
     # Evaluate Results
     def eval_result(self, results, eval_method):
-        rd.seed(2680)
         static_only = eval_method == "static"
         assert eval_method in ("openai", "static")
         # Set a large retry number to avoid failure

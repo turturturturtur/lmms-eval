@@ -326,6 +326,7 @@ class VLLMBackend(lmms):
         )
 
         responses: List[Union[GenerationResult, None]] = [None] * len(reordered_requests)
+        response_metadata: List[dict] = [{} for _ in reordered_requests]
         total_latency = 0.0
         total_tokens = 0
         current_concurrency = min(
@@ -378,7 +379,13 @@ class VLLMBackend(lmms):
                     elapsed = time.time() - started_at
                     
                     # Extract response
-                    response_text = result["choices"][0]["message"]["content"]
+                    choice = result["choices"][0]
+                    message = choice["message"]
+                    response_text = message.get("content")
+                    response_metadata[local_index] = {
+                        "reasoning_content": message.get("reasoning_content") or message.get("reasoning"),
+                        "finish_reason": choice.get("finish_reason"),
+                    }
                     
                     # Extract token usage
                     usage = result.get("usage", {})
@@ -587,6 +594,8 @@ class VLLMBackend(lmms):
                 import traceback
                 eval_logger.error(f"Error in preprocessing request {local_index}: {e}")
                 eval_logger.error(f"Traceback: {traceback.format_exc()}")
+                if self.fail_fast_on_request_error:
+                    raise VLLMBackendRequestError(f"vLLM request preprocessing failed for index {local_index}: {e}") from e
                 return f"[PREPROC_FAILED] {e}", local_index, False, False, time.time() - pre_start, 0, 0, 0
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -639,6 +648,7 @@ class VLLMBackend(lmms):
                     
                     responses[local_index] = GenerationResult(
                         text=str(response_text) if response_text is not None else "",
+                        **response_metadata[local_index],
                         token_counts=TokenCounts(
                             input_tokens=input_tokens,
                             output_tokens=completion_tokens,

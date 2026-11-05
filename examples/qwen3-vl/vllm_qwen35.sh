@@ -2,7 +2,7 @@
 set -euo pipefail
 
 
-source /mnt/cpfsB/tianleniu/conda/etc/profile.d/conda.sh
+source /mnt/cpfsA/user/tianleniu/conda/etc/profile.d/conda.sh
 conda activate /mnt/cpfs/yangyicun/miniconda3/envs/lmms-eval
 
 MODEL="${MODEL:-/mnt/cpfs/yangyicun/data/model/Qwen3-VL-8B-Instruct}"

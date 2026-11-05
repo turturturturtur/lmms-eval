@@ -207,6 +207,8 @@ class EvaluationTracker:
 
                 # update initial results dict
                 results.update({"task_hashes": task_hashes})
+                if os.environ.get("LMMS_EVAL_JUDGE_STAGE"):
+                    results["execution_stage"] = os.environ["LMMS_EVAL_JUDGE_STAGE"]
                 results.update(asdict(self.general_config_tracker))
                 dumped = json.dumps(
                     results,
@@ -249,6 +251,29 @@ class EvaluationTracker:
         else:
             eval_logger.info("Output path not provided, skipping saving results aggregated")
 
+    def save_raw_responses(self, task_name, instances, *, datetime_str, rank):
+        """Persist model outputs before filtering/scoring, including failed tasks."""
+        if not self.output_path:
+            return
+        path = Path(self.output_path) / self.general_config_tracker.model_name_sanitized
+        path.mkdir(parents=True, exist_ok=True)
+        date_id = datetime_str.replace(":", "-")
+        destination = path / f"{date_id}_raw_{sanitize_task_name(task_name)}_rank{rank}.jsonl"
+        temporary = destination.with_suffix(".jsonl.tmp")
+        with temporary.open("w", encoding="utf-8") as stream:
+            for instance in instances:
+                record = {
+                    "doc_id": instance.doc_id,
+                    "idx": instance.idx,
+                    "resps": instance.resps,
+                    "reasoning_resps": instance.reasoning_resps,
+                    "finish_reasons": instance.finish_reasons,
+                }
+                stream.write(json.dumps(record, default=handle_non_serializable, ensure_ascii=False) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(destination)
+
     def save_results_samples(
         self,
         task_name: str,
@@ -270,6 +295,7 @@ class EvaluationTracker:
                 file_results_samples = path.joinpath(f"{self.date_id}_samples_{task_name}.jsonl")
 
                 for sample in samples:
+                    sample = dict(sample)
                     # we first need to sanitize arguments and resps
                     # otherwise we won't be able to load the dataset
                     # using the datasets library
@@ -289,10 +315,7 @@ class EvaluationTracker:
                     if isinstance(sample["filtered_resps"], list) and len(sample["filtered_resps"]) == 1:
                         sample["filtered_resps"] = sample["filtered_resps"][0]
 
-                    if sample["resps"] == sample["filtered_resps"]:
-                        sample.pop("resps")
-                    elif isinstance(sample["resps"], list) and len(sample["resps"]) == 1 and sample["resps"][0] == sample["filtered_resps"]:
-                        sample.pop("resps")
+                    # Keep raw output even when extraction or matching succeeds.
                     sample["target"] = str(sample["target"])
                     sample.pop("arguments")
                     sample.pop("doc")
