@@ -5,6 +5,7 @@ import textwrap
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from pydantic import ValidationError
 
@@ -49,57 +50,64 @@ class TestJobSchedulerTimeouts(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmpdir:
                 fake_bin = Path(tmpdir) / "bin"
                 fake_bin.mkdir()
-                fake_accelerate = fake_bin / "accelerate"
-                fake_accelerate.write_text(
+                fake_launcher = fake_bin / "fake_eval_launcher"
+                fake_launcher.write_text(
                     textwrap.dedent(
                         """\
                         #!/usr/bin/env bash
                         set -euo pipefail
-                        if [[ "${FAKE_ACCELERATE_MODE}" == "sleep" ]]; then
+                        if [[ "${FAKE_LAUNCHER_MODE}" == "sleep" ]]; then
                             sleep 30
-                        elif [[ "${FAKE_ACCELERATE_MODE}" == "success" ]]; then
+                        elif [[ "${FAKE_LAUNCHER_MODE}" == "success" ]]; then
+                            mkdir -p "$1/fake"
+                            echo '{}' > "$1/fake/20260101_000000_results.json"
                             exit 0
                         else
-                            echo "unexpected FAKE_ACCELERATE_MODE=${FAKE_ACCELERATE_MODE}" >&2
+                            echo "unexpected FAKE_LAUNCHER_MODE=${FAKE_LAUNCHER_MODE}" >&2
                             exit 99
                         fi
                         """
                     ),
                     encoding="utf-8",
                 )
-                fake_accelerate.chmod(0o755)
+                fake_launcher.chmod(0o755)
 
-                old_path = os.environ["PATH"]
-                old_mode = os.environ.get("FAKE_ACCELERATE_MODE")
-                os.environ["PATH"] = f"{fake_bin}{os.pathsep}{old_path}"
+                old_mode = os.environ.get("FAKE_LAUNCHER_MODE")
                 try:
                     scheduler = JobScheduler()
-                    timeout_config = {
-                        "model": "fake",
-                        "tasks": ["hang"],
-                        "num_gpus": 1,
-                        "output_dir": str(Path(tmpdir) / "timeout_output"),
-                        "timeout_seconds": 1,
-                        "timeout_kill_after_seconds": 1,
-                    }
+                    # _build_eval_cmd invokes `python -m lmms_eval` directly for a
+                    # single GPU instead of the accelerate launcher, so pin the
+                    # command shape here and exercise the timeout logic itself.
+                    with patch.object(
+                        JobScheduler,
+                        "_build_eval_cmd",
+                        staticmethod(lambda config, output_path: [str(fake_launcher), str(output_path)]),
+                    ):
+                        timeout_config = {
+                            "model": "fake",
+                            "tasks": ["hang"],
+                            "num_gpus": 1,
+                            "output_dir": str(Path(tmpdir) / "timeout_output"),
+                            "timeout_seconds": 1,
+                            "timeout_kill_after_seconds": 1,
+                        }
 
-                    os.environ["FAKE_ACCELERATE_MODE"] = "sleep"
-                    started = time.monotonic()
-                    with self.assertRaises(TimeoutError):
-                        await scheduler._run_evaluation(timeout_config)
-                    self.assertLess(time.monotonic() - started, 5)
+                        os.environ["FAKE_LAUNCHER_MODE"] = "sleep"
+                        started = time.monotonic()
+                        with self.assertRaises(TimeoutError):
+                            await scheduler._run_evaluation(timeout_config)
+                        self.assertLess(time.monotonic() - started, 5)
 
-                    success_config = dict(timeout_config)
-                    success_config["output_dir"] = str(Path(tmpdir) / "success_output")
-                    success_config["timeout_seconds"] = 5
-                    os.environ["FAKE_ACCELERATE_MODE"] = "success"
-                    self.assertEqual(await scheduler._run_evaluation(success_config), {})
+                        success_config = dict(timeout_config)
+                        success_config["output_dir"] = str(Path(tmpdir) / "success_output")
+                        success_config["timeout_seconds"] = 5
+                        os.environ["FAKE_LAUNCHER_MODE"] = "success"
+                        self.assertIn("fake", await scheduler._run_evaluation(success_config))
                 finally:
-                    os.environ["PATH"] = old_path
                     if old_mode is None:
-                        os.environ.pop("FAKE_ACCELERATE_MODE", None)
+                        os.environ.pop("FAKE_LAUNCHER_MODE", None)
                     else:
-                        os.environ["FAKE_ACCELERATE_MODE"] = old_mode
+                        os.environ["FAKE_LAUNCHER_MODE"] = old_mode
 
         asyncio.run(run_case())
 

@@ -1,14 +1,28 @@
 import os
+from pathlib import Path
 from typing import Optional
 
 from .base import ServerInterface
 from .protocol import ServerConfig
+
+# Load .env for LLM judge configuration
+try:
+    from dotenv import load_dotenv
+
+    for candidate in [Path.cwd() / ".env", Path(__file__).resolve().parents[4] / ".env"]:
+        if candidate.is_file():
+            load_dotenv(candidate, override=False)
+            break
+except ImportError:
+    pass
 from .providers import (
     AnthropicProvider,
     AsyncAzureOpenAIProvider,
     AsyncOpenAIProvider,
     AzureOpenAIProvider,
+    BedrockProvider,
     DummyProvider,
+    LocalProvider,
     OpenAIProvider,
 )
 
@@ -16,7 +30,17 @@ from .providers import (
 class ProviderFactory:
     """Factory for creating judge instances based on configuration"""
 
-    _provider_classes = {"anthropic": AnthropicProvider, "openai": OpenAIProvider, "compatible": OpenAIProvider, "azure": AzureOpenAIProvider, "async_openai": AsyncOpenAIProvider, "async_azure": AsyncAzureOpenAIProvider, "dummy": DummyProvider}
+    _provider_classes = {
+        "anthropic": AnthropicProvider,
+        "openai": OpenAIProvider,
+        "compatible": OpenAIProvider,
+        "azure": AzureOpenAIProvider,
+        "async_openai": AsyncOpenAIProvider,
+        "async_azure": AsyncAzureOpenAIProvider,
+        "bedrock": BedrockProvider,
+        "local": LocalProvider,
+        "dummy": DummyProvider,
+    }
 
     # TODO
     # This should actually be a decorator that registers the class

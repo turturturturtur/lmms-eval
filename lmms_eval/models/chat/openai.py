@@ -27,6 +27,7 @@ from lmms_eval.models.model_utils.superchem_official import (
     parse_stream,
 )
 from lmms_eval.models.simple.openai import OpenAICompatible as OpenAICompatibleSimple
+from lmms_eval.models.simple.openai import _get_max_new_tokens
 from lmms_eval.protocol import ChatMessages
 
 VideoReader, _ = optional_import("decord", "VideoReader")
@@ -39,13 +40,13 @@ load_dotenv(verbose=True)
 class OpenAICompatible(OpenAICompatibleSimple):
     is_simple = False
 
-    def __init__(self, max_new_tokens: int = 4096, **kwargs):
+    def __init__(self, max_new_tokens: int = 4096, pass_video_url: bool = False, enable_thinking_kwarg: object = None, **kwargs):
         # Capture specific args for Qwen3-VL and media processing
         self.is_qwen3_vl = kwargs.get("is_qwen3_vl", False)
         # Handle cases where is_qwen3_vl is passed as a string
         if isinstance(self.is_qwen3_vl, str):
             self.is_qwen3_vl = self.is_qwen3_vl.lower() == "true"
-            
+
         self.max_pixels = int(kwargs.get("max_pixels", 151200))
         self.min_pixels = int(kwargs.get("min_pixels", 28 * 28))
         self.max_frames = int(kwargs.get("max_frames", 768))
@@ -54,6 +55,8 @@ class OpenAICompatible(OpenAICompatibleSimple):
             self.video_fps = float(self.video_fps)
         self.max_frames_num = int(kwargs.get("max_frames_num", 64))
         super().__init__(max_new_tokens=max_new_tokens, **kwargs)
+        self.pass_video_url = bool(pass_video_url)
+        self.enable_thinking_kwarg = enable_thinking_kwarg
 
     def generate_until(self, requests) -> List[GenerationResult]:
         if not requests:
@@ -301,14 +304,7 @@ class OpenAICompatible(OpenAICompatibleSimple):
             is_superchem_official = (
                 request_gen_kwargs.get("official_request") == "superchem"
             )
-            max_new_tokens = (
-                int(request_gen_kwargs["max_new_tokens"])
-                if is_superchem_official
-                else min(
-                    request_gen_kwargs.get("max_new_tokens", 1024),
-                    self.max_new_tokens,
-                )
-            )
+            max_new_tokens = _get_max_new_tokens(request_gen_kwargs)
             temperature = request_gen_kwargs.get("temperature", 0)
             top_p = request_gen_kwargs.get("top_p")
             top_k = request_gen_kwargs.get("top_k")
@@ -327,7 +323,7 @@ class OpenAICompatible(OpenAICompatibleSimple):
             if self.is_qwen3_vl:
                 messages = chat_messages.to_qwen3_vl_openai_messages(video_kwargs=video_kwargs)
             else:
-                messages = chat_messages.to_openai_messages(video_kwargs=video_kwargs)
+                messages = chat_messages.to_openai_messages(video_kwargs=video_kwargs, pass_video_url=self.pass_video_url)
 
             if is_superchem_official:
                 payload, options = build_superchem_request(
@@ -357,6 +353,15 @@ class OpenAICompatible(OpenAICompatibleSimple):
                 "max_tokens": max_new_tokens,
                 "temperature": temperature,
             }
+            extra_body = {}
+            if self.pass_video_url:
+                extra_body["media_io_kwargs"] = {"video": {"num_frames": int(self.max_frames_num)}}
+            if self.enable_thinking_kwarg is not None:
+                ek = self.enable_thinking_kwarg
+                ek_bool = ek.lower() == "true" if isinstance(ek, str) else bool(ek)
+                extra_body["chat_template_kwargs"] = {"enable_thinking": ek_bool}
+            if extra_body:
+                payload["extra_body"] = extra_body
 
             # Add optional sampling parameters if provided
             if top_p is not None:
@@ -373,7 +378,7 @@ class OpenAICompatible(OpenAICompatibleSimple):
                 payload.pop("temperature")
                 payload.pop("max_tokens")
                 payload["response_format"] = {"type": "text"}
-                payload["max_completion_tokens"] = 5000
+                payload["max_completion_tokens"] = max_new_tokens
 
             if self.rank == 0 and not _gen_config_printed:
                 eval_logger.info(f"[Generate Config] task={task}, max_tokens={max_new_tokens}, temperature={temperature}, top_p={top_p}, top_k={top_k}, presence_penalty={presence_penalty}, frequency_penalty={frequency_penalty}, gen_kwargs={request_gen_kwargs}")

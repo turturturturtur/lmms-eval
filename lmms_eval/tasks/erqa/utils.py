@@ -3,6 +3,7 @@ import re
 from collections import defaultdict
 
 from lmms_eval.tasks._task_utils.default_template_yaml import load_default_template_yaml
+from lmms_eval.tasks._task_utils.mcq_extract import extract_mcq_answer
 
 eval_logger = logging.getLogger("lmms-eval")
 
@@ -50,6 +51,12 @@ def erqa_doc_to_visual(doc: dict) -> list:
     return image_list
 
 
+def erqa_doc_to_messages(doc: dict, lmms_eval_specific_kwargs=None) -> list[dict]:
+    content = [{"type": "image", "url": image} for image in erqa_doc_to_visual(doc)]
+    content.append({"type": "text", "text": erqa_doc_to_text(doc)})
+    return [{"role": "user", "content": content}]
+
+
 def erqa_process_results(doc, results):
     key_name = "erqa_acc"
     # extract grounded answer
@@ -57,7 +64,7 @@ def erqa_process_results(doc, results):
     response = results[0]
 
     # extract predicted answer
-    pred_letter = _extract_answer_letter(response)
+    pred_letter = extract_mcq_answer(response, choices=["A", "B", "C", "D"])
     flag = pred_letter == grounded_output
 
     omnispatial_submission = {"id": doc["question_id"], "gt_content": grounded_output, "pred": response, "sub_task": doc["question_type"], "is_correct": flag}
