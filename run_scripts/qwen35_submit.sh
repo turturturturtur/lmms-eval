@@ -12,10 +12,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LMMS_EVAL_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-DEFAULT_DLC_RESOURCE_ID="quotaev2tl4w6aw0"
-REQUIRED_NAS_MOUNT_URI="nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
-REQUIRED_CPFSB_MOUNT_PATH="/mnt/cpfsB"
-BENCHMARK_DATASETS_CACHE="/mnt/cpfsB/evaluation_cache/lmms_eval"
+DEFAULT_DLC_RESOURCE_ID="quota1cauvwqouvn"
+BENCHMARK_DATASETS_CACHE="/mnt/nasA/tianleniu/evaluation_cache/lmms_eval"
 
 if (( $# < 2 )); then
     echo "[ERROR] Usage: bash $(basename "$0") <dlc_config.json> <eval_config.json> [judge_config.json] [-- <dlc auth flags>]"
@@ -120,36 +118,8 @@ require_single_resource_id() {
     fi
 }
 
-require_required_nas_mount() {
-    local value="$1"
-    local field="$2"
-    require_non_empty "${value}" "${field}"
-    case ",${value}," in
-        *",${REQUIRED_NAS_MOUNT_URI},"*) ;;
-        *)
-            echo "[ERROR] ${field} must include ${REQUIRED_NAS_MOUNT_URI}, got: ${value}" >&2
-            exit 9
-            ;;
-    esac
-}
-
-require_required_cpfsb_mount() {
-    local value="$1"
-    local field="$2"
-    require_non_empty "${value}" "${field}"
-
-    local uri
-    local uris=()
-    IFS=',' read -ra uris <<< "${value}"
-    for uri in "${uris[@]}"; do
-        if [[ "${uri}" == cpfs://*::${REQUIRED_CPFSB_MOUNT_PATH} ]]; then
-            return 0
-        fi
-    done
-
-    echo "[ERROR] ${field} must include a CPFS URI mounted at ${REQUIRED_CPFSB_MOUNT_PATH}, got: ${value}" >&2
-    exit 9
-}
+# The shared policy checks filesystem identity as well as the mount path.
+python3 "${LMMS_EVAL_ROOT}/lmms_eval/storage_policy.py" "${DLC_CONFIG}" "${EVAL_CONFIG}" ${JUDGE_CONFIG:+"${JUDGE_CONFIG}"}
 
 # ── resolve job name (needs model info from eval config) ──────────────────────
 MODEL=$(eval_cfg '.model.source_path // .model.path')
@@ -187,6 +157,20 @@ if [[ ! -x "${DLC_BINARY}" ]]; then
     echo "[ERROR] DLC binary not found or not executable: ${DLC_BINARY}"
     exit 1
 fi
+
+# Verify the exact interpreter that the mounted worker will use before CreateJob.
+export VLLM_USE_MODELSCOPE=False
+EVAL_VENV_PATH=$(eval_cfg '.env.venv_path // ""')
+if [[ ! -x "${EVAL_VENV_PATH}/bin/python" ]]; then
+    echo "[ERROR] Evaluation Python is missing: ${EVAL_VENV_PATH}/bin/python" >&2
+    exit 2
+fi
+RUNTIME_CHECK_ARGS=(--imports)
+if [[ "${MODEL_BACKEND}" == "vllm" || "${JUDGE_BACKEND}" == "vllm" ]]; then
+    RUNTIME_CHECK_ARGS+=(--vllm)
+fi
+PATH="${EVAL_VENV_PATH}/bin:${PATH}" "${EVAL_VENV_PATH}/bin/python" \
+    "${LMMS_EVAL_ROOT}/lmms_eval/runtime_preflight.py" "${RUNTIME_CHECK_ARGS[@]}"
 
 # 统一时间戳由 submitter 生成，保证所有 worker 目录一致
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
@@ -457,8 +441,6 @@ REGION=$(dlc_cfg '.dlc.region // ""')
 ENDPOINT=$(dlc_cfg '.dlc.endpoint // ""')
 
 require_single_resource_id "${RESOURCE_ID}" "dlc.resource_id"
-require_required_nas_mount "${DATA_SOURCE_URIS}" "dlc.data_source_uris"
-require_required_cpfsb_mount "${DATA_SOURCE_URIS}" "dlc.data_source_uris"
 
 if ! [[ "${PRIORITY}" =~ ^[0-9]+$ ]]; then
     echo "[ERROR] DLC priority must be an integer, got: ${PRIORITY}"
@@ -555,6 +537,7 @@ wait_for_job_success() {
     local status=""
     local detail_file=""
     while (( SECONDS < deadline )); do
+        check_webui_cancelled
         detail_file="${detail_dir}/${stage}_${job_id}_$(date +%Y%m%d_%H%M%S).json"
         "${DLC_BINARY}" get job "${job_id}" \
             -w "${workspace_id}" \
@@ -572,11 +555,21 @@ wait_for_job_success() {
             echo "[ERROR] ${stage} DLC job ended with status=${status}. Detail: ${detail_file}" >&2
             return 1
         fi
-        sleep "${poll_interval}"
+        for (( pause=0; pause<poll_interval; pause++ )); do
+            check_webui_cancelled
+            sleep 1
+        done
     done
 
     echo "[ERROR] Timeout while waiting for ${stage} DLC job ${job_id}. Last detail: ${detail_file}" >&2
     return 1
+}
+
+check_webui_cancelled() {
+    if [[ -n "${LMMS_EVAL_WEBUI_CANCEL_FILE:-}" && -f "${LMMS_EVAL_WEBUI_CANCEL_FILE}" ]]; then
+        echo "[INFO] Workflow cancellation requested by WebUI." >&2
+        exit 130
+    fi
 }
 
 OPTIONAL_DLC_ARGS=()
@@ -644,8 +637,6 @@ build_judge_submit_args() {
     require_non_empty "${judge_security_group_id}" "dlc.judge.security_group_id"
     require_non_empty "${judge_extended_cidrs}" "dlc.judge.extended_cidrs"
     require_single_resource_id "${judge_resource_id}" "dlc.judge.resource_id"
-    require_required_nas_mount "${judge_data_source_uris}" "dlc.judge.data_source_uris"
-    require_required_cpfsb_mount "${judge_data_source_uris}" "dlc.judge.data_source_uris"
 
     if [[ "${judge_worker_gpu}" != "0" ]]; then
         echo "[ERROR] Judge DLC must be CPU-only; expected worker_gpu=0, got ${judge_worker_gpu}" >&2
@@ -670,7 +661,7 @@ build_judge_submit_args() {
 
     local judge_inner_command
     local judge_command
-    judge_inner_command="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${judge_log_dir}; bash ${judge_script} ${judge_runtime_config}"
+    judge_inner_command="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export PYTHONPATH=${RUNTIME_SOURCE_ROOT}; export LMMS_EVAL_LOG_DIR=${judge_log_dir}; bash ${judge_script} ${judge_runtime_config}"
     judge_command="/bin/bash -c '$(quote_for_single_quotes "${judge_inner_command}")'"
 
     JUDGE_SUBMIT_ARGS=(
@@ -712,8 +703,8 @@ prepare_judge_runtime_config() {
          | .eval.output_path = $output_path
          | .eval.debug = false
          | .log.dir = $log_dir
-         | .env.lmms_eval_datasets_cache = "/mnt/cpfsB/evaluation_cache/lmms_eval"
-         | .env.hf_datasets_cache = "/mnt/cpfsB/evaluation_cache/lmms_eval"' \
+         | .env.lmms_eval_datasets_cache = "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval"
+         | .env.hf_datasets_cache = "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval"' \
         "${JUDGE_CONFIG}" > "${judge_runtime_config}"
 }
 
@@ -727,8 +718,9 @@ submit_and_resolve_job_id() {
     local submit_output
     local rc
 
+    check_webui_cancelled
     set +e
-    submit_output="$("${DLC_BINARY}" "$@" 2>&1)"
+    submit_output="$(python3 "${SCRIPT_DIR}/dlc_create_job.py" "$@" 2>&1)"
     rc=$?
     set -e
     printf "%s\n" "${submit_output}" | tee "${submit_log}" >&2
@@ -745,6 +737,7 @@ submit_and_resolve_job_id() {
             exit 67
         }
     fi
+    echo "[WEBUI_DLC_JOB] ${stage} ${job_id}" >&2
     printf "%s" "${job_id}"
 }
 
@@ -775,6 +768,22 @@ print_dry_run_command() {
     done
     printf "\n"
 }
+
+# Freeze sources before constructing either cloud command. The NAS directory is
+# mounted in both jobs; datasets, model weights, and the runtime stay external.
+RUNTIME_SOURCE_ROOT="${LMMS_EVAL_ROOT}"
+if [[ "${DRY_RUN:-0}" != "1" ]]; then
+    check_webui_cancelled
+    RUNTIME_SOURCE_ROOT="${FIXED_LOG_DIR}/source"
+    SNAPSHOT_ARGS=("${LMMS_EVAL_ROOT}" "${RUNTIME_SOURCE_ROOT}" --worker "${WORKER_SCRIPT}")
+    SNAPSHOT_JUDGE_SCRIPT="$(dlc_cfg '.dlc.judge_run_script // ""')"
+    if [[ "${JUDGE_BACKEND}" == "api" && -n "${SNAPSHOT_JUDGE_SCRIPT}" ]]; then
+        SNAPSHOT_ARGS+=(--judge "${SNAPSHOT_JUDGE_SCRIPT}")
+    fi
+    python3 "${LMMS_EVAL_ROOT}/tools/create_runtime_snapshot.py" "${SNAPSHOT_ARGS[@]}"
+    WORKER_SCRIPT="${RUNTIME_SOURCE_ROOT}/run_scripts/qwen35_worker.sh"
+    echo "[INFO] Frozen evaluation source: ${RUNTIME_SOURCE_ROOT}"
+fi
 
 HAS_JUDGE_CONFIG=0
 if [[ -n "${JUDGE_CONFIG}" ]]; then
@@ -813,6 +822,9 @@ if [[ "${HAS_JUDGE_CONFIG}" == "1" ]]; then
             echo "[ERROR] Judge script not found: ${JUDGE_SCRIPT}" >&2
             exit 1
         fi
+        if [[ "${RUNTIME_SOURCE_ROOT}" != "${LMMS_EVAL_ROOT}" ]]; then
+            JUDGE_SCRIPT="${RUNTIME_SOURCE_ROOT}/run_scripts/run_judge.sh"
+        fi
         build_judge_submit_args "${JUDGE_RUNTIME_CONFIG}" "${JUDGE_JOB_NAME}" "${JUDGE_LOG_DIR}" "${JUDGE_SCRIPT}"
     fi
 fi
@@ -821,7 +833,7 @@ INLINE_JUDGE_ARG=""
 if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
     INLINE_JUDGE_ARG=" \"\" ${JUDGE_RUNTIME_CONFIG}"
 fi
-INNER_COMMAND="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=0;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}${INLINE_JUDGE_ARG}"
+INNER_COMMAND="set -euo pipefail; cd ${LMMS_EVAL_ROOT}; export LMMS_EVAL_LOG_DIR=${FIXED_LOG_DIR}; export LMMS_EVAL_STAGE_DATASETS=0;${EXTRA_LD_EXPORT} bash ${WORKER_SCRIPT} ${RUNTIME_CONFIG}${INLINE_JUDGE_ARG} > >(tee -a ${FIXED_LOG_DIR}/worker.log) 2>&1"
 COMMAND="/bin/bash -c '$(quote_for_single_quotes "${INNER_COMMAND}")'"
 DLC_SUBMIT_ARGS=(
     submit pytorchjob
@@ -860,9 +872,9 @@ elif [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
 fi
 
 if [[ "${DRY_RUN:-0}" == "1" ]]; then
-    print_dry_run_command "eval" "${DLC_BINARY}" "${DLC_SUBMIT_ARGS[@]}"
+    print_dry_run_command "eval" python3 "${SCRIPT_DIR}/dlc_create_job.py" "${DLC_SUBMIT_ARGS[@]}"
     if [[ "${JUDGE_BACKEND}" == "api" ]]; then
-        print_dry_run_command "judge" "${DLC_BINARY}" "${JUDGE_SUBMIT_ARGS[@]}"
+        print_dry_run_command "judge" python3 "${SCRIPT_DIR}/dlc_create_job.py" "${JUDGE_SUBMIT_ARGS[@]}"
     fi
     exit 0
 fi
@@ -876,11 +888,12 @@ echo "  - vLLM logs: ${FIXED_LOG_DIR}"
 echo "  - eval log:  ${FIXED_LOG_DIR}"
 echo "[INFO] Unified timestamp: ${TIMESTAMP}"
 
+wait_for_job_success "${EVAL_JOB_ID}" "eval" "${RUNNING_TIMEOUT}" "${RESOURCE_ID}" "${WORKSPACE_ID}"
+
 if [[ "${HAS_JUDGE_CONFIG}" != "1" ]]; then
+    echo "[INFO] Evaluation completed successfully in DLC job: ${EVAL_JOB_ID}"
     exit 0
 fi
-
-wait_for_job_success "${EVAL_JOB_ID}" "eval" "${RUNNING_TIMEOUT}" "${RESOURCE_ID}" "${WORKSPACE_ID}"
 
 if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
     echo "[INFO] Eval + inline local vLLM judge workflow completed successfully in DLC job: ${EVAL_JOB_ID}"

@@ -22,8 +22,8 @@ load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
 
 validate_benchmark_cache_mount() {
-    if [[ ! -d "/mnt/cpfsB" || ! -d "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
-        echo "[ERROR] CPFSB benchmark cache is not mounted: ${LMMS_EVAL_BENCHMARK_CACHE}" >&2
+    if [[ ! -d "/mnt/nasA" || ! -d "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
+        echo "[ERROR] NAS A benchmark cache is not mounted: ${LMMS_EVAL_BENCHMARK_CACHE}" >&2
         return 2
     fi
     if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
@@ -133,90 +133,8 @@ setup_native_libs() {
 }
 
 check_runtime_deps() {
-    local _vllm_pythonpath
-    _vllm_pythonpath="$(innovator_vllm_pythonpath)"
-    VENV_PATH="${VENV_PATH}" INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 PYTHONPATH="${_vllm_pythonpath}" "${VENV_PATH}/bin/python" - <<'PY'
-import importlib.metadata as md
-import importlib.util
-import os
-import shutil
-import sys
-from packaging.version import Version
-
-errors = []
-
-
-def dist_version(name: str):
-    try:
-        return Version(md.version(name))
-    except md.PackageNotFoundError:
-        errors.append(f"missing package: {name}")
-        return None
-
-
-hub = dist_version("huggingface-hub")
-dist_version("vllm")
-if hub is not None and not (Version("0.34.0") <= hub < Version("1.0.0")):
-    errors.append(f"huggingface-hub must be >=0.34.0,<1.0, got {hub}")
-
-pydantic = dist_version("pydantic")
-if pydantic is not None and pydantic < Version("2.12.0"):
-    errors.append(f"pydantic must be >=2.12.0 for vLLM, got {pydantic}")
-
-for name in (
-    "pytablewriter",
-    "nvidia-ml-py",
-    "sacrebleu",
-    "evaluate",
-    "rouge-score",
-    "rouge",
-    "jiwer",
-    "tenacity",
-    "python-dotenv",
-    "openpyxl",
-):
-    dist_version(name)
-
-instrumentator = dist_version("prometheus-fastapi-instrumentator")
-if instrumentator is not None and instrumentator < Version("8.0.2"):
-    print(
-        "[WARN] "
-        "prometheus-fastapi-instrumentator must be >=8.0.2 for "
-        f"FastAPI/Starlette compatibility, got {instrumentator}",
-        file=sys.stderr,
-    )
-
-if shutil.which("ninja") is None:
-    errors.append("missing executable: ninja")
-
-if importlib.util.find_spec("pynvml") is None:
-    errors.append("missing import: pynvml")
-
-if importlib.util.find_spec("flashinfer") is None:
-    errors.append("missing import: flashinfer")
-else:
-    try:
-        __import__("flashinfer")
-    except Exception as exc:
-        errors.append(f"flashinfer import failed: {exc!r}")
-
-if importlib.util.find_spec("flash_attn") is not None:
-    errors.append("Innovator lmms-eval guard did not hide system flash_attn")
-
-if errors:
-    print("[ERROR] lmms-eval venv dependency check failed:", file=sys.stderr)
-    for item in errors:
-        print(f"  - {item}", file=sys.stderr)
-    print(
-        f"Fix with: {os.environ.get('VENV_PATH', '${VENV_PATH}')}/bin/python -m pip install "
-        "'huggingface-hub>=0.34,<1' 'pydantic>=2.12,<3' pytablewriter nvidia-ml-py ninja "
-        "'prometheus-fastapi-instrumentator>=8.0.2' sacrebleu evaluate rouge-score rouge jiwer tenacity python-dotenv openpyxl",
-        file=sys.stderr,
-    )
-    raise SystemExit(1)
-
-print("[INFO] lmms-eval venv dependency check passed.")
-PY
+    INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 PYTHONPATH="$(innovator_vllm_pythonpath)" \
+        "${VENV_PATH}/bin/python" "${LMMS_EVAL_ROOT}/lmms_eval/runtime_preflight.py" --vllm --imports
 }
 
 trim_whitespace() {
@@ -369,7 +287,7 @@ run_lmms_eval_task() {
         --signal=TERM \
         --kill-after="${TASK_TIMEOUT_KILL_AFTER_SECONDS}s" \
         "${TASK_TIMEOUT_SECONDS}s" \
-        "${VENV_PATH}/bin/torchrun" \
+        "${VENV_PATH}/bin/python" -m torch.distributed.run \
         --nnodes="${NUM_MACHINES}" \
         --node_rank="${_MACHINE_RANK}" \
         --nproc_per_node="${NPROC_PER_NODE}" \

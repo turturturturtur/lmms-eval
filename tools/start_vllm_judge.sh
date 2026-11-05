@@ -140,7 +140,8 @@ if ! command -v setsid >/dev/null 2>&1; then
     echo "[ERROR] setsid is required for owned vLLM process-group cleanup." >&2
     exit 1
 fi
-CUDA_VISIBLE_DEVICES="${JUDGE_CUDA_VISIBLE_DEVICES}" setsid python -m vllm.entrypoints.openai.api_server \
+# --model-path is validated as a local directory above.
+VLLM_USE_MODELSCOPE=False CUDA_VISIBLE_DEVICES="${JUDGE_CUDA_VISIBLE_DEVICES}" setsid python -m vllm.entrypoints.openai.api_server \
     --model "${MODEL_PATH}" \
     --served-model-name "${SERVED_MODEL_NAME}" \
     --tensor-parallel-size "${TP}" \

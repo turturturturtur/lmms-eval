@@ -112,7 +112,7 @@ cfg_bool() {
 }
 
 # ── 环境 ──────────────────────────────────────────────────────────────────────
-export HF_HOME=$(cfg '.env.hf_home // "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface"')
+export HF_HOME=$(cfg '.env.hf_home // "/mnt/nasA/tianleniu/evaluation_cache/huggingface"')
 # Priority: existing env var (e.g. from ~/.bashrc) > config file
 export HF_TOKEN="${HF_TOKEN:-$(cfg '.env.hf_token // empty')}"
 HF_DATASETS_CACHE_CFG=$(cfg '.env.hf_datasets_cache // empty')
@@ -130,7 +130,7 @@ export FORCE_COLOR=0
 export LOGURU_NO_COLOR=1
 
 # 虚拟环境路径
-VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv"')
+VENV_PATH=$(cfg '.env.venv_path // "/mnt/cpfsA/user/<USER>/conda/envs/lmm"')
 
 # 数据集缓存与离线模式
 LMMS_EVAL_DATASETS_CACHE=$(cfg '.env.lmms_eval_datasets_cache // empty')
@@ -146,16 +146,16 @@ if [[ -n "${LMMS_EVAL_DATASETS_CACHE}" && "${LMMS_EVAL_DATASETS_CACHE}" != "null
 fi
 
 validate_benchmark_cache_mount() {
-    if [[ ! -d "/mnt/cpfsB" || ! -d "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
-        echo "[ERROR] CPFSB benchmark cache is not mounted: /mnt/cpfsB/evaluation_cache/lmms_eval" >&2
+    if [[ ! -d "/mnt/nasA" || ! -d "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval" ]]; then
+        echo "[ERROR] NAS A benchmark cache is not mounted: /mnt/nasA/tianleniu/evaluation_cache/lmms_eval" >&2
         return 2
     fi
-    if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
-        echo "[ERROR] Judge must use benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
+    if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval" ]]; then
+        echo "[ERROR] Judge must use benchmark cache /mnt/nasA/tianleniu/evaluation_cache/lmms_eval, got: ${LMMS_EVAL_DATASETS_CACHE:-<unset>}" >&2
         return 2
     fi
-    if [[ "${HF_DATASETS_CACHE:-}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
-        echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
+    if [[ "${HF_DATASETS_CACHE:-}" != "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval" ]]; then
+        echo "[ERROR] HF_DATASETS_CACHE must match benchmark cache /mnt/nasA/tianleniu/evaluation_cache/lmms_eval, got: ${HF_DATASETS_CACHE:-<unset>}" >&2
         return 2
     fi
 }
@@ -167,20 +167,35 @@ TRANSFORMERS_OFFLINE=$(cfg_bool '.env.transformers_offline')
 [[ "${TRANSFORMERS_OFFLINE}" == "true" ]] && export TRANSFORMERS_OFFLINE=1 || unset TRANSFORMERS_OFFLINE
 
 # ── 日志 ──────────────────────────────────────────────────────────────────────
-LOG_BASE=$(cfg '.log.dir // "/mnt/cpfsB/<USER>/vllm_logs"')
+LOG_BASE=$(cfg '.log.dir // "/mnt/cpfsA/user/<USER>/vllm_logs"')
 LOG_DIR="${LOG_BASE}/judge_$(date +%Y-%m-%d_%H-%M-%S)"
 mkdir -p "${LOG_DIR}"
 
 # ── Judge 配置 ────────────────────────────────────────────────────────────────
 JUDGE_BACKEND=$(cfg '.judge.backend // "vllm"')  # api 或 vllm
 JUDGE_PARALLEL=$(cfg_int '.judge.parallel // 32')
+export JUDGE_DATAPOINT_TIMEOUT=$(cfg '.judge.datapoint_timeout_seconds // 300')
+export JUDGE_DATAPOINT_MAX_ATTEMPTS=$(cfg '.judge.datapoint_max_attempts // 3')
+export JUDGE_TIMEOUT=$(cfg '.judge.request_timeout_seconds // 120')
+for pair in "datapoint_timeout_seconds:${JUDGE_DATAPOINT_TIMEOUT}" "datapoint_max_attempts:${JUDGE_DATAPOINT_MAX_ATTEMPTS}" "request_timeout_seconds:${JUDGE_TIMEOUT}"; do
+    value="${pair#*:}"
+    if ! [[ "${value}" =~ ^[1-9][0-9]*$ ]]; then
+        echo "[ERROR] judge.${pair%%:*} must be a positive integer, got: ${value}" >&2
+        exit 2
+    fi
+done
+if (( JUDGE_TIMEOUT >= JUDGE_DATAPOINT_TIMEOUT )); then
+    echo "[ERROR] judge.request_timeout_seconds must be less than judge.datapoint_timeout_seconds" >&2
+    exit 2
+fi
+echo "[INFO] Judge sample timeout=${JUDGE_DATAPOINT_TIMEOUT}s attempts=${JUDGE_DATAPOINT_MAX_ATTEMPTS} request timeout=${JUDGE_TIMEOUT}s"
 
 # ── API 后端配置 (当 backend=api 时使用) ───────────────────────────────────────
 API_KEY=$(cfg '.judge.api.key // empty')
 API_BASE_URL=$(cfg '.judge.api.base_url // empty')
 
 # ── vLLM 后端配置 (当 backend=vllm 时使用) ─────────────────────────────────────
-VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B"')
+VLLM_MODEL_PATH=$(cfg '.judge.vllm.model_path // "/mnt/nasA/tianleniu/models/Qwen3.5-9B"')
 VLLM_PROCESSOR_COMPAT=$(cfg '.judge.vllm.processor_compat // "auto"')
 VLLM_TP=$(cfg_int '.judge.vllm.tp // 8')
 VLLM_MAX_MODEL_LEN=$(cfg_int '.judge.vllm.max_model_len // 40960')
@@ -226,10 +241,10 @@ fi
 # 优先从 input_result_path 读取，如果没有则尝试从旧的 output_path 读取
 INPUT_RESULT_PATH=$(cfg '.eval.input_result_path // empty')
 if [[ -z "${INPUT_RESULT_PATH}" || "${INPUT_RESULT_PATH}" == "null" ]]; then
-    INPUT_RESULT_PATH=$(cfg '.eval.output_path // "/mnt/cpfsB/<USER>/eval_result"')
+    INPUT_RESULT_PATH=$(cfg '.eval.output_path // "/mnt/cpfsA/user/<USER>/eval_result"')
 fi
 TASKS=$(cfg '.eval.tasks // empty')
-OUTPUT_PATH=$(cfg '.eval.output_path // "/mnt/cpfsB/<USER>/judge_results"')
+OUTPUT_PATH=$(cfg '.eval.output_path // "/mnt/cpfsA/user/<USER>/judge_results"')
 VERBOSITY=$(cfg '.eval.verbosity // "INFO"')
 SKIP_JUDGED=$(cfg_bool '.eval.skip_judged // false')
 
@@ -258,21 +273,33 @@ echo "=========================================="
 # ══════════════════════════════════════════════════════════════════════════════
 # §2  激活虚拟环境
 # ══════════════════════════════════════════════════════════════════════════════
-if [[ ! -f "${VENV_PATH}/bin/activate" ]]; then
+if [[ ! -x "${VENV_PATH}/bin/python" ]]; then
     echo "[ERROR] Virtual environment not found: ${VENV_PATH}"
     exit 1
 fi
 
 echo "[INFO] Activating virtual environment: ${VENV_PATH}"
-source "${VENV_PATH}/bin/activate"
+source "${LMMS_EVAL_ROOT}/run_scripts/activate_runtime.sh"
+activate_eval_runtime "${VENV_PATH}"
 INNOVATOR_SITECUSTOMIZE="${LMMS_EVAL_ROOT}/run_scripts/lmms_eval_sitecustomize"
 export PYTHONPATH="${INNOVATOR_SITECUSTOMIZE}:${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+export PYTHONSAFEPATH=1
 export INNOVATOR_LMMS_HIDE_FLASH_ATTN=1
 
 # 验证 lmms-eval 可用
-if ! python -c "import lmms_eval" 2>/dev/null; then
-    echo "[ERROR] lmms-eval not found in virtual environment"
-    echo "[INFO] Please install: pip install -e /mnt/cpfsB/<USER>/lmms-eval"
+if ! python - "${LMMS_EVAL_ROOT}" <<'PY'
+import sys
+from pathlib import Path
+import lmms_eval
+
+expected = (Path(sys.argv[1]) / "lmms_eval").resolve()
+actual = Path(lmms_eval.__file__).resolve().parent
+assert getattr(sys.flags, "safe_path", False), "Python >=3.11 and PYTHONSAFEPATH=1 are required"
+assert actual == expected, f"Judge source mismatch: expected {expected}, imported {actual}"
+print(f"[INFO] Judge Python source verified: {actual}")
+PY
+then
+    echo "[ERROR] lmms-eval source isolation check failed"
     exit 1
 fi
 
@@ -422,15 +449,14 @@ except Exception:
         --log "${VLLM_LOG}" \
     ) || { echo "[ERROR] Failed to start vLLM judge backend"; exit 1; }
     
-    # 打印子脚本日志（过滤掉机器可读的进程元数据行）
-    echo "${_output}" | grep -v -E '^VLLM_(PID|OWNED)='
-    
     VLLM_PID=$(echo "${_output}" | grep '^VLLM_PID=' | cut -d= -f2)
     VLLM_OWNED=$(echo "${_output}" | grep '^VLLM_OWNED=' | cut -d= -f2)
     if [[ "${VLLM_OWNED}" != "1" || -z "${VLLM_PID}" ]]; then
         echo "[ERROR] Local vLLM launcher did not return an owned PID" >&2
         exit 2
     fi
+    # Successful launchers may return only metadata. Empty logs are normal.
+    printf '%s\n' "${_output}" | sed '/^VLLM_\(PID\|OWNED\)=/d'
 }
 
 load_api_keys() {
@@ -443,11 +469,11 @@ load_api_keys() {
         if [[ "$-" == *u* ]]; then _saved_flags="${_saved_flags}u"; fi
         
         # 首先尝试 Qwen3-VL/evaluation 目录下的 setup_api_keys.sh
-        if [[ -f "/mnt/cpfsB/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" ]]; then
-            echo "[INFO] Loading API keys from /mnt/cpfsB/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh"
+        if [[ -f "/mnt/cpfsA/user/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" ]]; then
+            echo "[INFO] Loading API keys from /mnt/cpfsA/user/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh"
             set +eu
             set -a
-            source "/mnt/cpfsB/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" 2>/dev/null || true
+            source "/mnt/cpfsA/user/<USER>/Qwen3-VL/evaluation/setup_api_keys.sh" 2>/dev/null || true
             set +a
             [[ "${_saved_flags}" == *e* ]] && set -e
             [[ "${_saved_flags}" == *u* ]] && set -u
@@ -484,12 +510,14 @@ if [[ "${JUDGE_BACKEND}" == "vllm" ]]; then
     export API_TYPE="openai"
     export JUDGE_API_TYPE="openai"
     export JUDGE_DISABLE_THINKING=1
+    export JUDGE_STRUCTURED_OUTPUTS=1
     export MODEL_VERSION="${JUDGE_MODEL}"
     export JUDGE_MODEL_NAME="${JUDGE_MODEL}"
     export SCIVQR_OPEN_JUDGE_MODEL="${JUDGE_MODEL}"
     export SCIVQR_REASONING_JUDGE_MODEL="${JUDGE_MODEL}"
     
 elif [[ "${JUDGE_BACKEND}" == "api" ]]; then
+    unset JUDGE_STRUCTURED_OUTPUTS
     # ── 使用 API 后端 ─────────────────────────────────────────────────────────
     echo "[INFO] Using API backend for judging"
     

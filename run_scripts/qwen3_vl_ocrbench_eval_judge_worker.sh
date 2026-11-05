@@ -59,7 +59,7 @@ if [[ -z "${OCRBENCH_SAMPLE_FILE}" || ! -f "${OCRBENCH_SAMPLE_FILE}" ]]; then
 fi
 
 VENV_PATH="$(cfg '.env.venv_path')"
-if [[ -z "${VENV_PATH}" || "${VENV_PATH}" == "null" || ! -f "${VENV_PATH}/bin/activate" ]]; then
+if [[ -z "${VENV_PATH}" || "${VENV_PATH}" == "null" || ! -x "${VENV_PATH}/bin/python" ]]; then
     echo "[ERROR] Virtual environment not found: ${VENV_PATH}" >&2
     exit 6
 fi
@@ -74,8 +74,8 @@ else
     export HF_DATASETS_CACHE="${HF_HOME}/datasets"
     export LMMS_EVAL_DATASETS_CACHE="${HF_DATASETS_CACHE}"
 fi
-if [[ "${LMMS_EVAL_DATASETS_CACHE}" != "/mnt/cpfsB/evaluation_cache/lmms_eval" || ! -d "/mnt/cpfsB/evaluation_cache/lmms_eval" ]]; then
-    echo "[ERROR] OCRBench worker requires mounted benchmark cache /mnt/cpfsB/evaluation_cache/lmms_eval" >&2
+if [[ "${LMMS_EVAL_DATASETS_CACHE}" != "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval" || ! -d "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval" ]]; then
+    echo "[ERROR] OCRBench worker requires mounted benchmark cache /mnt/nasA/tianleniu/evaluation_cache/lmms_eval" >&2
     exit 2
 fi
 export HF_HUB_OFFLINE=1
@@ -156,7 +156,8 @@ echo "[INFO] Judge model     : ${JUDGE_MODEL}"
 echo "[INFO] Judge parallel  : ${JUDGE_PARALLEL}"
 
 # shellcheck disable=SC1090
-source "${VENV_PATH}/bin/activate"
+source "${SCRIPT_DIR}/activate_runtime.sh"
+activate_eval_runtime "${VENV_PATH}"
 
 set +e
 python -m lmms_eval judge \

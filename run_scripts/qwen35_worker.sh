@@ -20,15 +20,21 @@ JUDGE_CONFIG="${3:-}"
 
 load_config "${CONFIG}" "${CMD_MODEL_PATH}"
 export PYTHONPATH="${LMMS_EVAL_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+# Keep relative data paths rooted in the original working directory while
+# preventing python -m from importing mutable source code from that directory.
+export PYTHONSAFEPATH=1
 export LMMS_EVAL_JUDGE_STAGE="generation"
+# Checkpoints are mounted local directories. Do not inherit the DLC image's
+# optional ModelScope downloader patch, which can replace Hugging Face loading.
+export VLLM_USE_MODELSCOPE=False
 
 validate_benchmark_cache_mount() {
-    if [[ ! -d "/mnt/cpfsB" ]]; then
-        echo "[ERROR] CPFSB mount is missing: /mnt/cpfsB" >&2
+    if [[ ! -d "/mnt/nasA" ]]; then
+        echo "[ERROR] NAS A mount is missing: /mnt/nasA" >&2
         return 2
     fi
     if [[ ! -d "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
-        echo "[ERROR] Benchmark cache is missing from CPFSB: ${LMMS_EVAL_BENCHMARK_CACHE}" >&2
+        echo "[ERROR] Benchmark cache is missing from NAS A: ${LMMS_EVAL_BENCHMARK_CACHE}" >&2
         return 2
     fi
     if [[ "${LMMS_EVAL_DATASETS_CACHE:-}" != "${LMMS_EVAL_BENCHMARK_CACHE}" ]]; then
@@ -183,90 +189,10 @@ setup_native_libs() {
 }
 
 check_runtime_deps() {
-    local _vllm_pythonpath
-    _vllm_pythonpath="$(innovator_vllm_pythonpath)"
-    VENV_PATH="${VENV_PATH}" INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 PYTHONPATH="${_vllm_pythonpath}" "${VENV_PATH}/bin/python" - <<'PY'
-import importlib.metadata as md
-import importlib.util
-import os
-import shutil
-import sys
-from packaging.version import Version
-
-errors = []
-
-
-def dist_version(name: str):
-    try:
-        return Version(md.version(name))
-    except md.PackageNotFoundError:
-        errors.append(f"missing package: {name}")
-        return None
-
-
-hub = dist_version("huggingface-hub")
-dist_version("vllm")
-if hub is not None and not (Version("0.34.0") <= hub < Version("1.0.0")):
-    errors.append(f"huggingface-hub must be >=0.34.0,<1.0, got {hub}")
-
-pydantic = dist_version("pydantic")
-if pydantic is not None and pydantic < Version("2.12.0"):
-    errors.append(f"pydantic must be >=2.12.0 for vLLM, got {pydantic}")
-
-for name in (
-    "pytablewriter",
-    "nvidia-ml-py",
-    "sacrebleu",
-    "evaluate",
-    "rouge-score",
-    "rouge",
-    "jiwer",
-    "tenacity",
-    "python-dotenv",
-    "openpyxl",
-):
-    dist_version(name)
-
-instrumentator = dist_version("prometheus-fastapi-instrumentator")
-if instrumentator is not None and instrumentator < Version("8.0.2"):
-    print(
-        "[WARN] "
-        "prometheus-fastapi-instrumentator must be >=8.0.2 for "
-        f"FastAPI/Starlette compatibility, got {instrumentator}",
-        file=sys.stderr,
-    )
-
-if shutil.which("ninja") is None:
-    errors.append("missing executable: ninja")
-
-if importlib.util.find_spec("pynvml") is None:
-    errors.append("missing import: pynvml")
-
-if importlib.util.find_spec("flashinfer") is None:
-    errors.append("missing import: flashinfer")
-else:
-    try:
-        __import__("flashinfer")
-    except Exception as exc:
-        errors.append(f"flashinfer import failed: {exc!r}")
-
-if importlib.util.find_spec("flash_attn") is not None:
-    errors.append("Innovator lmms-eval guard did not hide system flash_attn")
-
-if errors:
-    print("[ERROR] lmms-eval venv dependency check failed:", file=sys.stderr)
-    for item in errors:
-        print(f"  - {item}", file=sys.stderr)
-    print(
-        f"Fix with: {os.environ.get('VENV_PATH', '${VENV_PATH}')}/bin/python -m pip install "
-        "'huggingface-hub>=0.34,<1' 'pydantic>=2.12,<3' pytablewriter nvidia-ml-py ninja "
-        "'prometheus-fastapi-instrumentator>=8.0.2' sacrebleu evaluate rouge-score rouge jiwer tenacity python-dotenv openpyxl",
-        file=sys.stderr,
-    )
-    raise SystemExit(1)
-
-print("[INFO] lmms-eval venv dependency check passed.")
-PY
+    local args=(--imports)
+    [[ "${MODEL_BACKEND}" == "vllm" ]] && args+=(--vllm)
+    INNOVATOR_LMMS_HIDE_FLASH_ATTN=1 PYTHONPATH="$(innovator_vllm_pythonpath)" \
+        "${VENV_PATH}/bin/python" "${LMMS_EVAL_ROOT}/lmms_eval/runtime_preflight.py" "${args[@]}"
 }
 
 validate_qwen35_model_compat() {
@@ -405,6 +331,14 @@ if errors:
 
 print("[INFO] lmms-eval API dependency check passed.")
 PY
+}
+
+compute_vllm_eval_resources() {
+    compute_resources
+    # All GPUs already serve inference in the persistent vLLM backends. A
+    # single HTTP client process per node keeps eval.concurrency from being
+    # multiplied by the GPU count and avoids duplicating dataset traversal.
+    NPROC_PER_NODE=1
 }
 
 compute_api_resources() {
@@ -624,8 +558,14 @@ run_lmms_eval_task() {
         gen_args=(--gen_kwargs "${GEN_KWARGS}")
     fi
 
+    local watchdog=()
+    if [[ "${MODEL_BACKEND}" == "vllm" ]]; then
+        local backend_pid_csv
+        backend_pid_csv="$(IFS=,; echo "${PIDS[*]}")"
+        watchdog=("${VENV_PATH}/bin/python" "${LMMS_EVAL_ROOT}/tools/run_with_backend_watch.py" --backend-pids "${backend_pid_csv}" --)
+    fi
     set +e
-    timeout \
+    "${watchdog[@]}" timeout \
         --signal=TERM \
         --kill-after="${TASK_TIMEOUT_KILL_AFTER_SECONDS}s" \
         "${TASK_TIMEOUT_SECONDS}s" \
@@ -694,8 +634,14 @@ run_lmms_eval() {
     local task
     for task in "${TASK_ARRAY[@]}"; do
         index=$(( index + 1 ))
-        if ! run_lmms_eval_task "${task}" "${index}" "${#TASK_ARRAY[@]}"; then
+        local task_rc=0
+        run_lmms_eval_task "${task}" "${index}" "${#TASK_ARRAY[@]}" || task_rc=$?
+        if (( task_rc != 0 )); then
             failed_tasks+=("${task}")
+            if (( task_rc == 75 )); then
+                echo "[ERROR] Local inference backend exited; aborting remaining tasks." >&2
+                break
+            fi
         fi
     done
 
@@ -777,12 +723,37 @@ run_inline_local_judge() {
         echo "[INFO][Machine ${MACHINE_RANK}] Eval succeeded; stopping eval vLLM backends before inline local judge."
         cleanup_vllm
     fi
-    wait_for_eval_gpu_release
+    wait_for_eval_gpu_release || return $?
 
     echo "[INFO][Machine ${MACHINE_RANK}] Starting inline local vLLM judge in the current DLC worker."
-    bash "${SCRIPT_DIR}/run_judge.sh" "${JUDGE_CONFIG}"
+    bash "${SCRIPT_DIR}/run_judge.sh" "${JUDGE_CONFIG}" || return $?
     echo "[INFO][Machine ${MACHINE_RANK}] Inline local vLLM judge completed successfully."
 }
+
+JUDGE_ONLY_SOURCE_CONFIG="$(cfg '.eval.judge_only_source_config // empty')"
+if [[ -n "${JUDGE_ONLY_SOURCE_CONFIG}" ]]; then
+    if [[ -z "${JUDGE_CONFIG}" ]]; then
+        echo "[ERROR] Judge retry requires an inline judge configuration." >&2
+        exit 2
+    fi
+    compute_api_resources
+    LOCAL_GPU_NUM=$(nvidia-smi -L | wc -l)
+    setup_logging
+    ensure_venv
+    prepend_pythonpath_bins
+    setup_native_libs
+    "${VENV_PATH}/bin/python" -m lmms_eval.llm_judge.retry "${CONFIG}"
+    "${VENV_PATH}/bin/python" "${LMMS_EVAL_ROOT}/tools/monitor_worker_resources.py" \
+        --parent-pid "$$" --output "${LOG_DIR}/worker_resources.jsonl" \
+        > "${LOG_DIR}/resource_monitor.log" 2>&1 &
+    echo "[INFO] Judge retry: inference reused from ${JUDGE_ONLY_SOURCE_CONFIG}; no inference backends launched."
+    # Calling in a conditional lets run_inline_local_judge propagate its exit code.
+    if run_inline_local_judge; then
+        exit 0
+    else
+        exit $?
+    fi
+fi
 
 if [[ "${MODEL_BACKEND}" == "openai" ]]; then
     compute_api_resources
@@ -800,7 +771,7 @@ if [[ "${MODEL_BACKEND}" == "openai" ]]; then
     fi
 
 else
-    compute_resources
+    compute_vllm_eval_resources
     setup_logging
     ensure_venv
     ensure_timeout_command
@@ -811,6 +782,9 @@ else
     resolve_qwen35_stop_token_ids
     setup_cleanup_trap
 
+    "${VENV_PATH}/bin/python" "${LMMS_EVAL_ROOT}/tools/monitor_worker_resources.py" \
+        --parent-pid "$$" --output "${LOG_DIR}/worker_resources.jsonl" \
+        > "${LOG_DIR}/resource_monitor.log" 2>&1 &
     launch_vllm_backends
 
     stage_datasets &
@@ -838,7 +812,7 @@ else
 fi
 
 JUDGE_RC=0
-if [[ -n "${JUDGE_CONFIG}" ]]; then
+if [[ -n "${JUDGE_CONFIG}" && "${EVAL_RC}" == "0" ]]; then
     if run_inline_local_judge; then
         JUDGE_RC=0
     else

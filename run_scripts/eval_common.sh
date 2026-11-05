@@ -5,9 +5,9 @@
 
 set -euo pipefail
 
-# Pre-populated benchmark cache mounted from CPFSB.  DLC workers must consume
+# Pre-populated benchmark cache mounted from NAS A.  DLC workers must consume
 # this cache directly; copying it to another shared path only adds startup I/O.
-LMMS_EVAL_BENCHMARK_CACHE="/mnt/cpfsB/evaluation_cache/lmms_eval"
+LMMS_EVAL_BENCHMARK_CACHE="/mnt/nasA/tianleniu/evaluation_cache/lmms_eval"
 
 # ── Guard: must be sourced ────────────────────────────────────────────────────
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
@@ -97,9 +97,10 @@ clean_failed_task_output() {
             ;;
     esac
 
-    rm -rf -- "${task_output_path}"
-    mkdir -p "${task_output_path}"
-    jq --arg task "${task}" '.eval.tasks = $task' "${CONFIG}" > "${task_output_path}/config.json"
+    # Keep raw responses and samples for diagnosis/rejudging. Only withdraw
+    # aggregated scores so an unsuccessful benchmark cannot look successful.
+    find "${task_output_path}" -type f -name '*_results.json' -delete
+    echo "[INFO][Machine ${MACHINE_RANK}] Preserved raw responses and samples for failed task: ${task}"
 }
 
 validate_lmms_eval_task_outputs() {
@@ -248,12 +249,13 @@ ensure_venv() {
     if [[ -z "${VENV_PATH}" || "${VENV_PATH}" == "null" ]]; then
         VENV_PATH="$(dirname "$0")/../.venv"
     fi
-    if [[ ! -f "${VENV_PATH}/bin/activate" ]]; then
+    if [[ ! -x "${VENV_PATH}/bin/python" ]]; then
         echo "[ERROR] Virtual environment not found: ${VENV_PATH}"
         exit 1
     fi
     echo "[INFO][Machine ${MACHINE_RANK}] Activating virtual environment: ${VENV_PATH}"
-    source "${VENV_PATH}/bin/activate"
+    source "${BASH_SOURCE[0]%/*}/activate_runtime.sh"
+    activate_eval_runtime "${VENV_PATH}"
 }
 
 # ── optionally stage pre-cached datasets ──────────────────────────────────────
@@ -567,7 +569,7 @@ run_lmms_eval() {
     # gets confused by these env vars and only spawns a single process.
     # torchrun handles multi-node/multi-process correctly and lmms-eval auto-detects
     # torch.distributed.is_initialized() to set distributed_executor_backend=torchrun.
-    "${VENV_PATH}/bin/torchrun" \
+    "${VENV_PATH}/bin/python" -m torch.distributed.run \
         --nnodes="${NUM_MACHINES}" \
         --node_rank="${_MACHINE_RANK}" \
         --nproc_per_node="${NPROC_PER_NODE}" \

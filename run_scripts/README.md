@@ -1,3 +1,13 @@
+当前 WebUI 存储配置（2026-10-05）
+
+- 后续评测和 judge 固定使用 workspace `247143`、quota `quota1cauvwqouvn`。
+- 仅挂载 CPFS A 和 NAS A。CPFS A 接入点 `ap-1sqxfm3pf4vkkcqec` 的 `/user/tianleniu/` 挂载为 `/mnt/cpfsA/user/tianleniu`，保持与本机相同的代码路径。
+- benchmark cache：`/mnt/nasA/tianleniu/evaluation_cache/lmms_eval`；HF_HOME：`/mnt/nasA/tianleniu/evaluation_cache/huggingface`。
+- 模型、日志和结果使用 NAS A，代码、DLC 工具和 lmm Python 使用 CPFS A。WebUI 配置页可展开查看目录可访问性。
+- `storage_policy.py` 在预览及提交时拒绝旧盘路径和其他挂载。历史记录不改写，浏览时按完整目录前缀映射到 A 区。
+- 创建任务通过 `dlc_create_job.py` 调用原生 [CreateJob API](https://help.aliyun.com/zh/pai/developer-reference/api-pai-dlc-2020-12-03-createjob)，保留 `AccessPointId` 和 `RoleArn`；DLC CLI 继续用于认证和任务查询。
+- `env.venv_path` 使用项目 `.venv`，从 NAS A 的现有运行包恢复，并补齐 vLLM 0.26.0、PyTorch 2.11.0/CUDA 12.9 与 Transformers 5.12.1。可运行上级目录的 `scripts/install_lmmeval_runtime.sh` 修复环境；WebUI 服务仍使用 Conda `lmm`。提交前会检查评测解释器及 vLLM 的依赖版本。
+
 # lmms-eval 运行脚本使用文档
 
 本目录（`run_scripts/`）提供了一套用于 **本地单机调试** 和 **DLC 集群大规模提交** 的运行脚本，支持 `lmms-eval` 与 `vLLM` / `SGLang` 等推理后端的无缝集成。
@@ -76,11 +86,11 @@ run_scripts/
 ```json
 {
   "env": {
-    "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
+    "hf_home": "/mnt/nasA/tianleniu/evaluation_cache/huggingface",
     "hf_token": "",
-    "venv_path": "/mnt/cpfsB/<USER>/lmms-eval/.venv",
-    "lmms_eval_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
-    "hf_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
+    "venv_path": "/mnt/cpfsA/user/<USER>/Innovator-Tune/lmms-eval/.venv",
+    "lmms_eval_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
     "hf_datasets_offline": true,
     "transformers_offline": true,
     "api_type": "openai",
@@ -88,7 +98,7 @@ run_scripts/
     "openai_api_url": "https://yunwu.ai/v1/chat/completions"
   },
   "log": {
-    "dir": "/mnt/cpfsB/<USER>/vllm_logs"
+    "dir": "/mnt/cpfsA/user/<USER>/vllm_logs"
   },
   "distributed": {
     "master_addr": "127.0.0.1",
@@ -97,7 +107,7 @@ run_scripts/
     "rank": 0
   },
   "model": {
-    "path": "/mnt/cpfsB/<USER>/data/model/Qwen3-VL-8B-Instruct",
+    "path": "/mnt/nasA/<USER>/models/Qwen3-VL-8B-Instruct",
     "tp": 1,
     "max_model_len": 65536,
     "gpu_memory_utilization": 0.9,
@@ -106,7 +116,7 @@ run_scripts/
   },
   "eval": {
     "tasks": "ai2d,mmmu_val,mmbench_en_dev",
-    "output_path": "/mnt/cpfsB/<USER>/lmms-eval/eval_result",
+    "output_path": "/mnt/nasA/<USER>/Innovator-Tune/lmms-eval/eval_result",
     "concurrency": 128,
     "gen_kwargs": "max_new_tokens=32768,max_pixels=4014080,temperature=1.0",
     "limit": -1,
@@ -124,7 +134,7 @@ run_scripts/
 | `env.hf_home` | string | HuggingFace 缓存根目录 |
 | `env.hf_token` | string | HuggingFace Token（可选） |
 | `env.venv_path` | string | Python 虚拟环境路径 |
-| `env.lmms_eval_datasets_cache` | string | 显式 datasets cache；固定指向已有 benchmark cache `/mnt/cpfsB/evaluation_cache/lmms_eval` |
+| `env.lmms_eval_datasets_cache` | string | 显式 datasets cache；固定指向已有 benchmark cache `/mnt/nasA/tianleniu/evaluation_cache/lmms_eval` |
 | `env.hf_datasets_cache` | string | 任务工具使用的 HF datasets cache；必须与 `env.lmms_eval_datasets_cache` 相同 |
 | `env.hf_datasets_offline` | bool | 是否离线加载 datasets |
 | `env.transformers_offline` | bool | 是否离线加载 transformers |
@@ -158,8 +168,8 @@ run_scripts/
   "dlc": {
     "submit": true,
     "job_name": "test_eval_jobs",
-    "binary": "/mnt/cpfsB/<USER>/dlc",
-    "run_script": "/mnt/cpfsB/<USER>/lmms-eval/scripts/qwen3_vl_worker.sh",
+    "binary": "/mnt/cpfsA/user/<USER>/Innovator-Tune/bin/dlc",
+    "run_script": "/mnt/cpfsA/user/<USER>/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh",
     "workers": 2,
     "worker_gpu": 8,
     "worker_cpu": 110,
@@ -168,8 +178,8 @@ run_scripts/
     "priority": 9,
     "running_timeout": 86400,
     "worker_image": "dsw-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/...",
-    "data_source_uris": "cpfs://...::/mnt/cpfsB,nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB,oss://...::/mnt/oss",
-    "resource_id": "quotaev2tl4w6aw0",
+    "data_source_uris": "bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/::/mnt/cpfsA/user/tianleniu,nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasA",
+    "resource_id": "quota1cauvwqouvn",
     "workspace_id": "245264",
     "vpc_id": "vpc-...",
     "switch_id": "vsw-...",
@@ -193,8 +203,8 @@ run_scripts/
 | `dlc.priority` | int | 作业优先级 |
 | `dlc.running_timeout` | int | 运行超时时间（秒） |
 | `dlc.worker_image` | string | Worker 容器镜像 |
-| `dlc.data_source_uris` | string | 数据挂载 URI（CPFS / NAS / OSS 等），必须包含 CPFS 挂载到 `/mnt/cpfsB` 的 URI，以及 `nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB` |
-| `dlc.resource_id` | string | 固定资源配额 ID，必须为 `quotaev2tl4w6aw0` |
+| `dlc.data_source_uris` | string | 数据挂载 URI（CPFS A / NAS A），必须包含 CPFS 挂载到 `/mnt/cpfsA/user/tianleniu` 的 URI，以及 `nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasA` |
+| `dlc.resource_id` | string | 固定资源配额 ID，必须为 `quota1cauvwqouvn` |
 | `dlc.workspace_id` | string | 工作空间 ID |
 | `dlc.vpc_id` / `switch_id` / `security_group_id` | string | 网络与安全组配置 |
 | `dlc.extended_cidrs` | string | 扩展 CIDR 列表 |
@@ -204,14 +214,14 @@ run_scripts/
 ```json
 {
   "env": {
-    "hf_home": "/mnt/cpfsB/public_data/public_dataset/.cache/huggingface",
-    "lmms_eval_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
-    "hf_datasets_cache": "/mnt/cpfsB/evaluation_cache/lmms_eval",
+    "hf_home": "/mnt/nasA/tianleniu/evaluation_cache/huggingface",
+    "lmms_eval_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
     "hf_token": "",
-    "venv_path": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/.venv"
+    "venv_path": "/mnt/cpfsA/user/<USER>/Innovator-Tune/lmms-eval/.venv"
   },
   "log": {
-    "dir": "/mnt/cpfsB/<USER>/Innovator-Tune/lmms-eval/judge_logs"
+    "dir": "/mnt/nasA/<USER>/Innovator-Tune/lmms-eval/judge_logs"
   },
   "judge": {
     "backend": "vllm",
@@ -222,7 +232,7 @@ run_scripts/
       "base_url": ""
     },
     "vllm": {
-      "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+      "model_path": "/mnt/nasA/tianleniu/models/Qwen3.5-9B",
       "tp": 8,
       "max_model_len": 40960,
       "gpu_memory_utilization": "0.88",
@@ -231,9 +241,9 @@ run_scripts/
     }
   },
   "eval": {
-    "input_result_path": "/mnt/cpfsB/<USER>/lmms-eval/eval_result/2026-04-12_18-59-25/Qwen3-VL-8B-Instruct",
+    "input_result_path": "/mnt/nasA/<USER>/Innovator-Tune/lmms-eval/eval_result/2026-04-12_18-59-25/Qwen3-VL-8B-Instruct",
     "tasks": "mmbench_en_dev,MolParse,sfe-en,mmmu_val_qwen3_official",
-    "output_path": "/mnt/cpfsB/<USER>/judge_results",
+    "output_path": "/mnt/cpfsA/user/<USER>/judge_results",
     "verbosity": "INFO",
     "debug": true
   }
@@ -268,7 +278,7 @@ run_scripts/
 ### 基础用法
 
 ```bash
-cd /mnt/cpfsB/<USER>/lmms-eval
+cd /mnt/cpfsA/user/<USER>/Innovator-Tune/lmms-eval
 bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json
 ```
 
@@ -280,7 +290,7 @@ bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json /path/to/anothe
 
 ### 复用已有 benchmark cache（默认）
 
-本地和 DLC 运行默认直接读取 `/mnt/cpfsB/evaluation_cache/lmms_eval`，不会复制 100G+ 的共享 cache。只有明确需要把 cache 复制到另一个目录时才开启 staging；如果 source 和 destination 相同，即使开启也会自动跳过。
+本地和 DLC 运行默认直接读取 `/mnt/nasA/tianleniu/evaluation_cache/lmms_eval`，不会复制 100G+ 的共享 cache。只有明确需要把 cache 复制到另一个目录时才开启 staging；如果 source 和 destination 相同，即使开启也会自动跳过。
 
 ```bash
 LMMS_EVAL_STAGE_DATASETS=1 bash run_scripts/qwen3_vl_worker.sh run_scripts/config_eval.json
@@ -331,7 +341,7 @@ launch_vllm_backends() → 启动 NUM_BACKENDS 个 vLLM 进程
 ### 提交命令
 
 ```bash
-cd /mnt/cpfsB/<USER>/lmms-eval
+cd /mnt/cpfsA/user/<USER>/Innovator-Tune/lmms-eval
 bash run_scripts/qwen3_vl_submit.sh run_scripts/config_dlc.json run_scripts/config_eval.json
 ```
 
@@ -358,8 +368,8 @@ dlc submit pytorchjob --command="..."
 
 - **统一时间戳**：由 submitter 生成并写入 `runtime_config.json`，确保所有 worker 的输出目录一致。
 - **强制非调试**：集群运行自动设置 `debug=false`，退出时会清理 vLLM 进程。
-- **直接复用 benchmark cache**：DLC 提交固定 `LMMS_EVAL_STAGE_DATASETS=0`，eval/judge 的 datasets cache 都指向 `/mnt/cpfsB/evaluation_cache/lmms_eval`，避免 CPFS 到 CPFS 的全量复制。
-- **CPFSB 挂载校验**：主任务和 judge 的 `data_source_uris` 必须包含挂载到 `/mnt/cpfsB` 的 CPFS URI；worker 启动时还会检查 benchmark cache 是否真实可见。
+- **直接复用 benchmark cache**：DLC 提交固定 `LMMS_EVAL_STAGE_DATASETS=0`，eval/judge 的 datasets cache 都指向 `/mnt/nasA/tianleniu/evaluation_cache/lmms_eval`，避免 共享目录之间 的全量复制。
+- **CPFS A 与 NAS A 挂载校验**：主任务和 judge 的 `data_source_uris` 必须包含挂载到 `/mnt/cpfsA/user/tianleniu` 的 CPFS URI；worker 启动时还会检查 benchmark cache 是否真实可见。
 
 ---
 
@@ -375,7 +385,7 @@ WebUI / `qwen35_submit.sh` 的两种 DLC 行为不同：
 ### 运行 Judge
 
 ```bash
-cd /mnt/cpfsB/<USER>/lmms-eval
+cd /mnt/cpfsA/user/<USER>/Innovator-Tune/lmms-eval
 bash run_scripts/run_judge.sh run_scripts/config_judge.json
 ```
 
@@ -409,7 +419,7 @@ bash run_scripts/run_judge.sh run_scripts/config_judge.json
   "judge": {
     "backend": "vllm",
     "vllm": {
-      "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+      "model_path": "/mnt/nasA/tianleniu/models/Qwen3.5-9B",
       "tp": 8,
       "max_model_len": 40960,
       "gpu_memory_utilization": "0.88",
