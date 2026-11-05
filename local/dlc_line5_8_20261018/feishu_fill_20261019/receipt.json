@@ -1,0 +1,98 @@
+{
+  "complete": true,
+  "verified_at": "2026-10-19T05:13:12.612768+00:00",
+  "url": "https://scnfed7y9q7p.feishu.cn/wiki/QXfpwaKEyi7H1hkhFwscFL0bnHb?sheet=RAG5Fk",
+  "sheet_id": "RAG5Fk",
+  "sheet_name": "Qwen3.5",
+  "revision_before": 1193,
+  "revision_after": 1194,
+  "filled_cell_count": 5,
+  "filled_cells": {
+    "AF5": {
+      "task": "superchem_en",
+      "value": 11.4,
+      "unrounded_value": 11.4,
+      "display": "11.40",
+      "job_id": "dlcy6okjvhx9hdpc"
+    },
+    "AG5": {
+      "task": "superchem_cn",
+      "value": 11.2,
+      "unrounded_value": 11.200000000000001,
+      "display": "11.20",
+      "job_id": "dlcy6okjvhx9hdpc"
+    },
+    "AH6": {
+      "task": "SmolInstruct_v2",
+      "value": 24.1846,
+      "unrounded_value": 24.18461807488824,
+      "display": "24.18",
+      "job_id": "dlcyqnrbf2twc2hy"
+    },
+    "AF7": {
+      "task": "superchem_en",
+      "value": 8.2,
+      "unrounded_value": 8.200000000000001,
+      "display": "8.20",
+      "job_id": "dlc9wv4ejam0n1as"
+    },
+    "AG7": {
+      "task": "superchem_cn",
+      "value": 11.4,
+      "unrounded_value": 11.4,
+      "display": "11.40",
+      "job_id": "dlc9wv4ejam0n1as"
+    }
+  },
+  "smol_aggregation": "arithmetic_mean_of_finite_subtasks_times_100; 14/14 finite",
+  "existing_average_formulas_recalculated": {
+    "AM5": {
+      "formula": "=AVERAGE(AA5:AL5)",
+      "value": 38.3541666666667
+    },
+    "AM6": {
+      "formula": "=AVERAGE(AA6:AL6)",
+      "value": 39.1028833333333
+    },
+    "AM7": {
+      "formula": "=AVERAGE(AA7:AL7)",
+      "value": 41.8633333333333
+    }
+  },
+  "entire_sheet_value_differences": {
+    "AF5": {
+      "before": "",
+      "after": "11.40"
+    },
+    "AG5": {
+      "before": "",
+      "after": "11.20"
+    },
+    "AM5": {
+      "before": "43.77",
+      "after": "38.35"
+    },
+    "AH6": {
+      "before": "",
+      "after": "24.18"
+    },
+    "AM6": {
+      "before": "40.46",
+      "after": "39.10"
+    },
+    "AF7": {
+      "before": "",
+      "after": "8.20"
+    },
+    "AG7": {
+      "before": "",
+      "after": "11.40"
+    },
+    "AM7": {
+      "before": "48.28",
+      "after": "41.86"
+    }
+  },
+  "all_target_values_notes_styles_verified": true,
+  "unrelated_cells_unchanged": true
+}

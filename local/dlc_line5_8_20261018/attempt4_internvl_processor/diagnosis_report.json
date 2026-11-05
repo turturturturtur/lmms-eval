@@ -1,0 +1,20 @@
+{
+  "failure": "InternVL image-only mm_processor_kwargs leaked into InternVLVideoProcessor constructor in installed vLLM 0.26.",
+  "reproduction": "Two tests failed with the same TypeError as the cloud job.",
+  "fix": "Worker-scoped import hook removes image-only options from video initialization; image processor retains requested patch limit.",
+  "verification": "4 actual installed-vLLM processor tests pass; default processor behavior preserved; image override lowers token count; unknown options still raise.",
+  "unchanged": [
+    "weights",
+    "task sources",
+    "generation hyperparameters",
+    "max_model_len=40960",
+    "TP=2",
+    "8 GPUs",
+    "concurrency=32"
+  ],
+  "retry_job_id": "dlc9wv4ejam0n1as",
+  "pending": null,
+  "gpu_gate_passed": true,
+  "complete": true,
+  "completion_report": "lmms-eval/local/dlc_line5_8_20261018/completion_report.json"
+}

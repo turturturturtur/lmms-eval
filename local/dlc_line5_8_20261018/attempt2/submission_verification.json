@@ -1,0 +1,23 @@
+[
+  {
+    "row": 5,
+    "job_id": "dlc1paq8ejxxyjkt",
+    "webui_runtime_discoverable": true,
+    "thinking": false,
+    "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_nothink_retry2_20261018/2026-10-18_08-42-50/runtime_config.json"
+  },
+  {
+    "row": 6,
+    "job_id": "dlc1pkptsbj3fx2s",
+    "webui_runtime_discoverable": true,
+    "thinking": false,
+    "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_nothink_retry2_20261018/2026-10-18_08-42-50/runtime_config.json"
+  },
+  {
+    "row": 7,
+    "job_id": "dlc1pupf633qmrlw",
+    "webui_runtime_discoverable": true,
+    "thinking": false,
+    "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_missing_nothink_retry2_20261018/2026-10-18_08-42-50/runtime_config.json"
+  }
+]

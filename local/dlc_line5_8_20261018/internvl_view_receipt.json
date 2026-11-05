@@ -1,0 +1,26 @@
+{
+  "original": "/mnt/nasA/tianleniu/lmms_eval_views/internvl3_5/iv35t-v2-3bf8c4fee9b5c478",
+  "view": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_model_views/internvl35_row07_nothink_20261018",
+  "weights": [
+    {
+      "name": "model-00001-of-00004.safetensors",
+      "target": "/mnt/nasA/tianleniu/models/InternVL3_5-8B/model-00001-of-00004.safetensors",
+      "size": 4982437672
+    },
+    {
+      "name": "model-00002-of-00004.safetensors",
+      "target": "/mnt/nasA/tianleniu/models/InternVL3_5-8B/model-00002-of-00004.safetensors",
+      "size": 3848612416
+    },
+    {
+      "name": "model-00003-of-00004.safetensors",
+      "target": "/mnt/nasA/tianleniu/models/InternVL3_5-8B/model-00003-of-00004.safetensors",
+      "size": 4999903176
+    },
+    {
+      "name": "model-00004-of-00004.safetensors",
+      "target": "/mnt/nasA/tianleniu/models/InternVL3_5-8B/model-00004-of-00004.safetensors",
+      "size": 3225776168
+    }
+  ]
+}

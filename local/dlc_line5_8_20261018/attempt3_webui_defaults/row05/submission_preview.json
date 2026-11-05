@@ -1,0 +1,50 @@
+{
+  "DisplayName": "eval_row05_missing_webui_defaults_20261018",
+  "WorkspaceId": "247143",
+  "ResourceId": "quota1cauvwqouvn",
+  "JobType": "PyTorchJob",
+  "Priority": 6,
+  "JobMaxRunningTimeMinutes": 10080,
+  "JobSpecs": [
+    {
+      "Type": "Worker",
+      "PodCount": 1,
+      "Image": "pai-wl-acr-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/tianleniu/innovatorvl:innovator-vl-20261002",
+      "ResourceConfig": {
+        "CPU": "32",
+        "GPU": "8",
+        "Memory": "128Gi",
+        "SharedMemory": "32Gi"
+      }
+    }
+  ],
+  "DataSources": [
+    {
+      "Uri": "bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/",
+      "MountPath": "/mnt/cpfsA/user/tianleniu",
+      "AccessPointId": "ap-1sqxfm3pf4vkkcqec",
+      "RoleArn": "acs:ram::1245621648665098:role/tianleniu-role"
+    },
+    {
+      "Uri": "nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/",
+      "MountPath": "/mnt/nasA"
+    }
+  ],
+  "UserVpc": {
+    "VpcId": "vpc-0jl5rpw5qokp6p2ettip6",
+    "SwitchId": "vsw-0jl0towefk00zk9gsahbu",
+    "SecurityGroupId": "sg-0jl0pd5qaerdj75wmred",
+    "ExtendedCIDRs": [
+      "10.1.32.0/20",
+      "10.1.0.0/20",
+      "10.1.255.0/29",
+      "10.1.255.8/29",
+      "10.1.16.0/20"
+    ]
+  },
+  "Settings": {
+    "Shell": "/bin/bash",
+    "JobReservedMinutes": 0
+  },
+  "UserCommand": "export LMMS_EVAL_LOG_DIR=/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00; bash /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row05/worker.sh /mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json"
+}

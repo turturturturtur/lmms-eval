@@ -1,0 +1,49 @@
+{
+  "env": {
+    "hf_home": "/mnt/nasA/tianleniu/evaluation_cache/huggingface",
+    "hf_token": "",
+    "venv_path": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/.venv",
+    "lmms_eval_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_offline": true,
+    "transformers_offline": true,
+    "api_type": "openai",
+    "openai_api_key": "",
+    "openai_api_url": "https://yunwu.ai/v1/chat/completions"
+  },
+  "log": {
+    "dir": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/qwen35_9b_feishu20"
+  },
+  "distributed": {
+    "master_addr": "127.0.0.1",
+    "master_port": 23456,
+    "world_size": 1,
+    "rank": 0
+  },
+  "model": {
+    "path": "/mnt/nasA/tianleniu/models/Qwen3.5-9B",
+    "tp": 2,
+    "max_model_len": 40960,
+    "gpu_memory_utilization": 0.88,
+    "max_num_seqs": 192,
+    "base_port": 8941,
+    "processor_compat": "required",
+    "view_root": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_model_views",
+    "startup_timeout_seconds": 1800,
+    "reasoning_parser": "qwen3",
+    "enable_thinking": false,
+    "is_qwen3_vl": false
+  },
+  "eval": {
+    "tasks": "ai2d,ai2d_no_mask,chartqa,infovqa_val,mmbench_en_dev,mmerealworld,mmerealworld_cn,mmmu_pro_vision_reasoning_qwen3_official,mmmu_val_qwen3_official,mmstar,ocrbench,realworldqa,seedbench_2_plus,vstar_bench,simplevqa,EMVista,sfe-en,microvqa,embspatial,erqa",
+    "output_path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/qwen35_9b_feishu20",
+    "concurrency": 32,
+    "gen_kwargs": "",
+    "limit": -1,
+    "vllm_request_timeout_seconds": 300,
+    "task_timeout_seconds": 21600,
+    "task_timeout_kill_after_seconds": 300,
+    "system_instruction": "",
+    "debug": false
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "create_time": "2026-06-15T11:14:45.000Z",
+    "modified_time": "2026-10-10T19:37:28.000Z",
+    "revision": 1193,
+    "sheets": [
+      {
+        "chart_count": 0,
+        "column_count": 36,
+        "float_image_count": 0,
+        "frozen_columns": 2,
+        "frozen_rows": 6,
+        "index": 0,
+        "is_hidden": false,
+        "merged_cells_count": 14,
+        "pivot_table_count": 0,
+        "resource_type": "sheet",
+        "row_count": 200,
+        "sheet_id": "1422c4",
+        "sheet_name": "Qwen3-VL"
+      },
+      {
+        "chart_count": 0,
+        "column_count": 45,
+        "float_image_count": 0,
+        "frozen_columns": 1,
+        "frozen_rows": 11,
+        "index": 1,
+        "is_hidden": false,
+        "merged_cells_count": 14,
+        "pivot_table_count": 0,
+        "resource_type": "sheet",
+        "row_count": 177,
+        "sheet_id": "RAG5Fk",
+        "sheet_name": "Qwen3.5"
+      },
+      {
+        "chart_count": 0,
+        "column_count": 40,
+        "float_image_count": 0,
+        "frozen_columns": 1,
+        "frozen_rows": 3,
+        "index": 2,
+        "is_hidden": false,
+        "merged_cells_count": 8,
+        "pivot_table_count": 0,
+        "resource_type": "sheet",
+        "row_count": 125,
+        "sheet_id": "wP2Jdv",
+        "sheet_name": "数据确认"
+      },
+      {
+        "chart_count": 0,
+        "column_count": 28,
+        "float_image_count": 0,
+        "frozen_columns": 2,
+        "index": 3,
+        "is_hidden": false,
+        "merged_cells_count": 7,
+        "pivot_table_count": 0,
+        "resource_type": "sheet",
+        "row_count": 141,
+        "sheet_id": "7WWWsC",
+        "sheet_name": "RegMix"
+      }
+    ],
+    "title": "实验结果",
+    "token": "KohBsxkl8h6FzItKBE9cF0oxnUh"
+  }
+}

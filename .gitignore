@@ -97,3 +97,6 @@ superchem_en_images/
 .venv_old
 eval_result/
 judged_results/
+
+# DLC submission source snapshots (full repo checkouts, ~50 MiB / 11k files each)
+local/**/source/

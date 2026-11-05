@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-18",
+  "scope": "Existing 2000-sample test sets and completed judged results; no new model inference or judging.",
+  "metrics": [
+    {
+      "model": "CPT+46M SFT checkpoint-10000",
+      "task": "MolParse",
+      "judged_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/judge/r22/MolParse/20260912_024857_samples_MolParse.jsonl",
+      "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/outputs/r22/regular/run/tasks/molparse/q35v-d5020c7a3cb7-2e368412/20260912_024857_results.json",
+      "samples": 2000,
+      "correct": 619,
+      "percent": 30.95,
+      "enable_thinking": false,
+      "exact_text_matches_after_strip": 529,
+      "judge_successes": 2000,
+      "score_vs_correct_incorrect_mismatches": 0,
+      "at_256_output_tokens": 267
+    },
+    {
+      "model": "CPT+46M SFT checkpoint-10000",
+      "task": "OpenRxn",
+      "judged_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/judge/r22/OpenRxn/20260912_025103_samples_OpenRxn.jsonl",
+      "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/outputs/r22/regular/run/tasks/openrxn/q35v-d5020c7a3cb7-2e368412/20260912_025103_results.json",
+      "samples": 2000,
+      "correct": 461,
+      "percent": 23.05,
+      "enable_thinking": false,
+      "exact_text_matches_after_strip": 77,
+      "judge_successes": 2000,
+      "score_vs_correct_incorrect_mismatches": 0,
+      "at_256_output_tokens": 625
+    },
+    {
+      "model": "CPT+full24 SFT checkpoint-15000",
+      "task": "MolParse",
+      "judged_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/judge/r65/MolParse/20260912_122158_samples_MolParse.jsonl",
+      "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/outputs/r65/regular/run/tasks/molparse/hf65/20260912_122158_results.json",
+      "samples": 2000,
+      "correct": 1344,
+      "percent": 67.2,
+      "enable_thinking": false,
+      "exact_text_matches_after_strip": 1198,
+      "judge_successes": 2000,
+      "score_vs_correct_incorrect_mismatches": 0,
+      "at_256_output_tokens": 231
+    },
+    {
+      "model": "CPT+full24 SFT checkpoint-15000",
+      "task": "OpenRxn",
+      "judged_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/judge/r65/OpenRxn/20260912_122351_samples_OpenRxn.jsonl",
+      "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/outputs/r65/regular/run/tasks/openrxn/hf65/20260912_122351_results.json",
+      "samples": 2000,
+      "correct": 956,
+      "percent": 47.8,
+      "enable_thinking": false,
+      "exact_text_matches_after_strip": 548,
+      "judge_successes": 2000,
+      "score_vs_correct_incorrect_mismatches": 0,
+      "at_256_output_tokens": 306
+    },
+    {
+      "model": "CPT+full24 SFT checkpoint-30000",
+      "task": "MolParse",
+      "judged_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/judge/r78/MolParse/20260911_155818_samples_MolParse.jsonl",
+      "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/outputs/r78/regular/run/tasks/molparse/hf78/20260911_155818_results.json",
+      "samples": 2000,
+      "correct": 1471,
+      "percent": 73.55,
+      "enable_thinking": false,
+      "exact_text_matches_after_strip": 1350,
+      "judge_successes": 2000,
+      "score_vs_correct_incorrect_mismatches": 0,
+      "at_256_output_tokens": 237
+    },
+    {
+      "model": "CPT+full24 SFT checkpoint-30000",
+      "task": "OpenRxn",
+      "judged_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/judge/r78/OpenRxn/20260911_160017_samples_OpenRxn.jsonl",
+      "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/outputs/r78/regular/run/tasks/openrxn/hf78/20260911_160017_results.json",
+      "samples": 2000,
+      "correct": 1052,
+      "percent": 52.6,
+      "enable_thinking": false,
+      "exact_text_matches_after_strip": 653,
+      "judge_successes": 2000,
+      "score_vs_correct_incorrect_mismatches": 0,
+      "at_256_output_tokens": 247
+    }
+  ],
+  "molparse_question_types": {
+    "source": "/mnt/cpfsA/Innovator-Tune/.setup/molparse-audit-20261007/prompt_groups.json",
+    "samples": 2000,
+    "smiles_esmiles": 1630,
+    "mcq": 8,
+    "yesno": 76,
+    "description": 176,
+    "iupac": 52,
+    "properties_counts": 58
+  },
+  "openrxn_question_types": {
+    "source": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval/InnovatorLab___open_rxn/default/0.0.0/5b451923c4808d432302074f042b799178293f5d/open_rxn-test.arrow",
+    "samples": 2000,
+    "image_present": 1716,
+    "image_null": 284,
+    "explicit_mcq_marker_matches": 0,
+    "text_only_example": "Generate specific compound by applying R group definitions R[1] = NHMe to Markush template C(=O)(C1(c2cccs2)C(*)COCC1)NN<sep><a>9:R[1]</a> and output SMILES string."
+  },
+  "judge_partial_answer_example": {
+    "source": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/judge/r78/OpenRxn/20260911_160017_samples_OpenRxn.jsonl",
+    "doc_id": 500,
+    "question": "<image>Please provide the title displayed in the image.",
+    "target": "There are multiple titles: General Reaction:; Selected Examples:",
+    "prediction": "The title displayed in the image is:\n\n**General Reaction:**",
+    "judge_raw": "correct",
+    "interpretation": "The prediction includes General Reaction only, while target also includes Selected Examples; this demonstrates that semantic judging may accept incomplete coverage."
+  },
+  "training_domain_evidence": {
+    "script": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/SFT/run_qwen35_9b_cpt_sft_megatron_full_dpshard.sh",
+    "lines": [
+      81,
+      83
+    ],
+    "datasets": [
+      "sft_full_molqa_molparser",
+      "sft_full_reaction"
+    ],
+    "limitation": "Domain training is confirmed in the recipe; this audit did not measure train/test overlaps or isolate causal contributions."
+  }
+}

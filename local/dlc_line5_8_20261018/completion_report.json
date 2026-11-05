@@ -1,0 +1,352 @@
+{
+  "complete": true,
+  "verified_at": "2026-10-18T15:39:29.474052+00:00",
+  "requested_benchmark_cells": 5,
+  "leaf_tasks": 18,
+  "total_samples": 35061,
+  "jobs": [
+    {
+      "row": 5,
+      "job_id": "dlcy6okjvhx9hdpc",
+      "status": "Succeeded",
+      "complete": true,
+      "tasks": {
+        "superchem_en": {
+          "samples": 500,
+          "responses": 500,
+          "metrics": {
+            "mcp_accuracy,none": 0.114
+          },
+          "finish_reasons": {
+            "stop": 454,
+            "length": 46
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/superchem_en/Qwen3-VL-8B-Instruct/20261018_165424_samples_superchem_en.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/superchem_en/Qwen3-VL-8B-Instruct/20261018_165424_results.json"
+        },
+        "superchem_cn": {
+          "samples": 500,
+          "responses": 500,
+          "metrics": {
+            "mcp_accuracy,none": 0.112
+          },
+          "finish_reasons": {
+            "stop": 476,
+            "length": 24
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/superchem_cn/Qwen3-VL-8B-Instruct/20261018_165625_samples_superchem_cn.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/superchem_cn/Qwen3-VL-8B-Instruct/20261018_165625_results.json"
+        }
+      },
+      "result_root": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00",
+      "model": "Qwen3-VL-8B-Instruct",
+      "requested_benchmarks": [
+        "superchem_en",
+        "superchem_cn"
+      ],
+      "cells": [
+        {
+          "cell": "AF5",
+          "task": "superchem_en"
+        },
+        {
+          "cell": "AG5",
+          "task": "superchem_cn"
+        }
+      ],
+      "gpu_count": 8,
+      "finished_at": "2026-10-18T08:58:01Z",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json"
+    },
+    {
+      "row": 6,
+      "job_id": "dlcyqnrbf2twc2hy",
+      "status": "Succeeded",
+      "complete": true,
+      "tasks": {
+        "smol_forward_synthesis": {
+          "samples": 4062,
+          "responses": 4062,
+          "metrics": {
+            "smol_metrics,none": 0.00036963125747341887
+          },
+          "finish_reasons": {
+            "length": 4062
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_forward_synthesis.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_retrosynthesis": {
+          "samples": 4156,
+          "responses": 4156,
+          "metrics": {
+            "smol_metrics,none": 0.4938076744164381
+          },
+          "finish_reasons": {
+            "stop": 3279,
+            "length": 877
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_retrosynthesis.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_molecule_captioning": {
+          "samples": 2538,
+          "responses": 2538,
+          "metrics": {
+            "smol_metrics,none": 0.11847885884819997
+          },
+          "finish_reasons": {
+            "stop": 2516,
+            "length": 22
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_molecule_captioning.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_molecule_generation": {
+          "samples": 2493,
+          "responses": 2493,
+          "metrics": {
+            "smol_metrics,none": 0.046498055718122114
+          },
+          "finish_reasons": {
+            "length": 789,
+            "stop": 1704
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_molecule_generation.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_name_conversion-i2f": {
+          "samples": 2993,
+          "responses": 2993,
+          "metrics": {
+            "smol_metrics,none": 0.05813564984964918
+          },
+          "finish_reasons": {
+            "stop": 2983,
+            "length": 10
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_name_conversion-i2f.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_name_conversion-i2s": {
+          "samples": 2993,
+          "responses": 2993,
+          "metrics": {
+            "smol_metrics,none": 0.3124460945686842
+          },
+          "finish_reasons": {
+            "stop": 2232,
+            "length": 761
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_name_conversion-i2s.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_name_conversion-s2f": {
+          "samples": 2993,
+          "responses": 2993,
+          "metrics": {
+            "smol_metrics,none": 0.028399599064483794
+          },
+          "finish_reasons": {
+            "stop": 2987,
+            "length": 6
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_name_conversion-s2f.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_name_conversion-s2i": {
+          "samples": 2993,
+          "responses": 2993,
+          "metrics": {
+            "smol_metrics,none": 0.0
+          },
+          "finish_reasons": {
+            "length": 434,
+            "stop": 2559
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_name_conversion-s2i.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_property_prediction-esol": {
+          "samples": 112,
+          "responses": 112,
+          "metrics": {
+            "smol_metrics,none": 5.4975806709757386e-14
+          },
+          "finish_reasons": {
+            "stop": 112
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_property_prediction-esol.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_property_prediction-lipo": {
+          "samples": 420,
+          "responses": 420,
+          "metrics": {
+            "smol_metrics,none": 7.878741668773176e-28
+          },
+          "finish_reasons": {
+            "stop": 420
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_property_prediction-lipo.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_property_prediction-bbbp": {
+          "samples": 197,
+          "responses": 197,
+          "metrics": {
+            "smol_metrics,none": 0.7969543147208121
+          },
+          "finish_reasons": {
+            "stop": 197
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_property_prediction-bbbp.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_property_prediction-clintox": {
+          "samples": 144,
+          "responses": 144,
+          "metrics": {
+            "smol_metrics,none": 0.3125
+          },
+          "finish_reasons": {
+            "stop": 144
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_property_prediction-clintox.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_property_prediction-hiv": {
+          "samples": 4107,
+          "responses": 4107,
+          "metrics": {
+            "smol_metrics,none": 0.6165084002921841
+          },
+          "finish_reasons": {
+            "stop": 4107
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_property_prediction-hiv.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        },
+        "smol_property_prediction-sider": {
+          "samples": 2860,
+          "responses": 2860,
+          "metrics": {
+            "smol_metrics,none": 0.6017482517482518
+          },
+          "finish_reasons": {
+            "stop": 2847,
+            "length": 13
+          },
+          "adapted_doc_trials": {},
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_samples_smol_property_prediction-sider.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json"
+        }
+      },
+      "result_root": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00",
+      "model": "gemma-4-12B-it",
+      "requested_benchmarks": [
+        "SmolInstruct_v2"
+      ],
+      "cells": [
+        {
+          "cell": "AH6",
+          "task": "SmolInstruct_v2"
+        }
+      ],
+      "gpu_count": 8,
+      "finished_at": "2026-10-18T10:04:05Z",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json"
+    },
+    {
+      "row": 7,
+      "job_id": "dlc9wv4ejam0n1as",
+      "status": "Succeeded",
+      "complete": true,
+      "tasks": {
+        "superchem_en": {
+          "samples": 500,
+          "responses": 500,
+          "metrics": {
+            "mcp_accuracy,none": 0.082
+          },
+          "finish_reasons": {
+            "stop": 377,
+            "length": 123
+          },
+          "adapted_doc_trials": {
+            "313": 1,
+            "34": 1
+          },
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_en/InternVL3_5-8B/20261018_233131_samples_superchem_en.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_en/InternVL3_5-8B/20261018_233131_results.json"
+        },
+        "superchem_cn": {
+          "samples": 500,
+          "responses": 500,
+          "metrics": {
+            "mcp_accuracy,none": 0.114
+          },
+          "finish_reasons": {
+            "length": 114,
+            "stop": 386
+          },
+          "adapted_doc_trials": {
+            "313": 1,
+            "34": 1
+          },
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_cn/InternVL3_5-8B/20261018_233517_samples_superchem_cn.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_cn/InternVL3_5-8B/20261018_233517_results.json"
+        }
+      },
+      "result_root": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17",
+      "model": "InternVL3_5-8B",
+      "requested_benchmarks": [
+        "superchem_en",
+        "superchem_cn"
+      ],
+      "cells": [
+        {
+          "cell": "AF7",
+          "task": "superchem_en"
+        },
+        {
+          "cell": "AG7",
+          "task": "superchem_cn"
+        }
+      ],
+      "gpu_count": 2,
+      "finished_at": "2026-10-18T15:38:46Z",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/runtime_config.json"
+    }
+  ],
+  "judge_required": false,
+  "judge_model_if_required": "Qwen3.5-9B",
+  "generation_settings_match_webui_defaults": true,
+  "compatibility_notes": [
+    "Gemma4 uses TRITON_ATTN to support its multimodal attention implementation.",
+    "InternVL uses a worker-local fix for image kwargs leaking into the video processor.",
+    "InternVL context-overflow samples lower image patch count while preserving all images and text.",
+    "InternVL ran on two GPUs because free resources were fragmented; TP=2 and concurrency=32 were unchanged."
+  ],
+  "source_sheet_revision": 1193,
+  "sheet_written": true,
+  "sheet_note": "2026-10-19: five originally missing benchmark cells written and read-back verified; original formulas recalculated.",
+  "row8": "All benchmark cells populated in the saved source sheet; no evaluation requested.",
+  "sheet_write_receipt": "/mnt/cpfsA/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/feishu_fill_20261019/receipt.json",
+  "sheet_revision_after_write": 1194
+}

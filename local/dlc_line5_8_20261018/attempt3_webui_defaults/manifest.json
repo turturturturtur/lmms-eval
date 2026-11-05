@@ -1,0 +1,62 @@
+{
+  "source_url": "https://scnfed7y9q7p.feishu.cn/wiki/QXfpwaKEyi7H1hkhFwscFL0bnHb?sheet=RAG5Fk",
+  "sheet_revision": 1193,
+  "jobs": [
+    {
+      "row": 5,
+      "model": "Qwen3-VL-8B-Instruct",
+      "tasks": [
+        "superchem_en",
+        "superchem_cn"
+      ],
+      "job_name": "eval_row05_missing_webui_defaults_20261018",
+      "directory": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row05",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json",
+      "source_sha256": "09b812e4e575840df3b4cf35cb39e665aaa0f5dddfa4c4a206e07b87642b6514",
+      "command": "export LMMS_EVAL_LOG_DIR=/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00; bash /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row05/worker.sh /mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json",
+      "status": "Queuing",
+      "previous_job_id": "dlc1paq8ejxxyjkt",
+      "submitted_at": "2026-10-18T05:58:19.650039+00:00",
+      "job_id": "dlcy6okjvhx9hdpc"
+    },
+    {
+      "row": 6,
+      "model": "gemma-4-12B-it",
+      "tasks": [
+        "SmolInstruct_v2"
+      ],
+      "job_name": "eval_row06_missing_webui_defaults_20261018",
+      "directory": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row06",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json",
+      "source_sha256": "09b812e4e575840df3b4cf35cb39e665aaa0f5dddfa4c4a206e07b87642b6514",
+      "command": "export LMMS_EVAL_LOG_DIR=/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00; bash /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row06/worker.sh /mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json",
+      "status": "Queuing",
+      "previous_job_id": "dlc1pkptsbj3fx2s",
+      "submitted_at": "2026-10-18T05:58:20.841653+00:00",
+      "job_id": "dlcyqnrbf2twc2hy"
+    },
+    {
+      "row": 7,
+      "model": "InternVL3_5-8B",
+      "tasks": [
+        "superchem_en",
+        "superchem_cn"
+      ],
+      "job_name": "eval_row07_missing_webui_defaults_20261018",
+      "directory": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row07",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json",
+      "source_sha256": "09b812e4e575840df3b4cf35cb39e665aaa0f5dddfa4c4a206e07b87642b6514",
+      "command": "export LMMS_EVAL_LOG_DIR=/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_missing_webui_defaults_20261018/2026-10-18_13-56-00; bash /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row07/worker.sh /mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json",
+      "status": "Queuing",
+      "previous_job_id": "dlc1pupf633qmrlw",
+      "submitted_at": "2026-10-18T05:58:21.603124+00:00",
+      "job_id": "dlcyqnrbfibmhflr"
+    }
+  ],
+  "skipped_rows": {
+    "8": "All benchmark cells already populated"
+  },
+  "source_manifest_sha256": "09b812e4e575840df3b4cf35cb39e665aaa0f5dddfa4c4a206e07b87642b6514",
+  "attempt": 3,
+  "benchmark_definition": "current WebUI checkout; no task overrides"
+}

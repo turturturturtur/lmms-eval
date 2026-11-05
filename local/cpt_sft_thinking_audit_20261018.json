@@ -1,0 +1,2108 @@
+{
+  "audit_date": "2026-10-18",
+  "scope": "Read-only verification of historical CPT+SFT evaluation thinking settings; no evaluation jobs started or settings changed.",
+  "july_config_audit": {
+    "count": 190,
+    "thinking_counts": {
+      "False": 190
+    },
+    "note": "Includes source configs, runtime configs, preflights and retries; this is not a count of unique completed jobs.",
+    "files": [
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/local_multiturn_corrections/checkpoint-2000/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ocrbench,chartqa,infovqa_val,mmstar"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/local_multiturn_corrections/checkpoint-3000/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ocrbench,chartqa,infovqa_val,mmstar,realworldqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/local_multiturn_corrections/checkpoint-4000/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ocrbench,chartqa,infovqa_val,mmstar,realworldqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/local_multiturn_corrections/checkpoint-5000/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,mmerealworld,mmerealworld_cn,realworldqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-1000/20260716_211016/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-1000/dryrun9_20260716_2115/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-1000/dryrun_20260716_2110/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-2000/20260716_211016/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-3000/20260716_211016/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-4000/20260716_211016/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-5000/20260716_211016/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/multiturn_reruns/checkpoint-6000/20260716_211016/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-1000/preflight_20260716/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-1000/rerun_20260716_160100/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-1000-rule_recovery/20260716_224027/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-1000-rule_recovery/verify_rule_recovery_223852/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-10000/20260716_160844/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-10000-failed3_recovery/20260717_104529/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,docvqa_val,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-10000-failed3_recovery/20260717_104650/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,docvqa_val,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-2000/20260716_160116/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-2000-microvqa_recovery/20260717_074903/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-2000-microvqa_recovery/20260717_074940/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-2000-microvqa_xlrs_recovery/20260717_081446/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "microvqa,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-2000-microvqa_xlrs_recovery/20260717_081525/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "microvqa,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-2000-rule_recovery/20260716_224032/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-3000/20260716_160135/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-3000-rule_recovery/20260716_224223/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-3000-xlrs_recovery/20260717_070706/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-3000-xlrs_recovery/20260717_070742/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-4000/20260716_160314/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-4000-rule_recovery/20260716_224243/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-4000-xlrs_recovery/20260717_070022/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-4000-xlrs_recovery/20260717_070051/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-4000-xlrs_recovery2/20260717_083217/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-4000-xlrs_recovery2/20260717_083247/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-5000/20260716_160328/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-5000-openrxn_recovery/20260717_065617/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "OpenRxn"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-5000-openrxn_recovery/20260717_065717/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "OpenRxn"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-5000-rule_recovery/20260716_224549/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-6000/rerun_20260716_160402/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-6000-rule_recovery/20260716_224606/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-6000-rule_recovery2/20260717_083314/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-6000-rule_recovery2/20260717_083346/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-7000/20260716_160555/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-8000/20260716_160613/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-9000/20260716_160641/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-9000-xlrs_recovery/20260717_052043/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/runs/checkpoint-9000-xlrs_recovery/20260717_052137/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-1000/20260716_221513/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-1000/20260716_232145/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-1000/dryrun_1k/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-1000/dryrun_textstop_supp_1k/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-1000/dryrun_textstop_supp_1k_v2/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-2000/20260716_221514/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-2000/20260716_232145/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-3000/20260716_221514/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-3000/20260716_232145/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-4000/20260716_221514/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-4000/20260716_232145/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-5000/20260716_221513/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-5000/20260716_232145/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-5000/dryrun_5k/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-6000/20260716_221514/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement/checkpoint-6000/20260716_232145/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-1000/20260716_233329/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-1000/20260716_233618/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-1000/dryrun_p5_r2_supp1k_233617/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-1000/dryrun_p5_supp1/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-2000/20260716_233621/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-2000/dryrun_p5_r2_supp2k_233620/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-3000/20260716_233623/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-3000/dryrun_p5_r2_supp3k_233622/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-4000/20260716_233626/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-4000/dryrun_p5_r2_supp4k_233625/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-5000/20260716_233629/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-5000/dryrun_p5_r2_supp5k_233628/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-6000/20260716_233632/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_p5/checkpoint-6000/dryrun_p5_r2_supp6k_233632/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_v2/checkpoint-1000/20260716_232530/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_v2/checkpoint-2000/20260716_232530/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_v2/checkpoint-3000/20260716_232530/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_v2/checkpoint-4000/20260716_232530/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_v2/checkpoint-5000/20260716_232530/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/sheet_supplement_textstop_v2/checkpoint-6000/20260716_232530/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9/checkpoint-2000/20260716_232145/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9/checkpoint-2000/dryrun_textstop9_2k/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9/checkpoint-2000/dryrun_textstop9_2k_v2/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-2000/20260716_233636/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-2000/dryrun_p5_full9/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-2000/dryrun_p5_r2_full9_2k_233635/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-3000/20260716_233639/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-3000/dryrun_p5_r2_full9_3k_233638/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-4000/20260716_233641/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-4000/dryrun_p5_r2_full9_4k_233640/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-6000/20260716_233644/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_p5/checkpoint-6000/dryrun_p5_r2_full9_6k_233643/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/configs/textstop_retry_9_v2/checkpoint-2000/20260716_232530/config_eval.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000/eval_q35_46m_sft_ckpt1000_pure_preflight_20260716/2026-07-16_15-59-21/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000/eval_q35_46m_sft_ckpt1000_pure_rerun_20260716_160100/2026-07-16_16-01-02/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_verify_rule_recovery_223852/2026-07-16_22-38-53/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000-failed3_recovery/eval_q35_46m_sft_ckpt10000_pure_failed3_recovery_20260717_104529/2026-07-17_10-45-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,docvqa_val,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000-failed3_recovery/eval_q35_46m_sft_ckpt10000_pure_failed3_recovery_20260717_104650/2026-07-17_10-46-50/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,docvqa_val,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000/eval_q35_46m_sft_ckpt2000_pure_20260716_160116/2026-07-16_16-01-16/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-microvqa_recovery/eval_q35_46m_sft_ckpt2000_pure_microvqa_recovery_20260717_074903/2026-07-17_07-49-03/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-microvqa_recovery/eval_q35_46m_sft_ckpt2000_pure_microvqa_recovery_20260717_074940/2026-07-17_07-49-41/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-microvqa_xlrs_recovery/eval_q35_46m_sft_ckpt2000_pure_microvqa_xlrs_recovery_20260717_081446/2026-07-17_08-14-46/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "microvqa,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-microvqa_xlrs_recovery/eval_q35_46m_sft_ckpt2000_pure_microvqa_xlrs_recovery_20260717_081525/2026-07-17_08-15-25/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "microvqa,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000/eval_q35_46m_sft_ckpt3000_pure_20260716_160135/2026-07-16_16-01-35/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-xlrs_recovery/eval_q35_46m_sft_ckpt3000_pure_xlrs_recovery_20260717_070706/2026-07-17_07-07-06/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-xlrs_recovery/eval_q35_46m_sft_ckpt3000_pure_xlrs_recovery_20260717_070742/2026-07-17_07-07-43/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000/eval_q35_46m_sft_ckpt4000_pure_20260716_160314/2026-07-16_16-03-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-xlrs_recovery/eval_q35_46m_sft_ckpt4000_pure_xlrs_recovery_20260717_070022/2026-07-17_07-00-22/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-xlrs_recovery/eval_q35_46m_sft_ckpt4000_pure_xlrs_recovery_20260717_070051/2026-07-17_07-00-51/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-xlrs_recovery2/eval_q35_46m_sft_ckpt4000_pure_xlrs_recovery2_20260717_083217/2026-07-17_08-32-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-xlrs_recovery2/eval_q35_46m_sft_ckpt4000_pure_xlrs_recovery2_20260717_083247/2026-07-17_08-32-47/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000/eval_q35_46m_sft_ckpt5000_pure_20260716_160328/2026-07-16_16-03-29/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-openrxn_recovery/eval_q35_46m_sft_ckpt5000_pure_openrxn_recovery_20260717_065617/2026-07-17_06-56-18/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "OpenRxn"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-openrxn_recovery/eval_q35_46m_sft_ckpt5000_pure_openrxn_recovery_20260717_065717/2026-07-17_06-57-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "OpenRxn"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000/eval_q35_46m_sft_ckpt6000_pure_rerun_20260716_160402/2026-07-16_16-04-03/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,mathvista_testmini,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery/eval_q35_46m_sft_ckpt6000_pure_rule_recovery_20260716_224606/2026-07-16_22-46-06/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083314/2026-07-17_08-33-15/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,mmmu_val_qwen3_official,mmmu_pro_standard_reasoning_qwen3_official,mmstar,vstar_bench,mmbench_en_dev,mmerealworld,mmerealworld_cn,docvqa_val,infovqa_val,seedbench,seedbench_2_plus,realworldqa,mathvision_reason_test_qwen3,mathverse_testmini_reasoning,wemath_testmini_reasoning,scienceqa,MolParse,OpenRxn,EMVista,superchem_en,superchem_cn,SmolInstruct_v2,ProteinLMBench,sfe-en,sfe-zh,microvqa,msearth_mcq,xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000-xlrs_recovery/eval_q35_46m_sft_ckpt9000_pure_xlrs_recovery_20260717_052043/2026-07-17_05-20-44/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000-xlrs_recovery/eval_q35_46m_sft_ckpt9000_pure_xlrs_recovery_20260717_052137/2026-07-17_05-21-37/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "xlrs-lite"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-1000/eval_q35_46m_sft_ckpt1000_stopfix_20260716_211016/2026-07-16_21-10-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-1000/eval_q35_46m_sft_ckpt1000_stopfix_dryrun9_20260716_2115/2026-07-16_21-08-46/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-1000/eval_q35_46m_sft_ckpt1000_stopfix_dryrun_20260716_2110/2026-07-16_21-07-12/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-2000/eval_q35_46m_sft_ckpt2000_stopfix_20260716_211016/2026-07-16_21-10-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-3000/eval_q35_46m_sft_ckpt3000_stopfix_20260716_211016/2026-07-16_21-10-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-4000/eval_q35_46m_sft_ckpt4000_stopfix_20260716_211016/2026-07-16_21-10-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-5000/eval_q35_46m_sft_ckpt5000_stopfix_20260716_211016/2026-07-16_21-10-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/multiturn_rerun/checkpoint-6000/eval_q35_46m_sft_ckpt6000_stopfix_20260716_211016/2026-07-16_21-10-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-1000/eval_q35_46m_sft_ckpt1000_sheetsupp_20260716_221513/2026-07-16_22-15-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-1000/eval_q35_46m_sft_ckpt1000_sheetsupp_dryrun_1k/2026-07-16_22-14-37/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-1000/eval_q35_46m_sft_ckpt1000_sheetsupp_textstop_20260716_232145/2026-07-16_23-21-45/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-1000/eval_q35_46m_sft_ckpt1000_sheetsupp_textstop_dryrun_textstop_supp_1k/2026-07-16_23-19-57/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-1000/eval_q35_46m_sft_ckpt1000_sheetsupp_textstop_dryrun_textstop_supp_1k_v2/2026-07-16_23-20-53/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-2000/eval_q35_46m_sft_ckpt2000_sheetsupp_20260716_221514/2026-07-16_22-15-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-2000/eval_q35_46m_sft_ckpt2000_sheetsupp_textstop_20260716_232145/2026-07-16_23-21-45/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-3000/eval_q35_46m_sft_ckpt3000_sheetsupp_20260716_221514/2026-07-16_22-15-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-3000/eval_q35_46m_sft_ckpt3000_sheetsupp_textstop_20260716_232145/2026-07-16_23-21-45/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-4000/eval_q35_46m_sft_ckpt4000_sheetsupp_20260716_221514/2026-07-16_22-15-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-4000/eval_q35_46m_sft_ckpt4000_sheetsupp_textstop_20260716_232145/2026-07-16_23-21-45/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-5000/eval_q35_46m_sft_ckpt5000_sheetsupp_20260716_221513/2026-07-16_22-15-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-5000/eval_q35_46m_sft_ckpt5000_sheetsupp_dryrun_5k/2026-07-16_22-14-38/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-5000/eval_q35_46m_sft_ckpt5000_sheetsupp_textstop_20260716_232145/2026-07-16_23-21-45/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-6000/eval_q35_46m_sft_ckpt6000_sheetsupp_20260716_221514/2026-07-16_22-15-14/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement/checkpoint-6000/eval_q35_46m_sft_ckpt6000_sheetsupp_textstop_20260716_232145/2026-07-16_23-21-45/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-1000/eval_q35_46m_sft_ckpt1000_supp5_20260716_233329/2026-07-16_23-33-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-1000/eval_q35_46m_sft_ckpt1000_supp5_20260716_233618/2026-07-16_23-36-18/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-1000/eval_q35_46m_sft_ckpt1000_supp5_dryrun_p5_r2_supp1k_233617/2026-07-16_23-36-17/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-1000/eval_q35_46m_sft_ckpt1000_supp5_dryrun_p5_supp1/2026-07-16_23-31-08/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-2000/eval_q35_46m_sft_ckpt2000_supp5_20260716_233621/2026-07-16_23-36-21/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-2000/eval_q35_46m_sft_ckpt2000_supp5_dryrun_p5_r2_supp2k_233620/2026-07-16_23-36-20/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-3000/eval_q35_46m_sft_ckpt3000_supp5_20260716_233623/2026-07-16_23-36-23/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-3000/eval_q35_46m_sft_ckpt3000_supp5_dryrun_p5_r2_supp3k_233622/2026-07-16_23-36-23/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-4000/eval_q35_46m_sft_ckpt4000_supp5_20260716_233626/2026-07-16_23-36-26/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-4000/eval_q35_46m_sft_ckpt4000_supp5_dryrun_p5_r2_supp4k_233625/2026-07-16_23-36-26/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-5000/eval_q35_46m_sft_ckpt5000_supp5_20260716_233629/2026-07-16_23-36-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-5000/eval_q35_46m_sft_ckpt5000_supp5_dryrun_p5_r2_supp5k_233628/2026-07-16_23-36-29/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-6000/eval_q35_46m_sft_ckpt6000_supp5_20260716_233632/2026-07-16_23-36-33/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_p5/checkpoint-6000/eval_q35_46m_sft_ckpt6000_supp5_dryrun_p5_r2_supp6k_233632/2026-07-16_23-36-32/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_v2/checkpoint-1000/eval_q35_46m_sft_ckpt1000_sheetsuppts2_20260716_232530/2026-07-16_23-25-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_v2/checkpoint-2000/eval_q35_46m_sft_ckpt2000_sheetsuppts2_20260716_232530/2026-07-16_23-25-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_v2/checkpoint-3000/eval_q35_46m_sft_ckpt3000_sheetsuppts2_20260716_232530/2026-07-16_23-25-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_v2/checkpoint-4000/eval_q35_46m_sft_ckpt4000_sheetsuppts2_20260716_232530/2026-07-16_23-25-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_v2/checkpoint-5000/eval_q35_46m_sft_ckpt5000_sheetsuppts2_20260716_232530/2026-07-16_23-25-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/sheet_supplement_textstop_v2/checkpoint-6000/eval_q35_46m_sft_ckpt6000_sheetsuppts2_20260716_232530/2026-07-16_23-25-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "mmerealworld,mmerealworld_cn,EMVista,microvqa"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9/checkpoint-2000/eval_q35_46m_sft_ckpt2000_textstop9_20260716_232145/2026-07-16_23-21-45/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9/checkpoint-2000/eval_q35_46m_sft_ckpt2000_textstop9_dryrun_textstop9_2k/2026-07-16_23-19-58/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9/checkpoint-2000/eval_q35_46m_sft_ckpt2000_textstop9_dryrun_textstop9_2k_v2/2026-07-16_23-20-53/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-2000/eval_q35_46m_sft_ckpt2000_textstop9p5_20260716_233636/2026-07-16_23-36-36/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-2000/eval_q35_46m_sft_ckpt2000_textstop9p5_dryrun_p5_full9/2026-07-16_23-31-09/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-2000/eval_q35_46m_sft_ckpt2000_textstop9p5_dryrun_p5_r2_full9_2k_233635/2026-07-16_23-36-35/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-3000/eval_q35_46m_sft_ckpt3000_textstop9p5_20260716_233639/2026-07-16_23-36-39/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-3000/eval_q35_46m_sft_ckpt3000_textstop9p5_dryrun_p5_r2_full9_3k_233638/2026-07-16_23-36-38/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-4000/eval_q35_46m_sft_ckpt4000_textstop9p5_20260716_233641/2026-07-16_23-36-41/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-4000/eval_q35_46m_sft_ckpt4000_textstop9p5_dryrun_p5_r2_full9_4k_233640/2026-07-16_23-36-40/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-6000/eval_q35_46m_sft_ckpt6000_textstop9p5_20260716_233644/2026-07-16_23-36-44/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_p5/checkpoint-6000/eval_q35_46m_sft_ckpt6000_textstop9p5_dryrun_p5_r2_full9_6k_233643/2026-07-16_23-36-44/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      },
+      {
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/textstop_retry_9_v2/checkpoint-2000/eval_q35_46m_sft_ckpt2000_textstop9v2_20260716_232530/2026-07-16_23-25-30/runtime_config.json",
+        "enable_thinking": false,
+        "tasks": "ai2d,ai2d_no_mask,ocrbench,chartqa,infovqa_val,mmstar,vstar_bench,realworldqa,mmbench_en_dev"
+      }
+    ]
+  },
+  "july_generation_logs": {
+    "count": 127,
+    "thinking_counts": {
+      "False": 127
+    },
+    "per_task": {
+      "mathvision_reason_test_qwen3": {
+        "False": 10
+      },
+      "mathverse_testmini_reasoning": {
+        "False": 11
+      },
+      "wemath_testmini_reasoning": {
+        "False": 10
+      },
+      "mathvista_testmini": {
+        "False": 5
+      },
+      "emvista": {
+        "False": 10
+      },
+      "superchem_en": {
+        "False": 10
+      },
+      "superchem_cn": {
+        "False": 10
+      },
+      "sfe-en": {
+        "False": 10
+      },
+      "mmmu_val_qwen3_official": {
+        "False": 10
+      },
+      "mmmu_pro_standard_reasoning_qwen3_official": {
+        "False": 10
+      },
+      "molparse": {
+        "False": 10
+      },
+      "openrxn": {
+        "False": 11
+      },
+      "scienceqa": {
+        "False": 10
+      }
+    },
+    "evidence": [
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000/eval_q35_46m_sft_ckpt1000_pure_rerun_20260716_160100/2026-07-16_16-01-02/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000/eval_q35_46m_sft_ckpt2000_pure_20260716_160116/2026-07-16_16-01-16/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000/eval_q35_46m_sft_ckpt3000_pure_20260716_160135/2026-07-16_16-01-35/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000/eval_q35_46m_sft_ckpt4000_pure_20260716_160314/2026-07-16_16-03-14/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000/eval_q35_46m_sft_ckpt5000_pure_20260716_160328/2026-07-16_16-03-29/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000/eval_q35_46m_sft_ckpt6000_pure_rerun_20260716_160402/2026-07-16_16-04-03/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvision_reason_test_qwen3",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_mathvision_reason_test_qwen3.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvision_reason_test_qwen3, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000/eval_q35_46m_sft_ckpt1000_pure_rerun_20260716_160100/2026-07-16_16-01-02/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000/eval_q35_46m_sft_ckpt2000_pure_20260716_160116/2026-07-16_16-01-16/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000/eval_q35_46m_sft_ckpt3000_pure_20260716_160135/2026-07-16_16-01-35/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000/eval_q35_46m_sft_ckpt4000_pure_20260716_160314/2026-07-16_16-03-14/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000/eval_q35_46m_sft_ckpt5000_pure_20260716_160328/2026-07-16_16-03-29/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000/eval_q35_46m_sft_ckpt6000_pure_rerun_20260716_160402/2026-07-16_16-04-03/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathverse_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_mathverse_testmini_reasoning.log",
+        "line": 633,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathverse_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 618,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "wemath_testmini_reasoning",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_wemath_testmini_reasoning.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=wemath_testmini_reasoning, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvista_testmini",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000/eval_q35_46m_sft_ckpt1000_pure_rerun_20260716_160100/2026-07-16_16-01-02/lmms_eval_rank0_mathvista_testmini.log",
+        "line": 713,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvista_testmini_format, max_tokens=16384, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 16384, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvista_testmini",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000/eval_q35_46m_sft_ckpt2000_pure_20260716_160116/2026-07-16_16-01-16/lmms_eval_rank0_mathvista_testmini.log",
+        "line": 713,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvista_testmini_format, max_tokens=16384, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 16384, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvista_testmini",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000/eval_q35_46m_sft_ckpt3000_pure_20260716_160135/2026-07-16_16-01-35/lmms_eval_rank0_mathvista_testmini.log",
+        "line": 713,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvista_testmini_format, max_tokens=16384, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 16384, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvista_testmini",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000/eval_q35_46m_sft_ckpt4000_pure_20260716_160314/2026-07-16_16-03-14/lmms_eval_rank0_mathvista_testmini.log",
+        "line": 713,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvista_testmini_cot, max_tokens=16384, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 16384, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mathvista_testmini",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000/eval_q35_46m_sft_ckpt5000_pure_20260716_160328/2026-07-16_16-03-29/lmms_eval_rank0_mathvista_testmini.log",
+        "line": 713,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mathvista_testmini_format, max_tokens=16384, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 16384, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "emvista",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_emvista.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=EMVista, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_superchem_en.log",
+        "line": 698,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_superchem_en.log",
+        "line": 700,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_superchem_en.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_superchem_en.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_superchem_en.log",
+        "line": 699,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_superchem_en.log",
+        "line": 694,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_superchem_en.log",
+        "line": 698,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_superchem_en.log",
+        "line": 699,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_superchem_en.log",
+        "line": 697,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_superchem_en.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_en, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_superchem_cn.log",
+        "line": 694,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_superchem_cn.log",
+        "line": 694,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_superchem_cn.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_superchem_cn.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_superchem_cn.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_superchem_cn.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_superchem_cn.log",
+        "line": 690,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_superchem_cn.log",
+        "line": 696,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_superchem_cn.log",
+        "line": 695,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "superchem_cn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_superchem_cn.log",
+        "line": 695,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=superchem_cn, max_tokens=128, temperature=1.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'temperature': 1.0, 'do_sample': True, 'top_p': 1.0, 'num_beams': 1, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_sfe-en.log",
+        "line": 643,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_sfe-en.log",
+        "line": 638,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_sfe-en.log",
+        "line": 655,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_sfe-en.log",
+        "line": 649,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_sfe-en.log",
+        "line": 643,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_sfe-en.log",
+        "line": 641,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_sfe-en.log",
+        "line": 651,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_sfe-en.log",
+        "line": 641,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_sfe-en.log",
+        "line": 647,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "sfe-en",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_sfe-en.log",
+        "line": 651,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=sfe-en, max_tokens=1024, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 1024, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000/eval_q35_46m_sft_ckpt1000_pure_rerun_20260716_160100/2026-07-16_16-01-02/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000/eval_q35_46m_sft_ckpt2000_pure_20260716_160116/2026-07-16_16-01-16/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000/eval_q35_46m_sft_ckpt3000_pure_20260716_160135/2026-07-16_16-01-35/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000/eval_q35_46m_sft_ckpt4000_pure_20260716_160314/2026-07-16_16-03-14/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000/eval_q35_46m_sft_ckpt5000_pure_20260716_160328/2026-07-16_16-03-29/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000/eval_q35_46m_sft_ckpt6000_pure_rerun_20260716_160402/2026-07-16_16-04-03/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_val_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_mmmu_val_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_val_qwen3_official, max_tokens=128, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 128, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000/eval_q35_46m_sft_ckpt1000_pure_rerun_20260716_160100/2026-07-16_16-01-02/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000/eval_q35_46m_sft_ckpt2000_pure_20260716_160116/2026-07-16_16-01-16/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000/eval_q35_46m_sft_ckpt3000_pure_20260716_160135/2026-07-16_16-01-35/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000/eval_q35_46m_sft_ckpt4000_pure_20260716_160314/2026-07-16_16-03-14/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000/eval_q35_46m_sft_ckpt5000_pure_20260716_160328/2026-07-16_16-03-29/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000/eval_q35_46m_sft_ckpt6000_pure_rerun_20260716_160402/2026-07-16_16-04-03/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log",
+        "line": 617,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=mmmu_pro_standard_reasoning_qwen3_official, max_tokens=32768, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 49152, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "molparse",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_molparse.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=MolParse, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-openrxn_recovery/eval_q35_46m_sft_ckpt5000_pure_openrxn_recovery_20260717_065717/2026-07-17_06-57-17/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "openrxn",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_openrxn.log",
+        "line": 625,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=OpenRxn, max_tokens=256, temperature=0.0, top_p=1.0, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 256, 'temperature': 0.0, 'top_p': 1.0, 'num_beams': 1, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-1000-rule_recovery/eval_q35_46m_sft_ckpt1000_pure_rule_recovery_20260716_224027/2026-07-16_22-40-27/lmms_eval_rank0_scienceqa.log",
+        "line": 642,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-10000/eval_q35_46m_sft_ckpt10000_pure_20260716_160844/2026-07-16_16-08-44/lmms_eval_rank0_scienceqa.log",
+        "line": 642,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-2000-rule_recovery/eval_q35_46m_sft_ckpt2000_pure_rule_recovery_20260716_224032/2026-07-16_22-40-32/lmms_eval_rank0_scienceqa.log",
+        "line": 642,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-3000-rule_recovery/eval_q35_46m_sft_ckpt3000_pure_rule_recovery_20260716_224223/2026-07-16_22-42-24/lmms_eval_rank0_scienceqa.log",
+        "line": 641,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-4000-rule_recovery/eval_q35_46m_sft_ckpt4000_pure_rule_recovery_20260716_224243/2026-07-16_22-42-44/lmms_eval_rank0_scienceqa.log",
+        "line": 643,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-5000-rule_recovery/eval_q35_46m_sft_ckpt5000_pure_rule_recovery_20260716_224549/2026-07-16_22-45-49/lmms_eval_rank0_scienceqa.log",
+        "line": 641,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-6000-rule_recovery2/eval_q35_46m_sft_ckpt6000_pure_rule_recovery2_20260717_083346/2026-07-17_08-33-47/lmms_eval_rank0_scienceqa.log",
+        "line": 642,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-7000/eval_q35_46m_sft_ckpt7000_pure_20260716_160555/2026-07-16_16-05-56/lmms_eval_rank0_scienceqa.log",
+        "line": 642,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-8000/eval_q35_46m_sft_ckpt8000_pure_20260716_160613/2026-07-16_16-06-14/lmms_eval_rank0_scienceqa.log",
+        "line": 642,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      },
+      {
+        "task": "scienceqa",
+        "path": "/mnt/nasA/tianleniu/Innovator-Tune/experiments/qwen35_9b_46m_sft_ckpt1k_10k_pure_eval_rerun_20260716/logs/eval/checkpoint-9000/eval_q35_46m_sft_ckpt9000_pure_20260716_160641/2026-07-16_16-06-41/lmms_eval_rank0_scienceqa.log",
+        "line": 641,
+        "enable_thinking": "False",
+        "generate_config": "[Generate Config] task=scienceqa, max_tokens=16, temperature=0.0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, stop=['\\n\\n'], stop_token_ids=[248046], enable_thinking=False, gen_kwargs={'max_new_tokens': 16, 'temperature': 0.0, 'do_sample': False, 'until': ['\\n\\n']}"
+      }
+    ]
+  },
+  "later_chemistry_raw_output_audit": [
+    {
+      "run": "dvcsup10_cptsft6k",
+      "task": "superchem_en",
+      "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/dvcsup10_cptsft6k/2026-09-09_03-49-29/tasks/superchem_en/checkpoint-6000/20260909_091054_samples_superchem_en.jsonl",
+      "sample_rows": 500,
+      "saved_responses": 4032,
+      "nonempty_reasoning_responses": 0,
+      "reasoning_field_present_rows": 500,
+      "raw_think_tag_responses": 0,
+      "finish_length": 329,
+      "finish_stop": 3703
+    },
+    {
+      "run": "dvcsup10_cptsft6k",
+      "task": "superchem_cn",
+      "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/dvcsup10_cptsft6k/2026-09-09_03-49-29/tasks/superchem_cn/checkpoint-6000/20260909_095338_samples_superchem_cn.jsonl",
+      "sample_rows": 500,
+      "saved_responses": 4032,
+      "nonempty_reasoning_responses": 0,
+      "reasoning_field_present_rows": 500,
+      "raw_think_tag_responses": 0,
+      "finish_stop": 3429,
+      "finish_length": 603
+    },
+    {
+      "run": "eval_CPT_SFT1M",
+      "task": "superchem_en",
+      "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_CPT_SFT1M/2026-08-31_20-11-49/tasks/superchem_en/checkpoint-976/20260901_042515_samples_superchem_en.jsonl",
+      "sample_rows": 500,
+      "saved_responses": 4032,
+      "nonempty_reasoning_responses": 0,
+      "reasoning_field_present_rows": 500,
+      "raw_think_tag_responses": 0,
+      "finish_stop": 3776,
+      "finish_length": 256
+    },
+    {
+      "run": "eval_CPT_SFT1M",
+      "task": "superchem_cn",
+      "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_CPT_SFT1M/2026-08-31_20-11-49/tasks/superchem_cn/checkpoint-976/20260901_045905_samples_superchem_cn.jsonl",
+      "sample_rows": 500,
+      "saved_responses": 4032,
+      "nonempty_reasoning_responses": 0,
+      "reasoning_field_present_rows": 500,
+      "raw_think_tag_responses": 0,
+      "finish_stop": 3659,
+      "finish_length": 373
+    }
+  ],
+  "october_mmmu_pro_vision": {
+    "state_file": "/mnt/cpfsA/Innovator-Tune/.setup/mmmu-pro-vision-all-20261007/state.json",
+    "cancellation_file": "/mnt/cpfsA/Innovator-Tune/.setup/mmmu-pro-vision-all-20261007/cancellation_20261008.json",
+    "runs": [
+      {
+        "row": 13,
+        "checkpoint": "checkpoint-1000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row13_20261007/2026-10-07_20-49-24/runtime_config.json",
+        "samples": [],
+        "logs": []
+      },
+      {
+        "row": 14,
+        "checkpoint": "checkpoint-2000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row14_20261007/2026-10-07_20-49-24/runtime_config.json",
+        "samples": [],
+        "logs": []
+      },
+      {
+        "row": 15,
+        "checkpoint": "checkpoint-3000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row15_20261007/2026-10-07_20-49-24/runtime_config.json",
+        "samples": [],
+        "logs": [
+          {
+            "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row15_20261007/2026-10-07_20-49-24/lmms_eval_rank0_mmmu_pro_vision_reasoning_qwen3_official.log",
+            "line": 114,
+            "generate_config": "[Generate Config] task=mmmu_pro_vision_reasoning_qwen3_official, max_tokens=65536, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, task_until_ignored=['\\n\\n'], model_stop_strings=None, stop_token_ids=[248046], enable_thinking=True, gen_kwargs={'max_new_tokens': 65536, 'until': ['\\n\\n'], 'temperature': 0}"
+          }
+        ]
+      },
+      {
+        "row": 16,
+        "checkpoint": "checkpoint-4000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row16_20261007/2026-10-07_20-47-56/runtime_config.json",
+        "samples": [],
+        "logs": []
+      },
+      {
+        "row": 17,
+        "checkpoint": "checkpoint-5000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row17_20261007/2026-10-07_20-47-56/runtime_config.json",
+        "samples": [],
+        "logs": []
+      },
+      {
+        "row": 18,
+        "checkpoint": "checkpoint-6000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row18_20261007/2026-10-07_20-47-56/runtime_config.json",
+        "samples": [],
+        "logs": []
+      },
+      {
+        "row": 19,
+        "checkpoint": "checkpoint-7000",
+        "status": "Complete",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row19_20261007/2026-10-07_20-47-56/runtime_config.json",
+        "samples": [
+          {
+            "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/mmmu_pro_vision_all_20261007/row19/2026-10-07_20-47-56/tasks/mmmu_pro_vision_reasoning_qwen3_official/mmmu_vision_row19/20261008_052924_samples_mmmu_pro_vision_reasoning_qwen3_official.jsonl",
+            "sample_rows": 1730,
+            "saved_responses": 1730,
+            "nonempty_reasoning_responses": 1730,
+            "reasoning_field_present_rows": 1730,
+            "raw_think_tag_responses": 0,
+            "finish_stop": 1270,
+            "finish_length": 460
+          }
+        ],
+        "logs": [
+          {
+            "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row19_20261007/2026-10-07_20-47-56/lmms_eval_rank0_mmmu_pro_vision_reasoning_qwen3_official.log",
+            "line": 114,
+            "generate_config": "[Generate Config] task=mmmu_pro_vision_reasoning_qwen3_official, max_tokens=65536, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, task_until_ignored=['\\n\\n'], model_stop_strings=None, stop_token_ids=[248046], enable_thinking=True, gen_kwargs={'max_new_tokens': 65536, 'until': ['\\n\\n'], 'temperature': 0}"
+          }
+        ]
+      },
+      {
+        "row": 20,
+        "checkpoint": "checkpoint-8000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row20_20261007/2026-10-07_20-47-56/runtime_config.json",
+        "samples": [],
+        "logs": []
+      },
+      {
+        "row": 21,
+        "checkpoint": "checkpoint-9000",
+        "status": "Complete",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row21_20261007/2026-10-07_20-47-56/runtime_config.json",
+        "samples": [
+          {
+            "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/mmmu_pro_vision_all_20261007/row21/2026-10-07_20-47-56/tasks/mmmu_pro_vision_reasoning_qwen3_official/mmmu_vision_row21/20261007_220837_samples_mmmu_pro_vision_reasoning_qwen3_official.jsonl",
+            "sample_rows": 1730,
+            "saved_responses": 1730,
+            "nonempty_reasoning_responses": 1730,
+            "reasoning_field_present_rows": 1730,
+            "raw_think_tag_responses": 0,
+            "finish_stop": 1284,
+            "finish_length": 446
+          }
+        ],
+        "logs": [
+          {
+            "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row21_20261007/2026-10-07_20-47-56/lmms_eval_rank0_mmmu_pro_vision_reasoning_qwen3_official.log",
+            "line": 114,
+            "generate_config": "[Generate Config] task=mmmu_pro_vision_reasoning_qwen3_official, max_tokens=65536, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, task_until_ignored=['\\n\\n'], model_stop_strings=None, stop_token_ids=[248046], enable_thinking=True, gen_kwargs={'max_new_tokens': 65536, 'until': ['\\n\\n'], 'temperature': 0}"
+          }
+        ]
+      },
+      {
+        "row": 22,
+        "checkpoint": "checkpoint-10000",
+        "status": "Stopped",
+        "enable_thinking": true,
+        "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row22_20261007/2026-10-07_20-49-09/runtime_config.json",
+        "samples": [],
+        "logs": [
+          {
+            "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/mmmu_pro_vision_all_20261007/eval_mmmupro_vision_row22_20261007/2026-10-07_20-49-09/lmms_eval_rank0_mmmu_pro_vision_reasoning_qwen3_official.log",
+            "line": 114,
+            "generate_config": "[Generate Config] task=mmmu_pro_vision_reasoning_qwen3_official, max_tokens=65536, temperature=0, top_p=None, top_k=None, repetition_penalty=None, min_p=None, presence_penalty=None, frequency_penalty=None, task_until_ignored=['\\n\\n'], model_stop_strings=None, stop_token_ids=[248046], enable_thinking=True, gen_kwargs={'max_new_tokens': 65536, 'until': ['\\n\\n'], 'temperature': 0}"
+          }
+        ]
+      }
+    ]
+  },
+  "checkpoint6000_chat_template": {
+    "path": "/mnt/nasA/tianleniu/experiments_ckpt/qwen35_9b_85m_cpt_full46m_sft_32a100_20260711/output/q35-9b-sft-46m-32a100-p8-20260711_124747/v0-20260711-125142/checkpoint-6000/chat_template.jinja",
+    "enable_thinking_line": 149,
+    "rendered_suffix": {
+      "False": "\n<think>\n\n</think>\n\n",
+      "True": "\n<think>\n"
+    },
+    "note": "CPU-only rendering of archived checkpoint template; no model generation."
+  },
+  "limitations": [
+    "Physics conclusion covers physics questions under shared MMMU/MMMU-Pro evaluation settings; no separate SeePhys or OlympiadBench physics run is asserted.",
+    "July sample files often lack raw_resps/reasoning_resps, so generation logs and persisted model_args are the primary evidence.",
+    "Non-thinking mode can still produce step-by-step explanations in the final answer.",
+    "October completed thinking Vision runs do not replace July mathematics or September chemistry evaluation results."
+  ]
+}

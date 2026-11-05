@@ -1,0 +1,3025 @@
+{
+  "checked_at": "2026-10-23T16:37:29.131815+08:00",
+  "root": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021",
+  "branches": {
+    "base20_2gpu_a4": {
+      "results": [
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d/portfix90_recovery_base20_base20/20261021_192825_results.json",
+          "metrics": {
+            "ai2d": {
+              "alias": "ai2d",
+              "exact_match,flexible-extract": 0.883419689119171,
+              "exact_match_stderr,flexible-extract": 0.005776008543880587,
+              "exact_match_stderr_clt,flexible-extract": 0.005776008543880651,
+              "exact_match_stderr_clustered,flexible-extract": "N/A"
+            }
+          },
+          "n_samples": {
+            "ai2d": {
+              "original": 3088,
+              "effective": 3088
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d_no_mask/portfix90_recovery_base20_base20/20261021_193220_results.json",
+          "metrics": {
+            "ai2d_no_mask": {
+              "alias": "ai2d_no_mask",
+              "exact_match,flexible-extract": 0.9604922279792746,
+              "exact_match_stderr,flexible-extract": 0.0035060643455173805,
+              "exact_match_stderr_clt,flexible-extract": 0.0035060643455174785,
+              "exact_match_stderr_clustered,flexible-extract": "N/A"
+            }
+          },
+          "n_samples": {
+            "ai2d_no_mask": {
+              "original": 3088,
+              "effective": 3088
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/chartqa/portfix90_recovery_base20_base20/20261021_193603_results.json",
+          "metrics": {
+            "chartqa": {
+              "alias": "chartqa",
+              "relaxed_overall,none": 0.8912,
+              "relaxed_overall_stderr,none": 0.006229008285247739,
+              "relaxed_overall_stderr_clt,none": 0.006229008285247906,
+              "relaxed_overall_stderr_clustered,none": "N/A",
+              "relaxed_human_split,none": 0.824,
+              "relaxed_human_split_stderr,none": 0.01077553199019609,
+              "relaxed_human_split_stderr_clt,none": 0.010775531990196001,
+              "relaxed_human_split_stderr_clustered,none": "N/A",
+              "relaxed_augmented_split,none": 0.9584,
+              "relaxed_augmented_split_stderr,none": 0.005649875119955859,
+              "relaxed_augmented_split_stderr_clt,none": 0.005649875119955917,
+              "relaxed_augmented_split_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "chartqa": {
+              "original": 2500,
+              "effective": 2500
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/embspatial/portfix90_recovery_base20_base20/20261022_044135_results.json",
+          "metrics": {
+            "embspatial": {
+              "alias": "embspatial",
+              "embspatial_acc,none": 0.7741758241758242,
+              "embspatial_acc_stderr,none": "N/A",
+              "embspatial_acc_stderr_clt,none": "N/A",
+              "embspatial_acc_stderr_clustered,none": "N/A",
+              "ai2thor_accuracy,none": 0.735270379338176,
+              "ai2thor_accuracy_stderr,none": "N/A",
+              "ai2thor_accuracy_stderr_clt,none": "N/A",
+              "ai2thor_accuracy_stderr_clustered,none": "N/A",
+              "mp3d_accuracy,none": 0.768526228143214,
+              "mp3d_accuracy_stderr,none": "N/A",
+              "mp3d_accuracy_stderr_clt,none": "N/A",
+              "mp3d_accuracy_stderr_clustered,none": "N/A",
+              "scannet_accuracy,none": 0.82,
+              "scannet_accuracy_stderr,none": "N/A",
+              "scannet_accuracy_stderr_clt,none": "N/A",
+              "scannet_accuracy_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "embspatial": {
+              "original": 3640,
+              "effective": 3640
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/emvista/portfix90_recovery_base20_base20/20261022_042348_results.json",
+          "metrics": {
+            "EMVista": {
+              "alias": "EMVista",
+              "exact_match_accuracy,none": 0.4935135135135135,
+              "exact_match_accuracy_stderr,none": "N/A",
+              "exact_match_accuracy_stderr_clt,none": 0.01162692845866622,
+              "exact_match_accuracy_stderr_clustered,none": "N/A",
+              "question,none": [],
+              "question_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": [],
+              "ground_truth,none": [],
+              "ground_truth_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "EMVista": {
+              "original": 1850,
+              "effective": 1850
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/erqa/portfix90_recovery_base20_base20/20261022_044620_results.json",
+          "metrics": {
+            "erqa": {
+              "alias": "erqa",
+              "erqa_acc,none": 0.4625,
+              "erqa_acc_stderr,none": "N/A",
+              "erqa_acc_stderr_clt,none": "N/A",
+              "erqa_acc_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "erqa": {
+              "original": 400,
+              "effective": 400
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/infovqa_val/portfix90_recovery_base20_base20/20261021_193920_results.json",
+          "metrics": {
+            "infovqa_val": {
+              "alias": "infovqa_val",
+              "anls,none": 0.8757204969246337,
+              "anls_stderr,none": 0.005908160034483049,
+              "anls_stderr_clt,none": 0.005908160034483023,
+              "anls_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "infovqa_val": {
+              "original": 2801,
+              "effective": 2801
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/microvqa/portfix90_recovery_base20_base20/20261022_043338_results.json",
+          "metrics": {
+            "microvqa": {
+              "alias": "microvqa",
+              "accuracy,none": 0.5239923224568138,
+              "accuracy_stderr,none": 0.015479041901779664,
+              "accuracy_stderr_clt,none": 0.015479041901779619,
+              "accuracy_stderr_clustered,none": "N/A",
+              "filtered_answer,none": [],
+              "filtered_answer_stderr,none": [],
+              "gt_index,none": [],
+              "gt_index_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "microvqa": {
+              "original": 1042,
+              "effective": 1042
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld_cn/portfix90_recovery_base20_base20/20261022_020446_results.json",
+          "metrics": {
+            "mmerealworld_cn": {
+              "alias": "mmerealworld_cn",
+              "mme_realworld_score,none": 0.5888118979212439,
+              "mme_realworld_score_stderr,none": "N/A",
+              "mme_realworld_score_stderr_clt,none": "N/A",
+              "mme_realworld_score_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "mmerealworld_cn": {
+              "original": 5917,
+              "effective": 5917
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_pro_standard_reasoning_qwen3_official/portfix90_recovery_base20_base20/20261022_034412_results.json",
+          "metrics": {
+            "mmmu_pro_standard_reasoning_qwen3_official": {
+              "alias": "mmmu_pro_standard_reasoning_qwen3_official",
+              "mmmu_pro_acc_official,none": {
+                "overall_accuracy": null,
+                "total_correct": null,
+                "total_samples": 1730,
+                "mode": "generation_only"
+              },
+              "mmmu_pro_acc_official_stderr,none": "N/A",
+              "mmmu_pro_acc_official_stderr_clt,none": "N/A",
+              "mmmu_pro_acc_official_stderr_clustered,none": "N/A",
+              "submission,none": [],
+              "submission_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "mmmu_pro_standard_reasoning_qwen3_official": {
+              "original": 1730,
+              "effective": 1730
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_val_qwen3_official/portfix90_recovery_base20_base20/20261022_040630_results.json",
+          "metrics": {
+            "mmmu_val_qwen3_official": {
+              "alias": "mmmu_val_qwen3_official",
+              "mmmu_acc_official,none": {
+                "overall_accuracy": null,
+                "accuracy_by_split": {},
+                "total_correct": null,
+                "total_samples": 900,
+                "mode": "generation_only"
+              },
+              "mmmu_acc_official_stderr,none": "N/A",
+              "mmmu_acc_official_stderr_clt,none": "N/A",
+              "mmmu_acc_official_stderr_clustered,none": "N/A",
+              "submission,none": [],
+              "submission_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "mmmu_val_qwen3_official": {
+              "original": 900,
+              "effective": 900
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmstar/portfix90_recovery_base20_base20/20261022_040828_results.json",
+          "metrics": {
+            "mmstar": {
+              "alias": "mmstar",
+              "coarse perception,none": 0.757313646469446,
+              "coarse perception_stderr,none": "N/A",
+              "coarse perception_stderr_clt,none": 0.02806876238252672,
+              "coarse perception_stderr_clustered,none": "N/A",
+              "average,none": 0.7342778184577744,
+              "average_stderr,none": "N/A",
+              "average_stderr_clt,none": 0.011502227517410642,
+              "average_stderr_clustered,none": "N/A",
+              "fine-grained perception,none": 0.6817980840088431,
+              "fine-grained perception_stderr,none": "N/A",
+              "fine-grained perception_stderr_clt,none": 0.03026628805735986,
+              "fine-grained perception_stderr_clustered,none": "N/A",
+              "instance reasoning,none": 0.7974245292114085,
+              "instance reasoning_stderr,none": "N/A",
+              "instance reasoning_stderr_clt,none": 0.02607865766373279,
+              "instance reasoning_stderr_clustered,none": "N/A",
+              "logical reasoning,none": 0.7336610584135337,
+              "logical reasoning_stderr,none": "N/A",
+              "logical reasoning_stderr_clt,none": 0.026750070374865206,
+              "logical reasoning_stderr_clustered,none": "N/A",
+              "math,none": 0.8044529092043126,
+              "math_stderr,none": "N/A",
+              "math_stderr_clt,none": 0.025156857313255922,
+              "math_stderr_clustered,none": "N/A",
+              "science & technology,none": 0.6310166834391024,
+              "science & technology_stderr,none": "N/A",
+              "science & technology_stderr_clt,none": 0.03063032594455827,
+              "science & technology_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "mmstar": {
+              "original": 1500,
+              "effective": 1500
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ocrbench/portfix90_recovery_base20_base20/20261022_041023_results.json",
+          "metrics": {
+            "ocrbench": {
+              "alias": "ocrbench",
+              "ocrbench_accuracy,none": 0.884,
+              "ocrbench_accuracy_stderr,none": "N/A",
+              "ocrbench_accuracy_stderr_clt,none": 0.010131468138756924,
+              "ocrbench_accuracy_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "ocrbench": {
+              "original": 1000,
+              "effective": 1000
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/realworldqa/portfix90_recovery_base20_base20/20261022_041341_results.json",
+          "metrics": {
+            "realworldqa": {
+              "alias": "realworldqa",
+              "exact_match,none": 0.7699346405228759,
+              "exact_match_stderr,none": 0.015226702650939913,
+              "exact_match_stderr_clt,none": 0.015226702650939847,
+              "exact_match_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "realworldqa": {
+              "original": 765,
+              "effective": 765
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/seedbench_2_plus/portfix90_recovery_base20_base20/20261022_041603_results.json",
+          "metrics": {
+            "seedbench_2_plus": {
+              "alias": "seedbench_2_plus",
+              "seedbench_2_plus_Chart,none": 0.7012345679012346,
+              "seedbench_2_plus_Chart_stderr,none": "N/A",
+              "seedbench_2_plus_Chart_stderr_clt,none": "N/A",
+              "seedbench_2_plus_Chart_stderr_clustered,none": "N/A",
+              "seedbench_2_plus_all,none": 0.7241985068072024,
+              "seedbench_2_plus_all_stderr,none": "N/A",
+              "seedbench_2_plus_all_stderr_clt,none": "N/A",
+              "seedbench_2_plus_all_stderr_clustered,none": "N/A",
+              "seedbench_2_plus_Web,none": 0.8469696969696969,
+              "seedbench_2_plus_Web_stderr,none": "N/A",
+              "seedbench_2_plus_Web_stderr_clt,none": "N/A",
+              "seedbench_2_plus_Web_stderr_clustered,none": "N/A",
+              "seedbench_2_plus_Map,none": 0.6468401486988847,
+              "seedbench_2_plus_Map_stderr,none": "N/A",
+              "seedbench_2_plus_Map_stderr_clt,none": "N/A",
+              "seedbench_2_plus_Map_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "seedbench_2_plus": {
+              "original": 2277,
+              "effective": 2277
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/sfe-en/portfix90_recovery_base20_base20/20261022_042600_results.json",
+          "metrics": {
+            "sfe-en": {
+              "alias": "sfe-en",
+              "exact_match,none": [],
+              "exact_match_stderr,none": [],
+              "needs_llm_judge,none": [],
+              "needs_llm_judge_stderr,none": [],
+              "question_type,none": [],
+              "question_type_stderr,none": [],
+              "formatted_question,none": [],
+              "formatted_question_stderr,none": [],
+              "answer,none": [],
+              "answer_stderr,none": [],
+              "field,none": [],
+              "field_stderr,none": [],
+              "id,none": [],
+              "id_stderr,none": [],
+              "sfe_info,none": [],
+              "sfe_info_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": [],
+              "question,none": [],
+              "question_stderr,none": [],
+              "image_path,none": [],
+              "image_path_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "sfe-en": {
+              "original": 1660,
+              "effective": 1660
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/simplevqa/portfix90_recovery_base20_base20/20261022_042041_results.json",
+          "metrics": {
+            "simplevqa": {
+              "alias": "simplevqa",
+              "simplevqa_judge,none": [],
+              "simplevqa_judge_stderr,none": [],
+              "needs_llm_judge,none": [],
+              "needs_llm_judge_stderr,none": [],
+              "question,none": [],
+              "question_stderr,none": [],
+              "answer,none": [],
+              "answer_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "simplevqa": {
+              "original": 2025,
+              "effective": 2025
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/vstar_bench/portfix90_recovery_base20_base20/20261022_041845_results.json",
+          "metrics": {
+            "vstar_bench": {
+              "alias": "vstar_bench",
+              "vstar_direct_attributes_acc,none": [],
+              "vstar_direct_attributes_acc_stderr,none": [],
+              "vstar_overall_acc,none": 91.62303664921467,
+              "vstar_overall_acc_stderr,none": "N/A",
+              "vstar_overall_acc_stderr_clt,none": 0.020098740731673156,
+              "vstar_overall_acc_stderr_clustered,none": "N/A",
+              "vstar_relative_position_acc,none": [],
+              "vstar_relative_position_acc_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "vstar_bench": {
+              "original": 191,
+              "effective": 191
+            }
+          },
+          "judge": null
+        }
+      ],
+      "sample_checks": [
+        {
+          "task": "20261021_192825_raw_ai2d_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d/portfix90_recovery_base20_base20/20261021_192825_raw_ai2d_rank0.jsonl",
+          "rows": 3088,
+          "unique_doc_ids": 3088,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 3088
+          }
+        },
+        {
+          "task": "ai2d",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d/portfix90_recovery_base20_base20/20261021_192825_samples_ai2d.jsonl",
+          "rows": 3088,
+          "unique_doc_ids": 3088,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 3088
+          }
+        },
+        {
+          "task": "20261021_193220_raw_ai2d_no_mask_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d_no_mask/portfix90_recovery_base20_base20/20261021_193220_raw_ai2d_no_mask_rank0.jsonl",
+          "rows": 3088,
+          "unique_doc_ids": 3088,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 3088
+          }
+        },
+        {
+          "task": "ai2d_no_mask",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d_no_mask/portfix90_recovery_base20_base20/20261021_193220_samples_ai2d_no_mask.jsonl",
+          "rows": 3088,
+          "unique_doc_ids": 3088,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 3088
+          }
+        },
+        {
+          "task": "20261021_193603_raw_chartqa_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/chartqa/portfix90_recovery_base20_base20/20261021_193603_raw_chartqa_rank0.jsonl",
+          "rows": 2500,
+          "unique_doc_ids": 2500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2500
+          }
+        },
+        {
+          "task": "chartqa",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/chartqa/portfix90_recovery_base20_base20/20261021_193603_samples_chartqa.jsonl",
+          "rows": 2500,
+          "unique_doc_ids": 2500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2500
+          }
+        },
+        {
+          "task": "20261022_044135_raw_embspatial_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/embspatial/portfix90_recovery_base20_base20/20261022_044135_raw_embspatial_rank0.jsonl",
+          "rows": 3640,
+          "unique_doc_ids": 3640,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 3640
+          }
+        },
+        {
+          "task": "embspatial",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/embspatial/portfix90_recovery_base20_base20/20261022_044135_samples_embspatial.jsonl",
+          "rows": 3640,
+          "unique_doc_ids": 3640,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 3640
+          }
+        },
+        {
+          "task": "20261022_042348_raw_EMVista_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/emvista/portfix90_recovery_base20_base20/20261022_042348_raw_EMVista_rank0.jsonl",
+          "rows": 1850,
+          "unique_doc_ids": 1850,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1850
+          }
+        },
+        {
+          "task": "EMVista",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/emvista/portfix90_recovery_base20_base20/20261022_042348_samples_EMVista.jsonl",
+          "rows": 1850,
+          "unique_doc_ids": 1850,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1850
+          }
+        },
+        {
+          "task": "20261022_044620_raw_erqa_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/erqa/portfix90_recovery_base20_base20/20261022_044620_raw_erqa_rank0.jsonl",
+          "rows": 400,
+          "unique_doc_ids": 400,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 400
+          }
+        },
+        {
+          "task": "erqa",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/erqa/portfix90_recovery_base20_base20/20261022_044620_samples_erqa.jsonl",
+          "rows": 400,
+          "unique_doc_ids": 400,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 400
+          }
+        },
+        {
+          "task": "20261021_193920_raw_infovqa_val_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/infovqa_val/portfix90_recovery_base20_base20/20261021_193920_raw_infovqa_val_rank0.jsonl",
+          "rows": 2801,
+          "unique_doc_ids": 2801,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2801
+          }
+        },
+        {
+          "task": "infovqa_val",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/infovqa_val/portfix90_recovery_base20_base20/20261021_193920_samples_infovqa_val.jsonl",
+          "rows": 2801,
+          "unique_doc_ids": 2801,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2801
+          }
+        },
+        {
+          "task": "20261022_043338_raw_microvqa_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/microvqa/portfix90_recovery_base20_base20/20261022_043338_raw_microvqa_rank0.jsonl",
+          "rows": 1042,
+          "unique_doc_ids": 1042,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1042
+          }
+        },
+        {
+          "task": "microvqa",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/microvqa/portfix90_recovery_base20_base20/20261022_043338_samples_microvqa.jsonl",
+          "rows": 1042,
+          "unique_doc_ids": 1042,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1042
+          }
+        },
+        {
+          "task": "20261021_200259_raw_mmbench_en_dev_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmbench_en_dev/portfix90_recovery_base20_base20/20261021_200259_raw_mmbench_en_dev_rank0.jsonl",
+          "rows": 4329,
+          "unique_doc_ids": 4329,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 4329
+          }
+        },
+        {
+          "task": "20261022_020446_raw_mmerealworld_cn_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld_cn/portfix90_recovery_base20_base20/20261022_020446_raw_mmerealworld_cn_rank0.jsonl",
+          "rows": 5917,
+          "unique_doc_ids": 5917,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 5917
+          }
+        },
+        {
+          "task": "mmerealworld_cn",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld_cn/portfix90_recovery_base20_base20/20261022_020446_samples_mmerealworld_cn.jsonl",
+          "rows": 5917,
+          "unique_doc_ids": 5917,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 5917
+          }
+        },
+        {
+          "task": "20261022_034412_raw_mmmu_pro_standard_reasoning_qwen3_official_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_pro_standard_reasoning_qwen3_official/portfix90_recovery_base20_base20/20261022_034412_raw_mmmu_pro_standard_reasoning_qwen3_official_rank0.jsonl",
+          "rows": 1730,
+          "unique_doc_ids": 1730,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1730
+          }
+        },
+        {
+          "task": "mmmu_pro_standard_reasoning_qwen3_official",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_pro_standard_reasoning_qwen3_official/portfix90_recovery_base20_base20/20261022_034412_samples_mmmu_pro_standard_reasoning_qwen3_official.jsonl",
+          "rows": 1730,
+          "unique_doc_ids": 1730,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1730
+          }
+        },
+        {
+          "task": "20261022_040630_raw_mmmu_val_qwen3_official_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_val_qwen3_official/portfix90_recovery_base20_base20/20261022_040630_raw_mmmu_val_qwen3_official_rank0.jsonl",
+          "rows": 900,
+          "unique_doc_ids": 900,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 900
+          }
+        },
+        {
+          "task": "mmmu_val_qwen3_official",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_val_qwen3_official/portfix90_recovery_base20_base20/20261022_040630_samples_mmmu_val_qwen3_official.jsonl",
+          "rows": 900,
+          "unique_doc_ids": 900,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 900
+          }
+        },
+        {
+          "task": "20261022_040828_raw_mmstar_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmstar/portfix90_recovery_base20_base20/20261022_040828_raw_mmstar_rank0.jsonl",
+          "rows": 1500,
+          "unique_doc_ids": 1500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1500
+          }
+        },
+        {
+          "task": "mmstar",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmstar/portfix90_recovery_base20_base20/20261022_040828_samples_mmstar.jsonl",
+          "rows": 1500,
+          "unique_doc_ids": 1500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1500
+          }
+        },
+        {
+          "task": "20261022_041023_raw_ocrbench_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ocrbench/portfix90_recovery_base20_base20/20261022_041023_raw_ocrbench_rank0.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1000
+          }
+        },
+        {
+          "task": "ocrbench",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ocrbench/portfix90_recovery_base20_base20/20261022_041023_samples_ocrbench.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1000
+          }
+        },
+        {
+          "task": "20261022_041341_raw_realworldqa_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/realworldqa/portfix90_recovery_base20_base20/20261022_041341_raw_realworldqa_rank0.jsonl",
+          "rows": 765,
+          "unique_doc_ids": 765,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 765
+          }
+        },
+        {
+          "task": "realworldqa",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/realworldqa/portfix90_recovery_base20_base20/20261022_041341_samples_realworldqa.jsonl",
+          "rows": 765,
+          "unique_doc_ids": 765,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 765
+          }
+        },
+        {
+          "task": "20261022_041603_raw_seedbench_2_plus_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/seedbench_2_plus/portfix90_recovery_base20_base20/20261022_041603_raw_seedbench_2_plus_rank0.jsonl",
+          "rows": 2277,
+          "unique_doc_ids": 2277,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2277
+          }
+        },
+        {
+          "task": "seedbench_2_plus",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/seedbench_2_plus/portfix90_recovery_base20_base20/20261022_041603_samples_seedbench_2_plus.jsonl",
+          "rows": 2277,
+          "unique_doc_ids": 2277,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2277
+          }
+        },
+        {
+          "task": "20261022_042600_raw_sfe_en_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/sfe-en/portfix90_recovery_base20_base20/20261022_042600_raw_sfe_en_rank0.jsonl",
+          "rows": 1660,
+          "unique_doc_ids": 1660,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1660
+          }
+        },
+        {
+          "task": "sfe-en",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/sfe-en/portfix90_recovery_base20_base20/20261022_042600_samples_sfe-en.jsonl",
+          "rows": 1660,
+          "unique_doc_ids": 1660,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1660
+          }
+        },
+        {
+          "task": "20261022_042041_raw_simplevqa_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/simplevqa/portfix90_recovery_base20_base20/20261022_042041_raw_simplevqa_rank0.jsonl",
+          "rows": 2025,
+          "unique_doc_ids": 2025,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2025
+          }
+        },
+        {
+          "task": "simplevqa",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/simplevqa/portfix90_recovery_base20_base20/20261022_042041_samples_simplevqa.jsonl",
+          "rows": 2025,
+          "unique_doc_ids": 2025,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2025
+          }
+        },
+        {
+          "task": "20261022_041845_raw_vstar_bench_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/vstar_bench/portfix90_recovery_base20_base20/20261022_041845_raw_vstar_bench_rank0.jsonl",
+          "rows": 191,
+          "unique_doc_ids": 191,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 191
+          }
+        },
+        {
+          "task": "vstar_bench",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/vstar_bench/portfix90_recovery_base20_base20/20261022_041845_samples_vstar_bench.jsonl",
+          "rows": 191,
+          "unique_doc_ids": 191,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 191
+          }
+        }
+      ],
+      "task_statuses": [
+        {
+          "task": "ai2d",
+          "status": "success",
+          "started_at": "2026-10-21T19:28:03+08:00",
+          "ended_at": "2026-10-21T19:31:58+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_ai2d.log"
+        },
+        {
+          "task": "ai2d_no_mask",
+          "status": "success",
+          "started_at": "2026-10-21T19:31:58+08:00",
+          "ended_at": "2026-10-21T19:35:42+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d_no_mask",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_ai2d_no_mask.log"
+        },
+        {
+          "task": "chartqa",
+          "status": "success",
+          "started_at": "2026-10-21T19:35:42+08:00",
+          "ended_at": "2026-10-21T19:39:00+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/chartqa",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_chartqa.log"
+        },
+        {
+          "task": "infovqa_val",
+          "status": "success",
+          "started_at": "2026-10-21T19:39:00+08:00",
+          "ended_at": "2026-10-21T20:02:36+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/infovqa_val",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_infovqa_val.log"
+        },
+        {
+          "task": "mmbench_en_dev",
+          "status": "failed",
+          "started_at": "2026-10-21T20:02:36+08:00",
+          "ended_at": "2026-10-21T20:04:14+08:00",
+          "exit_code": "1",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmbench_en_dev",
+          "status_reason": "exit_code_1",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmbench_en_dev.log"
+        },
+        {
+          "task": "mmerealworld",
+          "status": "timeout",
+          "started_at": "2026-10-21T20:04:14+08:00",
+          "ended_at": "2026-10-22T02:04:17+08:00",
+          "exit_code": "124",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld",
+          "status_reason": "timeout_after_21600s",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmerealworld.log"
+        },
+        {
+          "task": "mmerealworld_cn",
+          "status": "success",
+          "started_at": "2026-10-22T02:04:18+08:00",
+          "ended_at": "2026-10-22T03:43:50+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld_cn",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmerealworld_cn.log"
+        },
+        {
+          "task": "mmmu_pro_standard_reasoning_qwen3_official",
+          "status": "success",
+          "started_at": "2026-10-22T03:43:50+08:00",
+          "ended_at": "2026-10-22T04:06:09+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_pro_standard_reasoning_qwen3_official",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log"
+        },
+        {
+          "task": "mmmu_val_qwen3_official",
+          "status": "success",
+          "started_at": "2026-10-22T04:06:09+08:00",
+          "ended_at": "2026-10-22T04:08:09+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_val_qwen3_official",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmmu_val_qwen3_official.log"
+        },
+        {
+          "task": "mmstar",
+          "status": "success",
+          "started_at": "2026-10-22T04:08:09+08:00",
+          "ended_at": "2026-10-22T04:10:04+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmstar",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmstar.log"
+        },
+        {
+          "task": "ocrbench",
+          "status": "success",
+          "started_at": "2026-10-22T04:10:04+08:00",
+          "ended_at": "2026-10-22T04:13:22+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ocrbench",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_ocrbench.log"
+        },
+        {
+          "task": "realworldqa",
+          "status": "success",
+          "started_at": "2026-10-22T04:13:22+08:00",
+          "ended_at": "2026-10-22T04:15:43+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/realworldqa",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_realworldqa.log"
+        },
+        {
+          "task": "seedbench_2_plus",
+          "status": "success",
+          "started_at": "2026-10-22T04:15:43+08:00",
+          "ended_at": "2026-10-22T04:18:27+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/seedbench_2_plus",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_seedbench_2_plus.log"
+        },
+        {
+          "task": "vstar_bench",
+          "status": "success",
+          "started_at": "2026-10-22T04:18:27+08:00",
+          "ended_at": "2026-10-22T04:20:22+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/vstar_bench",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_vstar_bench.log"
+        },
+        {
+          "task": "simplevqa",
+          "status": "success",
+          "started_at": "2026-10-22T04:20:22+08:00",
+          "ended_at": "2026-10-22T04:23:29+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/simplevqa",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_simplevqa.log"
+        },
+        {
+          "task": "EMVista",
+          "status": "success",
+          "started_at": "2026-10-22T04:23:29+08:00",
+          "ended_at": "2026-10-22T04:25:41+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/emvista",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_emvista.log"
+        },
+        {
+          "task": "sfe-en",
+          "status": "success",
+          "started_at": "2026-10-22T04:25:41+08:00",
+          "ended_at": "2026-10-22T04:33:18+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/sfe-en",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_sfe-en.log"
+        },
+        {
+          "task": "microvqa",
+          "status": "success",
+          "started_at": "2026-10-22T04:33:18+08:00",
+          "ended_at": "2026-10-22T04:41:15+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/microvqa",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_microvqa.log"
+        },
+        {
+          "task": "embspatial",
+          "status": "success",
+          "started_at": "2026-10-22T04:41:15+08:00",
+          "ended_at": "2026-10-22T04:46:01+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/embspatial",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_embspatial.log"
+        },
+        {
+          "task": "erqa",
+          "status": "success",
+          "started_at": "2026-10-22T04:46:01+08:00",
+          "ended_at": "2026-10-22T04:47:10+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/erqa",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_erqa.log"
+        }
+      ]
+    },
+    "supplement_1gpu_a4": {
+      "results": [
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/aecv_drawing_qa/portfix90_recovery_supplement_industrial/20261021_192708_results.json",
+          "metrics": {
+            "aecv_drawing_qa": {
+              "alias": "aecv_drawing_qa",
+              "aecv_qa_exact_match,none": 0.5885416666666666,
+              "aecv_qa_exact_match_stderr,none": "N/A",
+              "aecv_qa_exact_match_stderr_clt,none": 0.0356069565871974,
+              "aecv_qa_exact_match_stderr_clustered,none": "N/A",
+              "needs_llm_judge,none": [],
+              "needs_llm_judge_stderr,none": [],
+              "question,none": [],
+              "question_stderr,none": [],
+              "answer,none": [],
+              "answer_stderr,none": [],
+              "category,none": [],
+              "category_stderr,none": [],
+              "aecv_qa_sample_id,none": [],
+              "aecv_qa_sample_id_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "aecv_drawing_qa": {
+              "original": 192,
+              "effective": 192
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/inspecsafe_v1_test/portfix90_recovery_supplement_industrial/20261021_192919_results.json",
+          "metrics": {
+            "inspecsafe_v1_test": {
+              "alias": "inspecsafe_v1_test",
+              "inspecsafe_safety_accuracy,none": 0.7624,
+              "inspecsafe_safety_accuracy_stderr,none": "N/A",
+              "inspecsafe_safety_accuracy_stderr_clt,none": 0.012042965515799328,
+              "inspecsafe_safety_accuracy_stderr_clustered,none": "N/A",
+              "inspecsafe_parse_valid,none": 0.976,
+              "inspecsafe_parse_valid_stderr,none": "N/A",
+              "inspecsafe_parse_valid_stderr_clt,none": 0.004330612354239312,
+              "inspecsafe_parse_valid_stderr_clustered,none": "N/A",
+              "inspecsafe_predicted_label,none": [],
+              "inspecsafe_predicted_label_stderr,none": [],
+              "inspecsafe_target_label,none": [],
+              "inspecsafe_target_label_stderr,none": [],
+              "inspecsafe_prediction_text,none": [],
+              "inspecsafe_prediction_text_stderr,none": [],
+              "inspecsafe_reference_description,none": [],
+              "inspecsafe_reference_description_stderr,none": [],
+              "inspecsafe_sample_id,none": [],
+              "inspecsafe_sample_id_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "inspecsafe_v1_test": {
+              "original": 1250,
+              "effective": 1250
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141124_results.json",
+          "metrics": {
+            "MolParse": {
+              "llm_judge_score": 0.754,
+              "needs_llm_judge": 1.0,
+              "llm_judge_success": 1.0,
+              "llm_judge_failed": 0.0,
+              "total_acc": 0.754
+            }
+          },
+          "n_samples": {
+            "MolParse": {
+              "original": 2000,
+              "effective": 2000
+            }
+          },
+          "judge": {
+            "mode": "judge",
+            "model": "Qwen3.5-9B",
+            "input_file": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/molparse/portfix90_recovery_supplement_regular/20261021_141124_samples_MolParse.jsonl",
+            "samples_file": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141124_samples_MolParse.jsonl",
+            "failed_samples": 0
+          }
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141559_results.json",
+          "metrics": {
+            "OpenRxn": {
+              "llm_judge_score": 0.563,
+              "needs_llm_judge": 1.0,
+              "llm_judge_success": 1.0,
+              "llm_judge_failed": 0.0,
+              "total_acc": 0.563
+            }
+          },
+          "n_samples": {
+            "OpenRxn": {
+              "original": 2000,
+              "effective": 2000
+            }
+          },
+          "judge": {
+            "mode": "judge",
+            "model": "Qwen3.5-9B",
+            "input_file": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/openrxn/portfix90_recovery_supplement_regular/20261021_141559_samples_OpenRxn.jsonl",
+            "samples_file": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141559_samples_OpenRxn.jsonl",
+            "failed_samples": 0
+          }
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/docvqa_val/portfix90_recovery_supplement_regular/20261021_131659_results.json",
+          "metrics": {
+            "docvqa_val": {
+              "alias": "docvqa_val",
+              "anls,none": 0.9677238355124638,
+              "anls_stderr,none": 0.002146482105574245,
+              "anls_stderr_clt,none": 0.002146482105574191,
+              "anls_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "docvqa_val": {
+              "original": 5349,
+              "effective": 5349
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/molparse/portfix90_recovery_supplement_regular/20261021_141124_results.json",
+          "metrics": {
+            "MolParse": {
+              "alias": "MolParse",
+              "llm_judge_score,none": 0.0,
+              "llm_judge_score_stderr,none": "N/A",
+              "llm_judge_score_stderr_clt,none": 0.0,
+              "llm_judge_score_stderr_clustered,none": "N/A",
+              "needs_llm_judge,none": [],
+              "needs_llm_judge_stderr,none": [],
+              "question,none": [],
+              "question_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": [],
+              "ground_truth,none": [],
+              "ground_truth_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "MolParse": {
+              "original": 2000,
+              "effective": 2000
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/msearth_mcq/portfix90_recovery_supplement_regular/20261021_184940_results.json",
+          "metrics": {
+            "msearth_mcq": {
+              "alias": "msearth_mcq",
+              "accuracy,none": 0.5211925287356322,
+              "accuracy_stderr,none": 0.009469410568595873,
+              "accuracy_stderr_clt,none": 0.009469410568595751,
+              "accuracy_stderr_clustered,none": "N/A",
+              "question,none": [],
+              "question_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": [],
+              "ground_truth,none": [],
+              "ground_truth_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "msearth_mcq": {
+              "original": 2784,
+              "effective": 2784
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/openrxn/portfix90_recovery_supplement_regular/20261021_141559_results.json",
+          "metrics": {
+            "OpenRxn": {
+              "alias": "OpenRxn",
+              "llm_judge_score,none": 0.0,
+              "llm_judge_score_stderr,none": "N/A",
+              "llm_judge_score_stderr_clt,none": 0.0,
+              "llm_judge_score_stderr_clustered,none": "N/A",
+              "needs_llm_judge,none": [],
+              "needs_llm_judge_stderr,none": [],
+              "question,none": [],
+              "question_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": [],
+              "ground_truth,none": [],
+              "ground_truth_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "OpenRxn": {
+              "original": 2000,
+              "effective": 2000
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/proteinlmbench/portfix90_recovery_supplement_regular/20261021_184827_results.json",
+          "metrics": {
+            "ProteinLMBench": {
+              "alias": "ProteinLMBench",
+              "protein_lm_accuracy,none": 0.6186440677966102,
+              "protein_lm_accuracy_stderr,none": 0.01581720827453007,
+              "protein_lm_accuracy_stderr_clt,none": 0.015817208274530172,
+              "protein_lm_accuracy_stderr_clustered,none": "N/A",
+              "extracted_answer,none": [],
+              "extracted_answer_stderr,none": [],
+              "ground_truth,none": [],
+              "ground_truth_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "ProteinLMBench": {
+              "original": 944,
+              "effective": 944
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/rxnbench_en/portfix90_recovery_supplement_regular/20261021_142314_results.json",
+          "metrics": {
+            "rxnbench_en": {
+              "alias": "rxnbench_en",
+              "accuracy,none": 0.8898360655737705,
+              "accuracy_stderr,none": 0.008020145320171534,
+              "accuracy_stderr_clt,none": 0.008020145320171486,
+              "accuracy_stderr_clustered,none": "N/A",
+              "pred_letter,none": [],
+              "pred_letter_stderr,none": [],
+              "gt_letter,none": [],
+              "gt_letter_stderr,none": [],
+              "question_type,none": [],
+              "question_type_stderr,none": [],
+              "raw_output,none": [],
+              "raw_output_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "rxnbench_en": {
+              "original": 1525,
+              "effective": 1525
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/scienceqa/portfix90_recovery_supplement_regular/20261021_140719_results.json",
+          "metrics": {
+            "scienceqa": {
+              "alias": "scienceqa",
+              "exact_match,none": 0.9394010846498467,
+              "exact_match_stderr,none": 0.0036641650316779207,
+              "exact_match_stderr_clt,none": 0.0036641650316780535,
+              "exact_match_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "scienceqa": {
+              "original": 4241,
+              "effective": 4241
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_results.json",
+          "metrics": {
+            "SmolInstruct_v2": {
+              " ": " ",
+              "alias": "SmolInstruct_v2"
+            },
+            "smol_forward_synthesis": {
+              "alias": " - smol_forward_synthesis",
+              "smol_metrics,none": 0.42091289939530413,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_molecule_captioning": {
+              "alias": " - smol_molecule_captioning",
+              "smol_metrics,none": 0.15786793047073833,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_molecule_generation": {
+              "alias": " - smol_molecule_generation",
+              "smol_metrics,none": 0.34816448888661994,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_name_conversion-i2f": {
+              "alias": " - smol_name_conversion-i2f",
+              "smol_metrics,none": 0.039759438690277316,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_name_conversion-i2s": {
+              "alias": " - smol_name_conversion-i2s",
+              "smol_metrics,none": 0.3946753500554626,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_name_conversion-s2f": {
+              "alias": " - smol_name_conversion-s2f",
+              "smol_metrics,none": 0.01937854994988306,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_name_conversion-s2i": {
+              "alias": " - smol_name_conversion-s2i",
+              "smol_metrics,none": 0.0003341129301703976,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_property_prediction-bbbp": {
+              "alias": " - smol_property_prediction-bbbp",
+              "smol_metrics,none": 0.5076142131979695,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_property_prediction-clintox": {
+              "alias": " - smol_property_prediction-clintox",
+              "smol_metrics,none": 0.2361111111111111,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_property_prediction-esol": {
+              "alias": " - smol_property_prediction-esol",
+              "smol_metrics,none": 6.11113712450737e-08,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_property_prediction-hiv": {
+              "alias": " - smol_property_prediction-hiv",
+              "smol_metrics,none": 0.6330654979303628,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_property_prediction-lipo": {
+              "alias": " - smol_property_prediction-lipo",
+              "smol_metrics,none": 0.030544336907545704,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_property_prediction-sider": {
+              "alias": " - smol_property_prediction-sider",
+              "smol_metrics,none": 0.43636363636363634,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            },
+            "smol_retrosynthesis": {
+              "alias": " - smol_retrosynthesis",
+              "smol_metrics,none": 0.4967086697766735,
+              "smol_metrics_stderr,none": "N/A",
+              "smol_metrics_stderr_clt,none": "N/A",
+              "smol_metrics_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "smol_forward_synthesis": {
+              "original": 4062,
+              "effective": 4062
+            },
+            "smol_retrosynthesis": {
+              "original": 4156,
+              "effective": 4156
+            },
+            "smol_molecule_captioning": {
+              "original": 2538,
+              "effective": 2538
+            },
+            "smol_molecule_generation": {
+              "original": 2493,
+              "effective": 2493
+            },
+            "smol_name_conversion-i2f": {
+              "original": 2993,
+              "effective": 2993
+            },
+            "smol_name_conversion-i2s": {
+              "original": 2993,
+              "effective": 2993
+            },
+            "smol_name_conversion-s2f": {
+              "original": 2993,
+              "effective": 2993
+            },
+            "smol_name_conversion-s2i": {
+              "original": 2993,
+              "effective": 2993
+            },
+            "smol_property_prediction-esol": {
+              "original": 112,
+              "effective": 112
+            },
+            "smol_property_prediction-lipo": {
+              "original": 420,
+              "effective": 420
+            },
+            "smol_property_prediction-bbbp": {
+              "original": 197,
+              "effective": 197
+            },
+            "smol_property_prediction-clintox": {
+              "original": 144,
+              "effective": 144
+            },
+            "smol_property_prediction-hiv": {
+              "original": 4107,
+              "effective": 4107
+            },
+            "smol_property_prediction-sider": {
+              "original": 2860,
+              "effective": 2860
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_cn/portfix90_recovery_supplement_regular/20261021_154243_results.json",
+          "metrics": {
+            "superchem_cn": {
+              "alias": "superchem_cn",
+              "superchem_official_pass1_first,official_all": 0.094,
+              "superchem_official_pass1_first_stderr,official_all": 0.013064047561049192,
+              "superchem_official_pass1_first_stderr_clt,official_all": 0.013064047561049166,
+              "superchem_official_pass1_first_stderr_clustered,official_all": "N/A",
+              "superchem_official_mean_reliability,official_all": 0.103,
+              "superchem_official_mean_reliability_stderr,official_all": 0.0105239492118704,
+              "superchem_official_mean_reliability_stderr_clt,official_all": 0.01052394921187042,
+              "superchem_official_mean_reliability_stderr_clustered,official_all": "N/A",
+              "superchem_official_pass8,official_all": 0.248,
+              "superchem_official_pass8_stderr,official_all": 0.019332342821239107,
+              "superchem_official_pass8_stderr_clt,official_all": 0.01933234282123912,
+              "superchem_official_pass8_stderr_clustered,official_all": "N/A",
+              "superchem_official_valid_rate,official_all": 0.94675,
+              "superchem_official_valid_rate_stderr,official_all": 0.007898807334948028,
+              "superchem_official_valid_rate_stderr_clt,official_all": 0.00789880733494806,
+              "superchem_official_valid_rate_stderr_clustered,official_all": "N/A"
+            }
+          },
+          "n_samples": {
+            "superchem_cn": {
+              "original": 500,
+              "effective": 500
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_en/portfix90_recovery_supplement_regular/20261021_143156_results.json",
+          "metrics": {
+            "superchem_en": {
+              "alias": "superchem_en",
+              "superchem_official_pass1_first,official_all": 0.13,
+              "superchem_official_pass1_first_stderr,official_all": 0.015055009352810985,
+              "superchem_official_pass1_first_stderr_clt,official_all": 0.015055009352810992,
+              "superchem_official_pass1_first_stderr_clustered,official_all": "N/A",
+              "superchem_official_mean_reliability,official_all": 0.12175,
+              "superchem_official_mean_reliability_stderr,official_all": 0.012261405266862197,
+              "superchem_official_mean_reliability_stderr_clt,official_all": 0.012261405266862214,
+              "superchem_official_mean_reliability_stderr_clustered,official_all": "N/A",
+              "superchem_official_pass8,official_all": 0.232,
+              "superchem_official_pass8_stderr,official_all": 0.01889619359195206,
+              "superchem_official_pass8_stderr_clt,official_all": 0.018896193591952035,
+              "superchem_official_pass8_stderr_clustered,official_all": "N/A",
+              "superchem_official_valid_rate,official_all": 0.95775,
+              "superchem_official_valid_rate_stderr,official_all": 0.006534736456898783,
+              "superchem_official_valid_rate_stderr_clt,official_all": 0.006534736456898797,
+              "superchem_official_valid_rate_stderr_clustered,official_all": "N/A"
+            }
+          },
+          "n_samples": {
+            "superchem_en": {
+              "original": 500,
+              "effective": 500
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/screenspot/portfix90_modelviews__q35v-20e20a7c09d3-03dd65bf/20261021_194218_results.json",
+          "metrics": {
+            "screenspot_v2": {
+              "alias": "screenspot_v2",
+              "screenspot_v2_action_acc,none": 0.2783018867924528,
+              "screenspot_v2_action_acc_stderr,none": "N/A",
+              "screenspot_v2_action_acc_stderr_clt,none": "N/A",
+              "screenspot_v2_action_acc_stderr_clustered,none": "N/A",
+              "screenspot_v2_text_acc,none": 0.2757660167130919,
+              "screenspot_v2_text_acc_stderr,none": "N/A",
+              "screenspot_v2_text_acc_stderr_clt,none": "N/A",
+              "screenspot_v2_text_acc_stderr_clustered,none": "N/A",
+              "screenspot_v2_icon_acc,none": 0.2815884476534296,
+              "screenspot_v2_icon_acc_stderr,none": "N/A",
+              "screenspot_v2_icon_acc_stderr_clt,none": "N/A",
+              "screenspot_v2_icon_acc_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "screenspot_v2": {
+              "original": 1272,
+              "effective": 1272
+            }
+          },
+          "judge": null
+        }
+      ],
+      "sample_checks": [
+        {
+          "task": "20261021_192708_raw_aecv_drawing_qa_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/aecv_drawing_qa/portfix90_recovery_supplement_industrial/20261021_192708_raw_aecv_drawing_qa_rank0.jsonl",
+          "rows": 192,
+          "unique_doc_ids": 192,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 192
+          }
+        },
+        {
+          "task": "aecv_drawing_qa",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/aecv_drawing_qa/portfix90_recovery_supplement_industrial/20261021_192708_samples_aecv_drawing_qa.jsonl",
+          "rows": 192,
+          "unique_doc_ids": 192,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 192
+          }
+        },
+        {
+          "task": "20261021_192919_raw_inspecsafe_v1_test_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/inspecsafe_v1_test/portfix90_recovery_supplement_industrial/20261021_192919_raw_inspecsafe_v1_test_rank0.jsonl",
+          "rows": 1250,
+          "unique_doc_ids": 1250,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1250
+          }
+        },
+        {
+          "task": "inspecsafe_v1_test",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/inspecsafe_v1_test/portfix90_recovery_supplement_industrial/20261021_192919_samples_inspecsafe_v1_test.jsonl",
+          "rows": 1250,
+          "unique_doc_ids": 1250,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1250
+          }
+        },
+        {
+          "task": "MolParse",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141124_samples_MolParse.jsonl",
+          "rows": 2000,
+          "unique_doc_ids": 2000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2000
+          }
+        },
+        {
+          "task": "OpenRxn",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141559_samples_OpenRxn.jsonl",
+          "rows": 2000,
+          "unique_doc_ids": 2000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2000
+          }
+        },
+        {
+          "task": "20261021_131659_raw_docvqa_val_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/docvqa_val/portfix90_recovery_supplement_regular/20261021_131659_raw_docvqa_val_rank0.jsonl",
+          "rows": 5349,
+          "unique_doc_ids": 5349,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 5349
+          }
+        },
+        {
+          "task": "docvqa_val",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/docvqa_val/portfix90_recovery_supplement_regular/20261021_131659_samples_docvqa_val.jsonl",
+          "rows": 5349,
+          "unique_doc_ids": 5349,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 5349
+          }
+        },
+        {
+          "task": "20261021_141124_raw_MolParse_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/molparse/portfix90_recovery_supplement_regular/20261021_141124_raw_MolParse_rank0.jsonl",
+          "rows": 2000,
+          "unique_doc_ids": 2000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2000
+          }
+        },
+        {
+          "task": "MolParse",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/molparse/portfix90_recovery_supplement_regular/20261021_141124_samples_MolParse.jsonl",
+          "rows": 2000,
+          "unique_doc_ids": 2000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2000
+          }
+        },
+        {
+          "task": "20261021_184940_raw_msearth_mcq_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/msearth_mcq/portfix90_recovery_supplement_regular/20261021_184940_raw_msearth_mcq_rank0.jsonl",
+          "rows": 2784,
+          "unique_doc_ids": 2784,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2784
+          }
+        },
+        {
+          "task": "msearth_mcq",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/msearth_mcq/portfix90_recovery_supplement_regular/20261021_184940_samples_msearth_mcq.jsonl",
+          "rows": 2784,
+          "unique_doc_ids": 2784,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2784
+          }
+        },
+        {
+          "task": "20261021_141559_raw_OpenRxn_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/openrxn/portfix90_recovery_supplement_regular/20261021_141559_raw_OpenRxn_rank0.jsonl",
+          "rows": 2000,
+          "unique_doc_ids": 2000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2000
+          }
+        },
+        {
+          "task": "OpenRxn",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/openrxn/portfix90_recovery_supplement_regular/20261021_141559_samples_OpenRxn.jsonl",
+          "rows": 2000,
+          "unique_doc_ids": 2000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2000
+          }
+        },
+        {
+          "task": "20261021_184827_raw_ProteinLMBench_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/proteinlmbench/portfix90_recovery_supplement_regular/20261021_184827_raw_ProteinLMBench_rank0.jsonl",
+          "rows": 944,
+          "unique_doc_ids": 944,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 944
+          }
+        },
+        {
+          "task": "ProteinLMBench",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/proteinlmbench/portfix90_recovery_supplement_regular/20261021_184827_samples_ProteinLMBench.jsonl",
+          "rows": 944,
+          "unique_doc_ids": 944,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 944
+          }
+        },
+        {
+          "task": "20261021_142314_raw_rxnbench_en_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/rxnbench_en/portfix90_recovery_supplement_regular/20261021_142314_raw_rxnbench_en_rank0.jsonl",
+          "rows": 1525,
+          "unique_doc_ids": 1525,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1525
+          }
+        },
+        {
+          "task": "rxnbench_en",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/rxnbench_en/portfix90_recovery_supplement_regular/20261021_142314_samples_rxnbench_en.jsonl",
+          "rows": 1525,
+          "unique_doc_ids": 1525,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1525
+          }
+        },
+        {
+          "task": "20261021_140719_raw_scienceqa_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/scienceqa/portfix90_recovery_supplement_regular/20261021_140719_raw_scienceqa_rank0.jsonl",
+          "rows": 4241,
+          "unique_doc_ids": 4241,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 4241
+          }
+        },
+        {
+          "task": "scienceqa",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/scienceqa/portfix90_recovery_supplement_regular/20261021_140719_samples_scienceqa.jsonl",
+          "rows": 4241,
+          "unique_doc_ids": 4241,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 4241
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_forward_synthesis_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_forward_synthesis_rank0.jsonl",
+          "rows": 4062,
+          "unique_doc_ids": 4062,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 4062
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_molecule_captioning_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_molecule_captioning_rank0.jsonl",
+          "rows": 2538,
+          "unique_doc_ids": 2538,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2538
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_molecule_generation_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_molecule_generation_rank0.jsonl",
+          "rows": 2493,
+          "unique_doc_ids": 2493,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2493
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_name_conversion_i2f_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_name_conversion_i2f_rank0.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2993
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_name_conversion_i2s_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_name_conversion_i2s_rank0.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2993
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_name_conversion_s2f_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_name_conversion_s2f_rank0.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2993
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_name_conversion_s2i_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_name_conversion_s2i_rank0.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2993
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_property_prediction_bbbp_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_property_prediction_bbbp_rank0.jsonl",
+          "rows": 197,
+          "unique_doc_ids": 197,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 197
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_property_prediction_clintox_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_property_prediction_clintox_rank0.jsonl",
+          "rows": 144,
+          "unique_doc_ids": 144,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 144
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_property_prediction_esol_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_property_prediction_esol_rank0.jsonl",
+          "rows": 112,
+          "unique_doc_ids": 112,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 112
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_property_prediction_hiv_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_property_prediction_hiv_rank0.jsonl",
+          "rows": 4107,
+          "unique_doc_ids": 4107,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 4107
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_property_prediction_lipo_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_property_prediction_lipo_rank0.jsonl",
+          "rows": 420,
+          "unique_doc_ids": 420,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 420
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_property_prediction_sider_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_property_prediction_sider_rank0.jsonl",
+          "rows": 2860,
+          "unique_doc_ids": 2860,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 2860
+          }
+        },
+        {
+          "task": "20261021_175337_raw_smol_retrosynthesis_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_raw_smol_retrosynthesis_rank0.jsonl",
+          "rows": 4156,
+          "unique_doc_ids": 4156,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 4156
+          }
+        },
+        {
+          "task": "smol_forward_synthesis",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_forward_synthesis.jsonl",
+          "rows": 4062,
+          "unique_doc_ids": 4062,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 4062
+          }
+        },
+        {
+          "task": "smol_molecule_captioning",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_molecule_captioning.jsonl",
+          "rows": 2538,
+          "unique_doc_ids": 2538,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2538
+          }
+        },
+        {
+          "task": "smol_molecule_generation",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_molecule_generation.jsonl",
+          "rows": 2493,
+          "unique_doc_ids": 2493,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2493
+          }
+        },
+        {
+          "task": "smol_name_conversion-i2f",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_name_conversion-i2f.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2993
+          }
+        },
+        {
+          "task": "smol_name_conversion-i2s",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_name_conversion-i2s.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2993
+          }
+        },
+        {
+          "task": "smol_name_conversion-s2f",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_name_conversion-s2f.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2993
+          }
+        },
+        {
+          "task": "smol_name_conversion-s2i",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_name_conversion-s2i.jsonl",
+          "rows": 2993,
+          "unique_doc_ids": 2993,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2993
+          }
+        },
+        {
+          "task": "smol_property_prediction-bbbp",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_property_prediction-bbbp.jsonl",
+          "rows": 197,
+          "unique_doc_ids": 197,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 197
+          }
+        },
+        {
+          "task": "smol_property_prediction-clintox",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_property_prediction-clintox.jsonl",
+          "rows": 144,
+          "unique_doc_ids": 144,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 144
+          }
+        },
+        {
+          "task": "smol_property_prediction-esol",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_property_prediction-esol.jsonl",
+          "rows": 112,
+          "unique_doc_ids": 112,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 112
+          }
+        },
+        {
+          "task": "smol_property_prediction-hiv",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_property_prediction-hiv.jsonl",
+          "rows": 4107,
+          "unique_doc_ids": 4107,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 4107
+          }
+        },
+        {
+          "task": "smol_property_prediction-lipo",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_property_prediction-lipo.jsonl",
+          "rows": 420,
+          "unique_doc_ids": 420,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 420
+          }
+        },
+        {
+          "task": "smol_property_prediction-sider",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_property_prediction-sider.jsonl",
+          "rows": 2860,
+          "unique_doc_ids": 2860,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 2860
+          }
+        },
+        {
+          "task": "smol_retrosynthesis",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_samples_smol_retrosynthesis.jsonl",
+          "rows": 4156,
+          "unique_doc_ids": 4156,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 4156
+          }
+        },
+        {
+          "task": "20261021_154243_raw_superchem_cn_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_cn/portfix90_recovery_supplement_regular/20261021_154243_raw_superchem_cn_rank0.jsonl",
+          "rows": 500,
+          "unique_doc_ids": 500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 4000
+          }
+        },
+        {
+          "task": "superchem_cn",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_cn/portfix90_recovery_supplement_regular/20261021_154243_samples_superchem_cn.jsonl",
+          "rows": 500,
+          "unique_doc_ids": 500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None, None, None, None, None, None, None, None]": 500
+          }
+        },
+        {
+          "task": "20261021_143156_raw_superchem_en_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_en/portfix90_recovery_supplement_regular/20261021_143156_raw_superchem_en_rank0.jsonl",
+          "rows": 500,
+          "unique_doc_ids": 500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 4000
+          }
+        },
+        {
+          "task": "superchem_en",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_en/portfix90_recovery_supplement_regular/20261021_143156_samples_superchem_en.jsonl",
+          "rows": 500,
+          "unique_doc_ids": 500,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None, None, None, None, None, None, None, None]": 500
+          }
+        },
+        {
+          "task": "20261021_194218_raw_screenspot_v2_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/screenspot/portfix90_modelviews__q35v-20e20a7c09d3-03dd65bf/20261021_194218_raw_screenspot_v2_rank0.jsonl",
+          "rows": 1272,
+          "unique_doc_ids": 1272,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "None": 1272
+          }
+        },
+        {
+          "task": "screenspot_v2",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/screenspot/portfix90_modelviews__q35v-20e20a7c09d3-03dd65bf/20261021_194218_samples_screenspot_v2.jsonl",
+          "rows": 1272,
+          "unique_doc_ids": 1272,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "[None]": 1272
+          }
+        }
+      ],
+      "task_statuses": [
+        {
+          "task": "aecv_drawing_qa",
+          "status": "success",
+          "started_at": "2026-10-21T19:26:51+08:00",
+          "ended_at": "2026-10-21T19:29:01+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/aecv_drawing_qa",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/industrial/lmms_eval_rank0_aecv_drawing_qa.log"
+        },
+        {
+          "task": "inspecsafe_v1_test",
+          "status": "success",
+          "started_at": "2026-10-21T19:29:01+08:00",
+          "ended_at": "2026-10-21T19:41:48+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/inspecsafe_v1_test",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/industrial/lmms_eval_rank0_inspecsafe_v1_test.log"
+        },
+        {
+          "task": "docvqa_val",
+          "status": "success",
+          "started_at": "2026-10-21T13:16:40+08:00",
+          "ended_at": "2026-10-21T14:06:58+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/docvqa_val",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_docvqa_val.log"
+        },
+        {
+          "task": "scienceqa",
+          "status": "success",
+          "started_at": "2026-10-21T14:06:58+08:00",
+          "ended_at": "2026-10-21T14:11:05+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/scienceqa",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_scienceqa.log"
+        },
+        {
+          "task": "MolParse",
+          "status": "success",
+          "started_at": "2026-10-21T14:11:05+08:00",
+          "ended_at": "2026-10-21T14:15:41+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/molparse",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_molparse.log"
+        },
+        {
+          "task": "OpenRxn",
+          "status": "success",
+          "started_at": "2026-10-21T14:15:41+08:00",
+          "ended_at": "2026-10-21T14:22:55+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/openrxn",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_openrxn.log"
+        },
+        {
+          "task": "rxnbench_en",
+          "status": "success",
+          "started_at": "2026-10-21T14:22:56+08:00",
+          "ended_at": "2026-10-21T14:31:37+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/rxnbench_en",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_rxnbench_en.log"
+        },
+        {
+          "task": "superchem_en",
+          "status": "success",
+          "started_at": "2026-10-21T14:31:37+08:00",
+          "ended_at": "2026-10-21T15:42:24+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_en",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_superchem_en.log"
+        },
+        {
+          "task": "superchem_cn",
+          "status": "success",
+          "started_at": "2026-10-21T15:42:24+08:00",
+          "ended_at": "2026-10-21T17:53:17+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_cn",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_superchem_cn.log"
+        },
+        {
+          "task": "SmolInstruct_v2",
+          "status": "success",
+          "started_at": "2026-10-21T17:53:17+08:00",
+          "ended_at": "2026-10-21T18:48:08+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_smolinstruct_v2.log"
+        },
+        {
+          "task": "ProteinLMBench",
+          "status": "success",
+          "started_at": "2026-10-21T18:48:08+08:00",
+          "ended_at": "2026-10-21T18:49:23+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/proteinlmbench",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_proteinlmbench.log"
+        },
+        {
+          "task": "msearth_mcq",
+          "status": "success",
+          "started_at": "2026-10-21T18:49:23+08:00",
+          "ended_at": "2026-10-21T19:00:17+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/msearth_mcq",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/logs/regular/lmms_eval_rank0_msearth_mcq.log"
+        }
+      ]
+    },
+    "math_native_3gpu": {
+      "results": [
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/dynamath_reasoning/portfix90_recovery_math_native/20261021_150958_results.json",
+          "metrics": {
+            "dynamath_reasoning": {
+              "alias": "dynamath_reasoning",
+              "dynamath_average,none": 0.7423153692614768,
+              "dynamath_average_stderr,none": "N/A",
+              "dynamath_average_stderr_clt,none": "N/A",
+              "dynamath_average_stderr_clustered,none": "N/A",
+              "dynamath_worst,none": 0.43912175648702595,
+              "dynamath_worst_stderr,none": "N/A",
+              "dynamath_worst_stderr_clt,none": "N/A",
+              "dynamath_worst_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "dynamath_reasoning": {
+              "original": 5010,
+              "effective": 5010
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvision_test/portfix90_recovery_math_native/20261021_130223_results.json",
+          "metrics": {
+            "mathvision_test": {
+              "alias": "mathvision_test",
+              "mathvision_standard_eval,none": 55.39,
+              "mathvision_standard_eval_stderr,none": "N/A",
+              "mathvision_standard_eval_stderr_clt,none": "N/A",
+              "mathvision_standard_eval_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "mathvision_test": {
+              "original": 3040,
+              "effective": 3040
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_cot/portfix90_recovery_math_native/20261021_141920_results.json",
+          "metrics": {
+            "mathvista_testmini_cot": {
+              "alias": "mathvista_testmini_cot",
+              "llm_as_judge_eval,none": 81.8,
+              "llm_as_judge_eval_stderr,none": "N/A",
+              "llm_as_judge_eval_stderr_clt,none": "N/A",
+              "llm_as_judge_eval_stderr_clustered,none": "N/A",
+              "submission,none": [],
+              "submission_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "mathvista_testmini_cot": {
+              "original": 1000,
+              "effective": 1000
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_format/portfix90_recovery_math_native/20261021_144244_results.json",
+          "metrics": {
+            "mathvista_testmini_format": {
+              "alias": "mathvista_testmini_format",
+              "llm_as_judge_eval,none": 80.2,
+              "llm_as_judge_eval_stderr,none": "N/A",
+              "llm_as_judge_eval_stderr_clt,none": "N/A",
+              "llm_as_judge_eval_stderr_clustered,none": "N/A",
+              "submission,none": [],
+              "submission_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "mathvista_testmini_format": {
+              "original": 1000,
+              "effective": 1000
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_solution/portfix90_recovery_math_native/20261021_143046_results.json",
+          "metrics": {
+            "mathvista_testmini_solution": {
+              "alias": "mathvista_testmini_solution",
+              "llm_as_judge_eval,none": 80.4,
+              "llm_as_judge_eval_stderr,none": "N/A",
+              "llm_as_judge_eval_stderr_clt,none": "N/A",
+              "llm_as_judge_eval_stderr_clustered,none": "N/A",
+              "submission,none": [],
+              "submission_stderr,none": []
+            }
+          },
+          "n_samples": {
+            "mathvista_testmini_solution": {
+              "original": 1000,
+              "effective": 1000
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/wemath_testmini_reasoning/portfix90_recovery_math_native/20261021_145338_results.json",
+          "metrics": {
+            "wemath_testmini_reasoning": {
+              "alias": "wemath_testmini_reasoning",
+              "wemath_loose,none": "76.19%",
+              "wemath_loose_stderr,none": "N/A",
+              "wemath_loose_stderr_clt,none": "N/A",
+              "wemath_loose_stderr_clustered,none": "N/A",
+              "wemath_strict,none": "54.86%",
+              "wemath_strict_stderr,none": "N/A",
+              "wemath_strict_stderr_clt,none": "N/A",
+              "wemath_strict_stderr_clustered,none": "N/A",
+              "acc_score,none": 0.774712643678161,
+              "acc_score_stderr,none": 0.010018182532551677,
+              "acc_score_stderr_clt,none": 0.010018182532551687,
+              "acc_score_stderr_clustered,none": "N/A",
+              "format_score,none": 0.6652873563218212,
+              "format_score_stderr,none": 0.007342776024970181,
+              "format_score_stderr_clt,none": 0.007342776024970159,
+              "format_score_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "wemath_testmini_reasoning": {
+              "original": 1740,
+              "effective": 1740
+            }
+          },
+          "judge": null
+        }
+      ],
+      "sample_checks": [
+        {
+          "task": "20261021_150958_raw_dynamath_reasoning_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/dynamath_reasoning/portfix90_recovery_math_native/20261021_150958_raw_dynamath_reasoning_rank0.jsonl",
+          "rows": 5010,
+          "unique_doc_ids": 5010,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 4972,
+            "length": 38
+          }
+        },
+        {
+          "task": "dynamath_reasoning",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/dynamath_reasoning/portfix90_recovery_math_native/20261021_150958_samples_dynamath_reasoning.jsonl",
+          "rows": 5010,
+          "unique_doc_ids": 5010,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 4972,
+            "['length']": 38
+          }
+        },
+        {
+          "task": "20261021_130223_raw_mathvision_test_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvision_test/portfix90_recovery_math_native/20261021_130223_raw_mathvision_test_rank0.jsonl",
+          "rows": 3040,
+          "unique_doc_ids": 3040,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 2888,
+            "length": 152
+          }
+        },
+        {
+          "task": "mathvision_test",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvision_test/portfix90_recovery_math_native/20261021_130223_samples_mathvision_test.jsonl",
+          "rows": 3040,
+          "unique_doc_ids": 3040,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 2888,
+            "['length']": 152
+          }
+        },
+        {
+          "task": "20261021_141920_raw_mathvista_testmini_cot_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_cot/portfix90_recovery_math_native/20261021_141920_raw_mathvista_testmini_cot_rank0.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 983,
+            "length": 17
+          }
+        },
+        {
+          "task": "mathvista_testmini_cot",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_cot/portfix90_recovery_math_native/20261021_141920_samples_mathvista_testmini_cot.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 983,
+            "['length']": 17
+          }
+        },
+        {
+          "task": "20261021_144244_raw_mathvista_testmini_format_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_format/portfix90_recovery_math_native/20261021_144244_raw_mathvista_testmini_format_rank0.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 982,
+            "length": 18
+          }
+        },
+        {
+          "task": "mathvista_testmini_format",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_format/portfix90_recovery_math_native/20261021_144244_samples_mathvista_testmini_format.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 982,
+            "['length']": 18
+          }
+        },
+        {
+          "task": "20261021_143046_raw_mathvista_testmini_solution_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_solution/portfix90_recovery_math_native/20261021_143046_raw_mathvista_testmini_solution_rank0.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 974,
+            "length": 26
+          }
+        },
+        {
+          "task": "mathvista_testmini_solution",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_solution/portfix90_recovery_math_native/20261021_143046_samples_mathvista_testmini_solution.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 974,
+            "['length']": 26
+          }
+        },
+        {
+          "task": "20261021_145338_raw_wemath_testmini_reasoning_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/wemath_testmini_reasoning/portfix90_recovery_math_native/20261021_145338_raw_wemath_testmini_reasoning_rank0.jsonl",
+          "rows": 1740,
+          "unique_doc_ids": 1740,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 1734,
+            "length": 6
+          }
+        },
+        {
+          "task": "wemath_testmini_reasoning",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/wemath_testmini_reasoning/portfix90_recovery_math_native/20261021_145338_samples_wemath_testmini_reasoning.jsonl",
+          "rows": 1740,
+          "unique_doc_ids": 1740,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 1734,
+            "['length']": 6
+          }
+        }
+      ],
+      "task_statuses": [
+        {
+          "task": "mathvision_test",
+          "status": "success",
+          "started_at": "2026-10-21T13:02:08+08:00",
+          "ended_at": "2026-10-21T14:18:58+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvision_test",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/logs/lmms_eval_rank0_mathvision_test.log"
+        },
+        {
+          "task": "mathvista_testmini_cot",
+          "status": "success",
+          "started_at": "2026-10-21T14:18:58+08:00",
+          "ended_at": "2026-10-21T14:30:24+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_cot",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/logs/lmms_eval_rank0_mathvista_testmini_cot.log"
+        },
+        {
+          "task": "mathvista_testmini_solution",
+          "status": "success",
+          "started_at": "2026-10-21T14:30:24+08:00",
+          "ended_at": "2026-10-21T14:42:22+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_solution",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/logs/lmms_eval_rank0_mathvista_testmini_solution.log"
+        },
+        {
+          "task": "mathvista_testmini_format",
+          "status": "success",
+          "started_at": "2026-10-21T14:42:23+08:00",
+          "ended_at": "2026-10-21T14:53:16+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/mathvista_testmini_format",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/logs/lmms_eval_rank0_mathvista_testmini_format.log"
+        },
+        {
+          "task": "wemath_testmini_reasoning",
+          "status": "success",
+          "started_at": "2026-10-21T14:53:16+08:00",
+          "ended_at": "2026-10-21T15:09:35+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/wemath_testmini_reasoning",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/logs/lmms_eval_rank0_wemath_testmini_reasoning.log"
+        },
+        {
+          "task": "dynamath_reasoning",
+          "status": "success",
+          "started_at": "2026-10-21T15:09:35+08:00",
+          "ended_at": "2026-10-21T16:00:46+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/results/run/tasks/dynamath_reasoning",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_native_3gpu/logs/lmms_eval_rank0_dynamath_reasoning.log"
+        }
+      ]
+    },
+    "math_reasoning_3gpu": {
+      "results": [
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathverse_testmini_reasoning/portfix90_recovery_math_reasoning/20261021_181147_results.json",
+          "metrics": {
+            "mathverse_testmini_reasoning": {
+              "alias": "mathverse_testmini_reasoning",
+              "acc_score,none": 0.7215736040609138,
+              "acc_score_stderr,none": 0.00714171526838818,
+              "acc_score_stderr_clt,none": 0.007141715268388189,
+              "acc_score_stderr_clustered,none": "N/A",
+              "format_score,none": 0.7322842639594154,
+              "format_score_stderr,none": 0.003769949289702808,
+              "format_score_stderr_clt,none": 0.003769949289702815,
+              "format_score_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "mathverse_testmini_reasoning": {
+              "original": 3940,
+              "effective": 3940
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_test_reasoning/portfix90_recovery_math_reasoning/20261021_161705_results.json",
+          "metrics": {
+            "mathvision_reason_test_reasoning": {
+              "alias": "mathvision_reason_test_reasoning",
+              "acc_score,none": 0.5299342105263158,
+              "acc_score_stderr,none": 0.009053676050625452,
+              "acc_score_stderr_clt,none": 0.009053676050625497,
+              "acc_score_stderr_clustered,none": "N/A",
+              "format_score,none": 0.8744078947368508,
+              "format_score_stderr,none": 0.0026567544041244317,
+              "format_score_stderr_clt,none": 0.00265675440412449,
+              "format_score_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "mathvision_reason_test_reasoning": {
+              "original": 3040,
+              "effective": 3040
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_testmini_reasoning/portfix90_recovery_math_reasoning/20261021_175922_results.json",
+          "metrics": {
+            "mathvision_reason_testmini_reasoning": {
+              "alias": "mathvision_reason_testmini_reasoning",
+              "acc_score,none": 0.47368421052631576,
+              "acc_score_stderr,none": 0.0286844376123458,
+              "acc_score_stderr_clt,none": 0.028684437612345765,
+              "acc_score_stderr_clustered,none": "N/A",
+              "format_score,none": 0.8506578947368454,
+              "format_score_stderr,none": 0.007143067328472497,
+              "format_score_stderr_clt,none": 0.007143067328472512,
+              "format_score_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "mathvision_reason_testmini_reasoning": {
+              "original": 304,
+              "effective": 304
+            }
+          },
+          "judge": null
+        },
+        {
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvista_testmini_cot_reasoning/portfix90_recovery_math_reasoning/20261021_185815_results.json",
+          "metrics": {
+            "mathvista_testmini_cot_reasoning": {
+              "alias": "mathvista_testmini_cot_reasoning",
+              "acc_score,none": 0.754,
+              "acc_score_stderr,none": 0.013626065817750641,
+              "acc_score_stderr_clt,none": 0.01362606581775054,
+              "acc_score_stderr_clustered,none": "N/A",
+              "format_score,none": 0.6575999999999969,
+              "format_score_stderr,none": 0.009805018020298484,
+              "format_score_stderr_clt,none": 0.009805018020298503,
+              "format_score_stderr_clustered,none": "N/A"
+            }
+          },
+          "n_samples": {
+            "mathvista_testmini_cot_reasoning": {
+              "original": 1000,
+              "effective": 1000
+            }
+          },
+          "judge": null
+        }
+      ],
+      "sample_checks": [
+        {
+          "task": "20261021_181147_raw_mathverse_testmini_reasoning_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathverse_testmini_reasoning/portfix90_recovery_math_reasoning/20261021_181147_raw_mathverse_testmini_reasoning_rank0.jsonl",
+          "rows": 3940,
+          "unique_doc_ids": 3940,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 3902,
+            "length": 38
+          }
+        },
+        {
+          "task": "mathverse_testmini_reasoning",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathverse_testmini_reasoning/portfix90_recovery_math_reasoning/20261021_181147_samples_mathverse_testmini_reasoning.jsonl",
+          "rows": 3940,
+          "unique_doc_ids": 3940,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 3902,
+            "['length']": 38
+          }
+        },
+        {
+          "task": "20261021_161705_raw_mathvision_reason_test_reasoning_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_test_reasoning/portfix90_recovery_math_reasoning/20261021_161705_raw_mathvision_reason_test_reasoning_rank0.jsonl",
+          "rows": 3040,
+          "unique_doc_ids": 3040,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 2939,
+            "length": 101
+          }
+        },
+        {
+          "task": "mathvision_reason_test_reasoning",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_test_reasoning/portfix90_recovery_math_reasoning/20261021_161705_samples_mathvision_reason_test_reasoning.jsonl",
+          "rows": 3040,
+          "unique_doc_ids": 3040,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 2939,
+            "['length']": 101
+          }
+        },
+        {
+          "task": "20261021_175922_raw_mathvision_reason_testmini_reasoning_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_testmini_reasoning/portfix90_recovery_math_reasoning/20261021_175922_raw_mathvision_reason_testmini_reasoning_rank0.jsonl",
+          "rows": 304,
+          "unique_doc_ids": 304,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 295,
+            "length": 9
+          }
+        },
+        {
+          "task": "mathvision_reason_testmini_reasoning",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_testmini_reasoning/portfix90_recovery_math_reasoning/20261021_175922_samples_mathvision_reason_testmini_reasoning.jsonl",
+          "rows": 304,
+          "unique_doc_ids": 304,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 295,
+            "['length']": 9
+          }
+        },
+        {
+          "task": "20261021_185815_raw_mathvista_testmini_cot_reasoning_rank0.jsonl",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvista_testmini_cot_reasoning/portfix90_recovery_math_reasoning/20261021_185815_raw_mathvista_testmini_cot_reasoning_rank0.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "stop": 995,
+            "length": 5
+          }
+        },
+        {
+          "task": "mathvista_testmini_cot_reasoning",
+          "path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvista_testmini_cot_reasoning/portfix90_recovery_math_reasoning/20261021_185815_samples_mathvista_testmini_cot_reasoning.jsonl",
+          "rows": 1000,
+          "unique_doc_ids": 1000,
+          "bad_json": 0,
+          "request_failure_markers": 0,
+          "empty_resps": 0,
+          "finish_reasons": {
+            "['stop']": 995,
+            "['length']": 5
+          }
+        }
+      ],
+      "task_statuses": [
+        {
+          "task": "mathvision_reason_test_reasoning",
+          "status": "success",
+          "started_at": "2026-10-21T16:16:45+08:00",
+          "ended_at": "2026-10-21T17:58:58+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_test_reasoning",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/logs/lmms_eval_rank0_mathvision_reason_test_reasoning.log"
+        },
+        {
+          "task": "mathvision_reason_testmini_reasoning",
+          "status": "success",
+          "started_at": "2026-10-21T17:58:58+08:00",
+          "ended_at": "2026-10-21T18:11:23+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvision_reason_testmini_reasoning",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/logs/lmms_eval_rank0_mathvision_reason_testmini_reasoning.log"
+        },
+        {
+          "task": "mathverse_testmini_reasoning",
+          "status": "success",
+          "started_at": "2026-10-21T18:11:23+08:00",
+          "ended_at": "2026-10-21T18:57:52+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathverse_testmini_reasoning",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/logs/lmms_eval_rank0_mathverse_testmini_reasoning.log"
+        },
+        {
+          "task": "mathvista_testmini_cot_reasoning",
+          "status": "success",
+          "started_at": "2026-10-21T18:57:52+08:00",
+          "ended_at": "2026-10-21T19:10:22+08:00",
+          "exit_code": "0",
+          "output_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/results/run/tasks/mathvista_testmini_cot_reasoning",
+          "status_reason": "completed",
+          "log_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/math_reasoning_3gpu/logs/lmms_eval_rank0_mathvista_testmini_cot_reasoning.log"
+        }
+      ]
+    }
+  }
+}

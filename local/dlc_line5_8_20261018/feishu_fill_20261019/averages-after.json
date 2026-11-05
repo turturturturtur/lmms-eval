@@ -1,0 +1,193 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "approx_char_count": 8070,
+    "has_more": false,
+    "ranges": [
+      {
+        "actual_range": "AA5:AM7",
+        "cells": [
+          [
+            {
+              "value": "44.27"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；scienceqa；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "91.91"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；MolParse；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "4.35"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；OpenRxn；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "9.25"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；rxnbench_en；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "82.75"
+            },
+            {
+              "note": "2026-10-19 回填；模型 Qwen3-VL-8B-Instruct；任务 superchem_en；DLC dlcy6okjvhx9hdpc Succeeded；生成超参数与 WebUI 默认一致；无需 judge。\n全量 500/500 样本；mcp_accuracy=0.114；本表按 0–100 分制显示。\n结果文件：/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/superchem_en/Qwen3-VL-8B-Instruct/20261018_165424_results.json\nSHA256：aa22a8ba2fb5e915b7c8fb4c5c3f5c06db58f24b4ef912bba52a1e042fe2fbcd",
+              "value": "11.40"
+            },
+            {
+              "note": "2026-10-19 回填；模型 Qwen3-VL-8B-Instruct；任务 superchem_cn；DLC dlcy6okjvhx9hdpc Succeeded；生成超参数与 WebUI 默认一致；无需 judge。\n全量 500/500 样本；mcp_accuracy=0.112；本表按 0–100 分制显示。\n结果文件：/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/superchem_cn/Qwen3-VL-8B-Instruct/20261018_165625_results.json\nSHA256：9421abddb42f9df437f66ea3e79cb2256f2524eac434eccd7d7f7425354935b6",
+              "value": "11.20"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；SmolInstruct_v2；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "20.15"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；ProteinLMBench；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "59.32"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；msearth_mcq；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "47.34"
+            },
+            {
+              "value": "28.98"
+            },
+            {
+              "value": "49.33"
+            },
+            {
+              "formula": "=AVERAGE(AA5:AL5)",
+              "value": 38.3541666666667
+            }
+          ],
+          [
+            {
+              "value": "39.30"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；scienceqa；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "89.39"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；MolParse；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "4.95"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；OpenRxn；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "12.60"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；rxnbench_en；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "85.31"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；superchem_en；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "8.60"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；superchem_cn；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "11.40"
+            },
+            {
+              "note": "2026-10-19 回填；模型 gemma-4-12B-it；任务 SmolInstruct_v2；DLC dlcyqnrbf2twc2hy Succeeded；生成超参数与 WebUI 默认一致；无需 judge。\n汇总沿用原表 arithmetic_mean_of_finite_subtasks_times_100；本次有效 14/14 子任务，33061/33061 样本；非样本量加权。原表部分旧结果仅 10 项有效，本次无非有限分数被剔除。\n未舍入总分 24.18461807488824；14 项原始分数：{\"smol_forward_synthesis\": 0.00036963125747341887, \"smol_retrosynthesis\": 0.4938076744164381, \"smol_molecule_captioning\": 0.11847885884819997, \"smol_molecule_generation\": 0.046498055718122114, \"smol_name_conversion-i2f\": 0.05813564984964918, \"smol_name_conversion-i2s\": 0.3124460945686842, \"smol_name_conversion-s2f\": 0.028399599064483794, \"smol_name_conversion-s2i\": 0.0, \"smol_property_prediction-esol\": 5.4975806709757386e-14, \"smol_property_prediction-lipo\": 7.878741668773176e-28, \"smol_property_prediction-bbbp\": 0.7969543147208121, \"smol_property_prediction-clintox\": 0.3125, \"smol_property_prediction-hiv\": 0.6165084002921841, \"smol_property_prediction-sider\": 0.6017482517482518}\n结果文件：/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/tasks/smolinstruct_v2/gemma-4-12B-it/20261018_170523_results.json\nSHA256：7e5dd3035b600f039a8f662d799d89d2742aa673cd341ac7f5afd81bab673fe8",
+              "value": "24.18"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；ProteinLMBench；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "56.67"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；msearth_mcq；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "57.61"
+            },
+            {
+              "value": "22.41"
+            },
+            {
+              "value": "56.81"
+            },
+            {
+              "formula": "=AVERAGE(AA6:AL6)",
+              "value": 39.1028833333333
+            }
+          ],
+          [
+            {
+              "value": "46.81"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；scienceqa；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "95.94"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；MolParse；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "19.05"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；OpenRxn；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "14.05"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；rxnbench_en；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "80.46"
+            },
+            {
+              "note": "2026-10-19 回填；模型 InternVL3_5-8B；任务 superchem_en；DLC dlc9wv4ejam0n1as Succeeded；生成超参数与 WebUI 默认一致；无需 judge。\n全量 500/500 样本；mcp_accuracy=0.082；本表按 0–100 分制显示。\n运行资源 2 GPU，TP=2；doc_id 34 和 313 因上下文超长自适应降低图像切片数，保留全部图片和文本。\n结果文件：/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_en/InternVL3_5-8B/20261018_233131_results.json\nSHA256：c435460fc6be54410d6ebdbe1949c5d29897f1e3548561e5e06b317cec7c5063",
+              "value": "8.20"
+            },
+            {
+              "note": "2026-10-19 回填；模型 InternVL3_5-8B；任务 superchem_cn；DLC dlc9wv4ejam0n1as Succeeded；生成超参数与 WebUI 默认一致；无需 judge。\n全量 500/500 样本；mcp_accuracy=0.114；本表按 0–100 分制显示。\n运行资源 2 GPU，TP=2；doc_id 34 和 313 因上下文超长自适应降低图像切片数，保留全部图片和文本。\n结果文件：/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_cn/InternVL3_5-8B/20261018_233517_results.json\nSHA256：85f5deb8c7b6489c0c181651ae90f7e8befc859e1029648250dbd059399e7cea",
+              "value": "11.40"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；SmolInstruct_v2；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "40.27"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；ProteinLMBench；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "61.76"
+            },
+            {
+              "note": "Innovator-Tune 2026-09-11 补测；msearth_mcq；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "57.00"
+            },
+            {
+              "value": "19.63"
+            },
+            {
+              "value": "47.79"
+            },
+            {
+              "formula": "=AVERAGE(AA7:AL7)",
+              "value": 41.8633333333333
+            }
+          ]
+        ],
+        "col_indices": [
+          "AA",
+          "AB",
+          "AC",
+          "AD",
+          "AE",
+          "AF",
+          "AG",
+          "AH",
+          "AI",
+          "AJ",
+          "AK",
+          "AL",
+          "AM"
+        ],
+        "range": "AA5:AM7",
+        "row_indices": [
+          5,
+          6,
+          7
+        ],
+        "truncated": false
+      }
+    ],
+    "returned_cell_count": 39,
+    "revision": 1194,
+    "warning_message": "处理 ranges[n].cells 之前，必须先查看顶层 has_more，以及每个 range 的 actual_range / row_indices / col_indices。定位真实行号时用 row_indices[i]，定位真实列字母时用 col_indices[j]，不要按二维数组下标自己数行列；skip_hidden=true、skip_filter=true 或结果被截断时，这样会错位。"
+  }
+}

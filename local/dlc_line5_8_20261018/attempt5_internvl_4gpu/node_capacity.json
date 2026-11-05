@@ -1,0 +1,876 @@
+[
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:25Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:42Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "96",
+    "LimitGPU": "8",
+    "LimitMemory": "1306Gi",
+    "MachineGroupId": "mgldvevdzgk4jzvu",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevdzgk4jzvu-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "208093880981569952",
+        "UserName": "\u5f6d\u6d69\u8f69"
+      },
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      },
+      {
+        "UserId": "204209578665146926",
+        "UserName": "\u6bdb\u5fb7\u9716"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004145279820476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 3,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "96",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "1306Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 3,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 3
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:39Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:47Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "64",
+    "LimitGPU": "8",
+    "LimitMemory": "350Gi",
+    "MachineGroupId": "mgldvevdvv0c1pdc",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevdvv0c1pdc-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      },
+      {
+        "UserId": "204087080981569941",
+        "UserName": "\u4f55\u91cd\u9633"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004152643690476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 2,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "64",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "350Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 2,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 2
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:34Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:48Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "92",
+    "LimitGPU": "7",
+    "LimitMemory": "960Gi",
+    "MachineGroupId": "mgldvevdufolane8",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevdufolane8-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "201905780561148721",
+        "UserName": "\u738b\u4fca\u7199"
+      },
+      {
+        "UserId": "203438273582516165",
+        "UserName": "\u9ad8\u5955\u4e30"
+      },
+      {
+        "UserId": "207814473582517545",
+        "UserName": "\u94ae\u5929\u4e50"
+      },
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004152643690476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 4,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "92",
+    "RequestGPU": "7",
+    "RequestGPUMemory": "560.00Gi",
+    "RequestMemory": "960Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 4,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 4
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:42Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:46Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "60",
+    "LimitGPU": "5",
+    "LimitMemory": "400Gi",
+    "MachineGroupId": "mgldvevdpryo1dq8",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevdpryo1dq8-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      },
+      {
+        "UserId": "209333791447271485",
+        "UserName": "\u9646\u5bb6\u5174"
+      },
+      {
+        "UserId": "203195880981569968",
+        "UserName": "\u4e25\u6b63\u5b89"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004152643690476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 3,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "60",
+    "RequestGPU": "5",
+    "RequestGPUMemory": "400.00Gi",
+    "RequestMemory": "400Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 3,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 3
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:31Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:41Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "88",
+    "LimitGPU": "8",
+    "LimitMemory": "532Gi",
+    "MachineGroupId": "mgldvevdolrgyuf8",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevdolrgyuf8-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "204087080981569941",
+        "UserName": "\u4f55\u91cd\u9633"
+      },
+      {
+        "UserId": "201142287814708025",
+        "UserName": "\u4f55\u4fca\u8c6a"
+      },
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004145279820476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 4,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "88",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "532Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 3,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 3
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:28Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:41Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "64",
+    "LimitGPU": "8",
+    "LimitMemory": "350Gi",
+    "MachineGroupId": "mgldvevd7i7s41is",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevd7i7s41is-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      },
+      {
+        "UserId": "204087080981569941",
+        "UserName": "\u4f55\u91cd\u9633"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004145279820476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 2,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "64",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "350Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 2,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 2
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:28Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:49Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "92",
+    "LimitGPU": "8",
+    "LimitMemory": "1548Gi",
+    "MachineGroupId": "mgldvevd5k80dzal",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevd5k80dzal-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "201078276338226937",
+        "UserName": "\u8bb8\u591a"
+      },
+      {
+        "UserId": "207814473582517545",
+        "UserName": "\u94ae\u5929\u4e50"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004152643690476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 2,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "92",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "1548Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 2,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 2
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "1245621648665098",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-03-27T08:16:22Z",
+    "GmtExpiredTime": "2026-10-27T16:00:00Z",
+    "GmtModifiedTime": "2026-09-19T01:23:51Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "60",
+    "LimitGPU": "8",
+    "LimitMemory": "716Gi",
+    "MachineGroupId": "mgldvevd06nzawku",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mgldvevd06nzawku-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      },
+      {
+        "UserId": "203031480923083931",
+        "UserName": "\u5218\u7fd4\u777f"
+      },
+      {
+        "UserId": "208044173582517478",
+        "UserName": "\u4f55\u660a\u806a"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004152643690476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 4,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "60",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "716Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 4,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 4
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "205510873654840114",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-04-02T06:49:36Z",
+    "GmtExpiredTime": "2026-11-02T16:00:00Z",
+    "GmtModifiedTime": "2026-09-24T00:48:26Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "96",
+    "LimitGPU": "8",
+    "LimitMemory": "1600Gi",
+    "MachineGroupId": "mg1tqb9xmydjtekj",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mg1tqb9xmydjtekj-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "206900876945411294",
+        "UserName": "\u94a6\u6d69\u7136"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004529666180476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 1,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "96",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "1600Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 1,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 1
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "205510873654840114",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-04-02T06:49:51Z",
+    "GmtExpiredTime": "2026-11-02T16:00:00Z",
+    "GmtModifiedTime": "2026-09-24T00:48:22Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "16",
+    "LimitGPU": "8",
+    "LimitMemory": "1600Gi",
+    "MachineGroupId": "mg1tqb9xmycuz1h1",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mg1tqb9xmycuz1h1-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "209977573624403425",
+        "UserName": "\u7559\u5609\u57ce"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004529666180476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 1,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "16",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "1600Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 1,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 1
+  },
+  {
+    "AcceleratorType": "GPU",
+    "AllocatableCPU": "96",
+    "AllocatableGPU": "8",
+    "AllocatableMemory": "1600Gi",
+    "AncestorQuotaWorkloadNum": 0,
+    "AvailabilityZone": "A",
+    "BoundQuotas": [
+      {
+        "QuotaId": "quota1cauvwqouvn",
+        "QuotaName": "a100_prod_quota_02"
+      }
+    ],
+    "CPU": "96",
+    "CliqueID": "",
+    "CreatorId": "205510873654840114",
+    "DescendantQuotaWorkloadNum": 0,
+    "DiskCapacity": 0,
+    "DiskPL": "",
+    "EriQuantity": 0,
+    "GPU": "8",
+    "GPUMemory": "80G",
+    "GPUType": "GU7E",
+    "GmtCreatedTime": "2026-04-05T09:20:37Z",
+    "GmtExpiredTime": "2026-11-05T16:00:00Z",
+    "GmtModifiedTime": "2026-09-27T00:55:21Z",
+    "HealthCount": 1,
+    "HealthRate": 10000,
+    "HyperNode": "",
+    "HyperZone": "",
+    "IsBound": true,
+    "LimitCPU": "96",
+    "LimitGPU": "8",
+    "LimitMemory": "1550Gi",
+    "MachineGroupId": "mg1mjjkeiqghsmzq",
+    "Memory": "1600Gi",
+    "NodeGPUMemory": "640G",
+    "NodeHealingPolicy": {
+      "Enabled": true,
+      "InterventionWindowHours": 72,
+      "Source": "DEFAULT"
+    },
+    "NodeName": "lingjjzxfyht3hny-mg1mjjkeiqghsmzq-0",
+    "NodeStatus": "Ready",
+    "NodeType": "ml.gu7ef.8xlarge-gu100",
+    "OccupiedByUsers": [
+      {
+        "UserId": "201415477472637346",
+        "UserName": "\u7a0b\u6cfd\u6e2f"
+      },
+      {
+        "UserId": "201078276338226937",
+        "UserName": "\u8bb8\u591a"
+      }
+    ],
+    "OrderInfo": {
+      "OrderInstanceId": "2004720759770476",
+      "OrderNodeCount": 1,
+      "OrderStatus": "Normal"
+    },
+    "OrderStatus": "Normal",
+    "PaymentType": "PREPAY",
+    "PodNum": 2,
+    "ReasonCode": "",
+    "ReasonMessage": "",
+    "RequestCPU": "96",
+    "RequestGPU": "8",
+    "RequestGPUMemory": "640.00Gi",
+    "RequestMemory": "1550Gi",
+    "ResourceGroupId": "lingjjzxfyht3hny",
+    "ResourceGroupName": "pai_rg_a100_01",
+    "ResourceType": "Lingjun",
+    "SelfQuotaWorkloadNum": 2,
+    "SupportRDMA": false,
+    "SystemReservedCPU": "0",
+    "SystemReservedMemory": "0Gi",
+    "WorkloadNum": 2
+  }
+]

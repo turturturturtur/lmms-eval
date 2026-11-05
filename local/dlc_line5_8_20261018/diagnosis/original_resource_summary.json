@@ -1,0 +1,47 @@
+[
+  {
+    "row": 5,
+    "job_id": "dlc1uqr9jfra24dk",
+    "cloud_status": "Failed",
+    "memory_peak_gib": 57.22,
+    "memory_failcnt_max": 0,
+    "oom_seen": false,
+    "tasks": {
+      "lmms_eval_rank0_superchem_cn.log": {
+        "read_timeouts": 200,
+        "context_errors": 0
+      },
+      "lmms_eval_rank0_superchem_en.log": {
+        "read_timeouts": 206,
+        "context_errors": 0
+      }
+    }
+  },
+  {
+    "row": 6,
+    "job_id": "dlc1v0qux7u3fny9",
+    "cloud_status": "Failed",
+    "memory_peak_gib": 27.95,
+    "memory_failcnt_max": 0,
+    "oom_seen": false,
+    "tasks": {}
+  },
+  {
+    "row": 7,
+    "job_id": "dlc1vaqgazr1lmnl",
+    "cloud_status": "Failed",
+    "memory_peak_gib": 56.93,
+    "memory_failcnt_max": 0,
+    "oom_seen": false,
+    "tasks": {
+      "lmms_eval_rank0_superchem_cn.log": {
+        "read_timeouts": 194,
+        "context_errors": 0
+      },
+      "lmms_eval_rank0_superchem_en.log": {
+        "read_timeouts": 162,
+        "context_errors": 8
+      }
+    }
+  }
+]

@@ -1,0 +1,123 @@
+{
+  "ClusterId": "asi_cn-wulanchabu_pai-serverless_prd01.1294336768262632",
+  "CodeSource": {
+    "CodeSourceId": "",
+    "MountPath": ""
+  },
+  "CredentialConfig": {
+    "AliyunEnvRoleKey": "",
+    "EnableCredentialInject": false
+  },
+  "DataSources": [
+    {
+      "DataSourceId": "",
+      "MountPath": "/mnt/cpfsA/user/tianleniu",
+      "Options": "",
+      "Uri": "bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/"
+    },
+    {
+      "DataSourceId": "",
+      "MountPath": "/mnt/nasA",
+      "Options": "",
+      "Uri": "nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/"
+    }
+  ],
+  "DisplayName": "eval_row05_missing_webui_defaults_20261018",
+  "Duration": 10781,
+  "ElasticSpec": {
+    "AIMasterDockerImage": "",
+    "AIMasterType": "",
+    "ElasticStrategy": "",
+    "EnableAIMaster": false,
+    "EnableElasticInference": false,
+    "EnableElasticTraining": false,
+    "EnablePsJobElasticPS": false,
+    "EnablePsJobElasticWorker": false,
+    "EnablePsResourceEstimate": false,
+    "MaxParallelism": 0,
+    "MinParallelism": 0,
+    "PSMaxParallelism": 0,
+    "PSMinParallelism": 0
+  },
+  "EnabledDebugger": false,
+  "GmtCreateTime": "2026-10-18T05:58:20Z",
+  "GmtFinishTime": "2026-10-18T08:58:01Z",
+  "GmtRunningTime": "2026-10-18T08:47:38Z",
+  "GmtSubmittedTime": "2026-10-18T05:58:24Z",
+  "GmtSuccessedTime": "2026-10-18T08:58:01Z",
+  "JobId": "dlcy6okjvhx9hdpc",
+  "JobSpecs": [
+    {
+      "AssignNodeSpec": {
+        "EnableAssignNode": false,
+        "NodeNames": "",
+        "AntiAffinityNodeNames": ""
+      },
+      "EcsSpec": "",
+      "Image": "pai-wl-acr-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/tianleniu/innovatorvl:innovator-vl-20261002",
+      "ImageConfig": {
+        "Auth": "",
+        "DockerRegistry": "",
+        "Password": "",
+        "Username": ""
+      },
+      "PodCount": 1,
+      "ResourceConfig": {
+        "CPU": "32",
+        "GPU": "8",
+        "GPUType": "",
+        "Memory": "128Gi",
+        "SharedMemory": "32Gi"
+      },
+      "Type": "Worker"
+    }
+  ],
+  "JobType": "PyTorchJob",
+  "Pods": [
+    {
+      "GmtCreateTime": "2026-10-18T08:46:27Z",
+      "GmtFinishTime": "2026-10-18T08:57:58Z",
+      "GmtStartTime": "2026-10-18T08:47:36Z",
+      "Ip": "10.250.196.93",
+      "PodId": "dlcy6okjvhx9hdpc-master-0",
+      "PodUid": "cca3b41f-3203-4ebc-9dac-b6ef9cf5d82b",
+      "Status": "Succeeded",
+      "Type": "master",
+      "IsNodeProblematic": false
+    }
+  ],
+  "Priority": 6,
+  "ReasonCode": "JobSucceeded",
+  "ReasonMessage": "PyTorchJob dlcy6okjvhx9hdpc is successfully completed.",
+  "RequestId": "01A14F8F-50E4-5F3A-B640-115619DD12AD",
+  "ResourceId": "quota1cauvwqouvn",
+  "Settings": {
+    "BusinessUserId": "",
+    "Caller": "",
+    "EnableErrorMonitoringInAIMaster": false,
+    "EnableSanityCheck": false,
+    "EnableOssAppend": false,
+    "EnableRDMA": true,
+    "EnableTideResource": false,
+    "ErrorMonitoringArgs": "",
+    "SanityCheckArgs": "",
+    "PipelineId": "",
+    "Driver": "",
+    "Shell": "/bin/bash",
+    "OversoldType": "",
+    "JobReservedMinutes": 0,
+    "JobReservedPolicy": "",
+    "EnableDistributedTaskAssigment": false,
+    "QueueId": "",
+    "DisableEcsStockCheck": false,
+    "EnablePreemptibleJob": false,
+    "SchedulingStrategy": ""
+  },
+  "Status": "Succeeded",
+  "ThirdpartyLibDir": "",
+  "UserCommand": "export LMMS_EVAL_LOG_DIR=/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00; bash /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/row05/worker.sh /mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json",
+  "UserId": "207814473582517545",
+  "WorkspaceId": "247143",
+  "WorkspaceName": "Innovator_Coder2",
+  "Accessibility": "PRIVATE"
+}

@@ -1,0 +1,75 @@
+{
+  "env": {
+    "hf_home": "/mnt/nasA/tianleniu/evaluation_cache/huggingface",
+    "hf_token": "",
+    "venv_path": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/.venv",
+    "lmms_eval_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_offline": true,
+    "transformers_offline": true,
+    "api_type": "openai",
+    "openai_api_key": "",
+    "openai_api_url": ""
+  },
+  "log": {
+    "dir": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_nothink_20261018/2026-10-18_01-55-36"
+  },
+  "distributed": {
+    "master_addr": "127.0.0.1",
+    "master_port": 23456,
+    "world_size": 1,
+    "rank": 0
+  },
+  "model": {
+    "path": "/mnt/nasA/tianleniu/models/gemma-4-12B-it",
+    "tp": 2,
+    "max_model_len": 40960,
+    "gpu_memory_utilization": 0.88,
+    "max_num_seqs": 192,
+    "base_port": 8941,
+    "startup_timeout_seconds": 1800,
+    "reasoning_parser": "gemma4",
+    "enable_thinking": false,
+    "is_qwen3_vl": false,
+    "served_model_name": "gemma-4-12B-it",
+    "chat_template": "/mnt/nasA/tianleniu/models/gemma-4-12B-it/chat_template.jinja",
+    "mm_encoder_tp_mode": "weights",
+    "stop_token_ids": [
+      1,
+      106,
+      50
+    ],
+    "source_path": "/mnt/nasA/tianleniu/models/gemma-4-12B-it",
+    "backend": "vllm"
+  },
+  "eval": {
+    "tasks": "SmolInstruct_v2",
+    "output_path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row06_missing_nothink_20261018",
+    "concurrency": 32,
+    "gen_kwargs": "",
+    "limit": -1,
+    "vllm_request_timeout_seconds": 300,
+    "task_timeout_seconds": 21600,
+    "task_timeout_kill_after_seconds": 300,
+    "system_instruction": "",
+    "debug": false,
+    "timestamp": "2026-10-18_01-55-36"
+  },
+  "dlc": {
+    "submit": false
+  },
+  "provenance": {
+    "sheet_revision": 1193,
+    "sheet_row": 6,
+    "cells": [
+      {
+        "cell": "AH6",
+        "task": "SmolInstruct_v2"
+      }
+    ],
+    "source_manifest_sha256": "826916172adbc122a5deeb1bdb064e1f0d8f822fb3d9e74c0ea7f7411e1f8edc",
+    "source_root": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/source",
+    "benchmark_source": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/.setup/rl-judge-feishu-20261007/supplement_source_v2",
+    "thinking": false
+  }
+}

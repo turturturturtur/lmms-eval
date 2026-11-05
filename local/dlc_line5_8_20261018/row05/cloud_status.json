@@ -1,0 +1,118 @@
+{
+  "ClusterId": "asi_cn-wulanchabu_pai-serverless_prd01.1294336768262632",
+  "CodeSource": {
+    "CodeSourceId": "",
+    "MountPath": ""
+  },
+  "CredentialConfig": {
+    "AliyunEnvRoleKey": "",
+    "EnableCredentialInject": false
+  },
+  "DataSources": [
+    {
+      "DataSourceId": "",
+      "MountPath": "/mnt/cpfsA/user/tianleniu",
+      "Options": "",
+      "Uri": "bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/"
+    },
+    {
+      "DataSourceId": "",
+      "MountPath": "/mnt/nasA",
+      "Options": "",
+      "Uri": "nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/"
+    }
+  ],
+  "DisplayName": "eval_row05_missing_nothink_20261018",
+  "Duration": 20,
+  "ElasticSpec": {
+    "AIMasterDockerImage": "",
+    "AIMasterType": "",
+    "ElasticStrategy": "",
+    "EnableAIMaster": false,
+    "EnableElasticInference": false,
+    "EnableElasticTraining": false,
+    "EnablePsJobElasticPS": false,
+    "EnablePsJobElasticWorker": false,
+    "EnablePsResourceEstimate": false,
+    "MaxParallelism": 0,
+    "MinParallelism": 0,
+    "PSMaxParallelism": 0,
+    "PSMinParallelism": 0
+  },
+  "EnabledDebugger": false,
+  "GmtCreateTime": "2026-10-17T17:59:13Z",
+  "GmtSubmittedTime": "2026-10-17T17:59:17Z",
+  "JobId": "dlc1uqr9jfra24dk",
+  "JobSpecs": [
+    {
+      "AssignNodeSpec": {
+        "EnableAssignNode": false,
+        "NodeNames": "",
+        "AntiAffinityNodeNames": ""
+      },
+      "EcsSpec": "",
+      "Image": "pai-wl-acr-registry-vpc.cn-wulanchabu.cr.aliyuncs.com/tianleniu/innovatorvl:innovator-vl-20261002",
+      "ImageConfig": {
+        "Auth": "",
+        "DockerRegistry": "",
+        "Password": "",
+        "Username": ""
+      },
+      "PodCount": 1,
+      "ResourceConfig": {
+        "CPU": "32",
+        "GPU": "8",
+        "GPUType": "",
+        "Memory": "128Gi",
+        "SharedMemory": "32Gi"
+      },
+      "Type": "Worker"
+    }
+  ],
+  "JobType": "PyTorchJob",
+  "Pods": [
+    {
+      "GmtCreateTime": "2026-10-17T17:59:18Z",
+      "Ip": "26.14.211.13",
+      "PodId": "dlc1uqr9jfra24dk-master-0",
+      "PodUid": "e5d93331-64c3-4ce3-b9cb-3d3e1ba45d97",
+      "Status": "Pending",
+      "Type": "master",
+      "IsNodeProblematic": false
+    }
+  ],
+  "Priority": 6,
+  "ReasonCode": "JobPreparing",
+  "ReasonMessage": "PyTorchJob dlc1uqr9jfra24dk has been successfully scheduled and is now entering the preparation phase.",
+  "RequestId": "01A14B04-E31D-5FDD-8252-93B095768706",
+  "ResourceId": "quota1cauvwqouvn",
+  "Settings": {
+    "BusinessUserId": "",
+    "Caller": "",
+    "EnableErrorMonitoringInAIMaster": false,
+    "EnableSanityCheck": false,
+    "EnableOssAppend": false,
+    "EnableRDMA": true,
+    "EnableTideResource": false,
+    "ErrorMonitoringArgs": "",
+    "SanityCheckArgs": "",
+    "PipelineId": "",
+    "Driver": "",
+    "Shell": "/bin/bash",
+    "OversoldType": "",
+    "JobReservedMinutes": 0,
+    "JobReservedPolicy": "",
+    "EnableDistributedTaskAssigment": false,
+    "QueueId": "",
+    "DisableEcsStockCheck": false,
+    "EnablePreemptibleJob": false,
+    "SchedulingStrategy": ""
+  },
+  "Status": "EnvPreparing",
+  "ThirdpartyLibDir": "",
+  "UserCommand": "export LMMS_EVAL_LOG_DIR=/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_nothink_20261018/2026-10-18_01-55-36; bash /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/row05/worker.sh /mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_nothink_20261018/2026-10-18_01-55-36/runtime_config.json",
+  "UserId": "207814473582517545",
+  "WorkspaceId": "247143",
+  "WorkspaceName": "Innovator_Coder2",
+  "Accessibility": "PRIVATE"
+}

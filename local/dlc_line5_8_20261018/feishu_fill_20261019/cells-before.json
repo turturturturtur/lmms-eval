@@ -1,0 +1,1117 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "approx_char_count": 14323,
+    "has_more": false,
+    "ranges": [
+      {
+        "actual_range": "AF1:AH11",
+        "cells": [
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              }
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              }
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              },
+              "value": "superchem_en"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              },
+              "value": "superchem_cn"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "rgb(31, 35, 41)",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "font_weight": "bold",
+                "horizontal_alignment": "center",
+                "vertical_alignment": "middle"
+              },
+              "value": "SmolInstruct_v2"
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；SmolInstruct_v2；eval_rag5fk_missing_p7_r05_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "20.15"
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；superchem_en；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "8.60"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；superchem_cn；eval_rag5fk_missing_p7_r06_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "11.40"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；SmolInstruct_v2；eval_rag5fk_missing_p7_r07_20260911_retry1；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "40.27"
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；superchem_en；eval_rag5fk_missing_p7_r08_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "4.00"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；superchem_cn；eval_rag5fk_missing_p7_r08_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "4.40"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#f8f9fa",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；SmolInstruct_v2；eval_rag5fk_missing_p7_r08_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "6.87"
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "value": "18.80"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "value": "19.80"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "value": "18.80"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "value": "19.80"
+            },
+            {
+              "border_styles": {
+                "bottom": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；SmolInstruct_v2；eval_rag5fk_missing_p7_r09_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "14.38"
+            }
+          ],
+          [
+            {
+              "border_styles": {
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              }
+            },
+            {
+              "border_styles": {
+                "left": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "right": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                },
+                "top": {
+                  "color": "#1f2329",
+                  "style": "solid",
+                  "weight": "thin"
+                }
+              },
+              "cell_styles": {
+                "background_color": "#dee0e3",
+                "font_color": "rgb(0, 0, 0)",
+                "font_size": 13,
+                "horizontal_alignment": "center",
+                "number_format": "#,##0.00",
+                "vertical_alignment": "middle"
+              },
+              "note": "Innovator-Tune 2026-09-11 补测；SmolInstruct_v2；eval_rag5fk_missing_p7_r11_20260911；来源 /mnt/cpfsB/tianleniu/Innovator-Tune/experiments/feishu_rag5fk_missing_eval_p7_20260911/results/metrics.json",
+              "value": "27.44"
+            }
+          ]
+        ],
+        "col_indices": [
+          "AF",
+          "AG",
+          "AH"
+        ],
+        "range": "AF1:AH11",
+        "row_indices": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ],
+        "truncated": false
+      }
+    ],
+    "returned_cell_count": 33,
+    "revision": 1193,
+    "warning_message": "处理 ranges[n].cells 之前，必须先查看顶层 has_more，以及每个 range 的 actual_range / row_indices / col_indices。定位真实行号时用 row_indices[i]，定位真实列字母时用 col_indices[j]，不要按二维数组下标自己数行列；skip_hidden=true、skip_filter=true 或结果被截断时，这样会错位。"
+  }
+}

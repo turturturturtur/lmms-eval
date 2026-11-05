@@ -1,0 +1,26 @@
+{
+  "jobs": [
+    {
+      "row": 7,
+      "model": "InternVL3_5-8B",
+      "tasks": [
+        "superchem_en",
+        "superchem_cn"
+      ],
+      "job_name": "eval_row07_webui_2gpu_processorfix_20261018_232417",
+      "directory": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt6_internvl_2gpu/row07",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/runtime_config.json",
+      "source_sha256": "b6a4103a0bb6c29bdbcef177fa34122e757e93e105ebcab97f7aab47a0f4c0a3",
+      "command": "export LMMS_EVAL_LOG_DIR=/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17; bash /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt6_internvl_2gpu/row07/worker.sh /mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/runtime_config.json",
+      "status": "Creating",
+      "previous_job_id": "dlch4j5sbujo3y3y",
+      "submitted_at": "2026-10-18T15:24:19.297050+00:00",
+      "job_id": "dlc9wv4ejam0n1as"
+    }
+  ],
+  "source_url": "https://scnfed7y9q7p.feishu.cn/wiki/QXfpwaKEyi7H1hkhFwscFL0bnHb?sheet=RAG5Fk",
+  "sheet_revision": 1193,
+  "source_manifest_sha256": "b6a4103a0bb6c29bdbcef177fa34122e757e93e105ebcab97f7aab47a0f4c0a3",
+  "attempt": 6,
+  "previous_manifest": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt5_internvl_4gpu/manifest.json"
+}

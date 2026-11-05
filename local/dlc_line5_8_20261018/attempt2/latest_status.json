@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-10-18T00:56:25.367296+00:00",
+  "jobs": [
+    {
+      "row": 5,
+      "job_id": "dlc1paq8ejxxyjkt",
+      "status": "Failed",
+      "gate_passed": false,
+      "gate_responses": 0,
+      "responses": {},
+      "worker_tail": [
+        "                                                           ^^^^^^^^^^^^^^^^^^^",
+        "AttributeError: 'ConfigurableTask' object has no attribute 'doc_to_messages'",
+        "[INFO][Machine 0] Stopping owned vLLM process groups...",
+        "[INFO][Machine 0] Done."
+      ]
+    },
+    {
+      "row": 6,
+      "job_id": "dlc1pkptsbj3fx2s",
+      "status": "Queuing",
+      "gate_passed": false,
+      "gate_responses": 0,
+      "responses": {}
+    },
+    {
+      "row": 7,
+      "job_id": "dlc1pupf633qmrlw",
+      "status": "Queuing",
+      "gate_passed": false,
+      "gate_responses": 0,
+      "responses": {}
+    }
+  ]
+}

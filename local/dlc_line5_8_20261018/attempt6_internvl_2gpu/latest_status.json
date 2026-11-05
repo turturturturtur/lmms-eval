@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-10-18T15:38:56.598718+00:00",
+  "jobs": [
+    {
+      "row": 7,
+      "job_id": "dlc9wv4ejam0n1as",
+      "status": "Succeeded",
+      "gate_passed": true,
+      "gate_responses": 8,
+      "responses": {
+        "superchem_cn": 500,
+        "superchem_en": 500
+      },
+      "worker_tail": [
+        "[INFO][Machine 0] lmms-eval task completed: superchem_cn",
+        "[INFO][Machine 0] Evaluation completed successfully for all tasks.",
+        "[INFO][Machine 0] Stopping owned vLLM process groups...",
+        "[INFO][Machine 0] Done."
+      ],
+      "task_progress": {
+        "lmms_eval_rank0_superchem_cn.log": "500/500 [01:08<00:00,  7.26it/s]",
+        "lmms_eval_rank0_superchem_en.log": "500/500 [01:12<00:00,  6.94it/s]"
+      }
+    }
+  ]
+}

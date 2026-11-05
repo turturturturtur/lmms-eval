@@ -1,0 +1,62 @@
+[OK] Pod logs for [dlc6owhe3vq76nmx]-[dlc6owhe3vq76nmx-master-0]
+BOOTSTRAP ACCEPTED base20
+[INFO][Machine 0/1] Config          : /mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/base20_runtime_config.json
+[INFO][Machine 0/1] Rank            : 0/1  master=localhost:23456
+[INFO][Machine 0/1] Local GPUs      : 2  main=2 (TP=2, backends=1)
+[INFO][Machine 0/1] Log dir         : /mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs
+[INFO][Machine 0] Activating virtual environment: /mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/.venv
+[INFO][Machine 0] Native lib path prepended: /mnt/cpfsA/user/tianleniu/conda/envs/lmm/lib
+[INFO] Evaluation runtime preflight passed: {"datasets": "5.0.1", "evaluate": "0.4.6", "flashinfer-python": "0.6.14", "jiwer": "4.0.0", "nvidia-ml-py": "13.615.71", "openpyxl": "3.1.5", "pytablewriter": "1.2.1", "python-dotenv": "1.2.2", "rouge": "1.0.1", "rouge-score": "0.1.2", "sacrebleu": "2.6.0", "tenacity": "9.1.4", "torch": "2.11.0+cu129", "transformers": "5.12.1", "vllm": "0.26.0+cu129"}
+[INFO][Machine 0] Qwen3.5 model preflight passed: model=/tmp/portfix90_modelviews/q35v-02d792125ff2-0fde3771 processor=Qwen3VLVideoProcessor transformers=5.12.1
+[INFO][Machine 0] Qwen3.5 model stop token IDs: [248046]
+[INFO][Machine 0] Starting model vLLM  GPUs=0,1  port=8941  backend=FLASHINFER  reasoning_parser=qwen3  is_qwen3_vl=False  enable_thinking=False  enforce_eager=False...
+[INFO][Machine 0] Waiting for all backends to be ready (timeout 1800s, expected_model=portfix90_recovery_base20_base20)...
+[INFO][Machine 0] Ready: http://localhost:8941/v1 model=portfix90_recovery_base20_base20 pid=398
+[INFO][Machine 0] lmms-eval vllm mode: 20 task(s), output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run
+[INFO][Machine 0] Launching lmms-eval task 1/20: ai2d  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_ai2d.log
+[INFO][Machine 0] lmms-eval task completed: ai2d
+[INFO][Machine 0] Launching lmms-eval task 2/20: ai2d_no_mask  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d_no_mask  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_ai2d_no_mask.log
+[INFO][Machine 0] lmms-eval task completed: ai2d_no_mask
+[INFO][Machine 0] Launching lmms-eval task 3/20: chartqa  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/chartqa  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_chartqa.log
+[INFO][Machine 0] lmms-eval task completed: chartqa
+[INFO][Machine 0] Launching lmms-eval task 4/20: infovqa_val  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/infovqa_val  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_infovqa_val.log
+[INFO][Machine 0] lmms-eval task completed: infovqa_val
+[INFO][Machine 0] Launching lmms-eval task 5/20: mmbench_en_dev  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmbench_en_dev  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmbench_en_dev.log
+[ERROR][Machine 0] lmms-eval task failed: mmbench_en_dev  exit_code=1  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmbench_en_dev.log
+[INFO][Machine 0] Preserved raw responses and samples for failed task: mmbench_en_dev
+[INFO][Machine 0] Launching lmms-eval task 6/20: mmerealworld  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmerealworld.log
+[ERROR][Machine 0] lmms-eval task timed out: mmerealworld  timeout=21600s  kill_after=300s  exit_code=124  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmerealworld.log
+[INFO][Machine 0] Preserved raw responses and samples for failed task: mmerealworld
+[INFO][Machine 0] Launching lmms-eval task 7/20: mmerealworld_cn  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld_cn  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmerealworld_cn.log
+[INFO][Machine 0] lmms-eval task completed: mmerealworld_cn
+[INFO][Machine 0] Launching lmms-eval task 8/20: mmmu_pro_standard_reasoning_qwen3_official  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_pro_standard_reasoning_qwen3_official  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmmu_pro_standard_reasoning_qwen3_official.log
+[INFO][Machine 0] lmms-eval task completed: mmmu_pro_standard_reasoning_qwen3_official
+[INFO][Machine 0] Launching lmms-eval task 9/20: mmmu_val_qwen3_official  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_val_qwen3_official  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmmu_val_qwen3_official.log
+[INFO][Machine 0] lmms-eval task completed: mmmu_val_qwen3_official
+[INFO][Machine 0] Launching lmms-eval task 10/20: mmstar  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmstar  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_mmstar.log
+[INFO][Machine 0] lmms-eval task completed: mmstar
+[INFO][Machine 0] Launching lmms-eval task 11/20: ocrbench  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ocrbench  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_ocrbench.log
+[INFO][Machine 0] lmms-eval task completed: ocrbench
+[INFO][Machine 0] Launching lmms-eval task 12/20: realworldqa  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/realworldqa  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_realworldqa.log
+[INFO][Machine 0] lmms-eval task completed: realworldqa
+[INFO][Machine 0] Launching lmms-eval task 13/20: seedbench_2_plus  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/seedbench_2_plus  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_seedbench_2_plus.log
+[INFO][Machine 0] lmms-eval task completed: seedbench_2_plus
+[INFO][Machine 0] Launching lmms-eval task 14/20: vstar_bench  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/vstar_bench  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_vstar_bench.log
+[INFO][Machine 0] lmms-eval task completed: vstar_bench
+[INFO][Machine 0] Launching lmms-eval task 15/20: simplevqa  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/simplevqa  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_simplevqa.log
+[INFO][Machine 0] lmms-eval task completed: simplevqa
+[INFO][Machine 0] Launching lmms-eval task 16/20: EMVista  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/emvista  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_emvista.log
+[INFO][Machine 0] lmms-eval task completed: EMVista
+[INFO][Machine 0] Launching lmms-eval task 17/20: sfe-en  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/sfe-en  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_sfe-en.log
+[INFO][Machine 0] lmms-eval task completed: sfe-en
+[INFO][Machine 0] Launching lmms-eval task 18/20: microvqa  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/microvqa  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_microvqa.log
+[INFO][Machine 0] lmms-eval task completed: microvqa
+[INFO][Machine 0] Launching lmms-eval task 19/20: embspatial  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/embspatial  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_embspatial.log
+[INFO][Machine 0] lmms-eval task completed: embspatial
+[INFO][Machine 0] Launching lmms-eval task 20/20: erqa  output=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/erqa  log=/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/logs/lmms_eval_rank0_erqa.log
+[INFO][Machine 0] lmms-eval task completed: erqa
+[ERROR][Machine 0] Evaluation finished with failed task(s): mmbench_en_dev mmerealworld
+[ERROR][Machine 0] Evaluation phase failed with rc=1.
+[INFO][Machine 0] Stopping owned vLLM process groups...
+[WARN][Machine 0] Force-killing owned vLLM process group 398
+[INFO][Machine 0] Done.

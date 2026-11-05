@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "source_manifest_sha256": "c1cb998934a72b07d8520fa83cb52ba3f5ae41f0ffa4ada3cf4dde6e8808f84c",
+  "cpu_regression_log": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/diagnosis/regression_after.log",
+  "original_model_data_validation": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/preflight.json",
+  "gpu_gate_required": true
+}

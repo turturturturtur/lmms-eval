@@ -1,0 +1,36 @@
+{
+  "ok": true,
+  "identity": "user",
+  "data": {
+    "failed": 0,
+    "results": [
+      {
+        "data": {
+          "updated_cells_count": 2
+        },
+        "index": 0,
+        "success": true,
+        "tool_name": "set_cell_range"
+      },
+      {
+        "data": {
+          "updated_cells_count": 1
+        },
+        "index": 1,
+        "success": true,
+        "tool_name": "set_cell_range"
+      },
+      {
+        "data": {
+          "updated_cells_count": 2
+        },
+        "index": 2,
+        "success": true,
+        "tool_name": "set_cell_range"
+      }
+    ],
+    "revision": 1194,
+    "succeeded": 3,
+    "total": 3
+  }
+}

@@ -1,0 +1,920 @@
+{
+  "runtime": {
+    "torch": "2.11.0+cu129",
+    "transformers": "5.12.1",
+    "datasets": "5.0.1",
+    "pytablewriter": "1.2.1",
+    "sacrebleu": "2.6.0",
+    "evaluate": "0.4.6",
+    "rouge-score": "0.1.2",
+    "rouge": "1.0.1",
+    "jiwer": "4.0.0",
+    "tenacity": "9.1.4",
+    "python-dotenv": "1.2.2",
+    "openpyxl": "3.1.5",
+    "vllm": "0.26.0+cu129",
+    "nvidia-ml-py": "13.615.71",
+    "flashinfer-python": "0.6.14"
+  },
+  "jobs": [
+    {
+      "row": 5,
+      "model": "Qwen3VLForConditionalGeneration",
+      "request_count": 8,
+      "tasks": [
+        {
+          "task": "superchem_cn",
+          "doc_id": 0,
+          "images": 4,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_cn",
+          "doc_id": 34,
+          "images": 30,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_cn",
+          "doc_id": 313,
+          "images": 25,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_cn",
+          "doc_id": 390,
+          "images": 18,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 0,
+          "images": 4,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 34,
+          "images": 30,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 313,
+          "images": 25,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 390,
+          "images": 18,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        }
+      ],
+      "serialized_generation_parameters": [
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "Qwen3-VL-8B-Instruct",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645,
+            151643
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        }
+      ],
+      "judge_required": false,
+      "webui_defaults_match": true
+    },
+    {
+      "row": 6,
+      "model": "Gemma4UnifiedForConditionalGeneration",
+      "request_count": 14,
+      "tasks": [
+        {
+          "task": "smol_forward_synthesis",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 4062,
+          "repeats": 1
+        },
+        {
+          "task": "smol_retrosynthesis",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 960,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 4156,
+          "repeats": 1
+        },
+        {
+          "task": "smol_molecule_captioning",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 1024,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 2538,
+          "repeats": 1
+        },
+        {
+          "task": "smol_molecule_generation",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 1024,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 2493,
+          "repeats": 1
+        },
+        {
+          "task": "smol_name_conversion-i2f",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 20,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 2993,
+          "repeats": 1
+        },
+        {
+          "task": "smol_name_conversion-i2s",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 1024,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 2993,
+          "repeats": 1
+        },
+        {
+          "task": "smol_name_conversion-s2f",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 20,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 2993,
+          "repeats": 1
+        },
+        {
+          "task": "smol_name_conversion-s2i",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 1024,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 2993,
+          "repeats": 1
+        },
+        {
+          "task": "smol_property_prediction-esol",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 1024,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 112,
+          "repeats": 1
+        },
+        {
+          "task": "smol_property_prediction-lipo",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 1024,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 420,
+          "repeats": 1
+        },
+        {
+          "task": "smol_property_prediction-bbbp",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 20,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 197,
+          "repeats": 1
+        },
+        {
+          "task": "smol_property_prediction-clintox",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 20,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 144,
+          "repeats": 1
+        },
+        {
+          "task": "smol_property_prediction-hiv",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 20,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 4107,
+          "repeats": 1
+        },
+        {
+          "task": "smol_property_prediction-sider",
+          "doc_id": 0,
+          "images": 0,
+          "generation_kwargs": {
+            "max_new_tokens": 20,
+            "temperature": 0.0,
+            "do_sample": false,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 2860,
+          "repeats": 1
+        }
+      ],
+      "serialized_generation_parameters": [
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 1024,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 1024,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 20,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 20,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 20,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 960,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 1024,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 20,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 128,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 1024,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 1024,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 20,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 1024,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "gemma-4-12B-it",
+          "max_tokens": 20,
+          "temperature": 0.0,
+          "stop_token_ids": [
+            1,
+            106,
+            50
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        }
+      ],
+      "judge_required": false,
+      "webui_defaults_match": true
+    },
+    {
+      "row": 7,
+      "model": "InternVLChatModel",
+      "request_count": 8,
+      "tasks": [
+        {
+          "task": "superchem_cn",
+          "doc_id": 0,
+          "images": 4,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_cn",
+          "doc_id": 34,
+          "images": 30,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_cn",
+          "doc_id": 313,
+          "images": 25,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_cn",
+          "doc_id": 390,
+          "images": 18,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 0,
+          "images": 4,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 34,
+          "images": 30,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 313,
+          "images": 25,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        },
+        {
+          "task": "superchem_en",
+          "doc_id": 390,
+          "images": 18,
+          "generation_kwargs": {
+            "max_new_tokens": 128,
+            "temperature": 1.0,
+            "do_sample": true,
+            "top_p": 1.0,
+            "num_beams": 1,
+            "until": [
+              "\n\n"
+            ]
+          },
+          "samples": 500,
+          "repeats": 1
+        }
+      ],
+      "serialized_generation_parameters": [
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        },
+        {
+          "model": "InternVL3_5-8B",
+          "max_tokens": 128,
+          "temperature": 1.0,
+          "top_p": 1.0,
+          "stop_token_ids": [
+            151645
+          ],
+          "chat_template_kwargs": {
+            "enable_thinking": false
+          }
+        }
+      ],
+      "judge_required": false,
+      "webui_defaults_match": true
+    }
+  ],
+  "passed": true,
+  "source_manifest_sha256": "09b812e4e575840df3b4cf35cb39e665aaa0f5dddfa4c4a206e07b87642b6514"
+}

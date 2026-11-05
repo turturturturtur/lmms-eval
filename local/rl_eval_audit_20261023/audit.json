@@ -1,0 +1,475 @@
+{
+  "checked_at": "2026-10-23T16:39:36.611179+08:00",
+  "sheet_revision": 1197,
+  "completed_old_rl": [
+    {
+      "step": 20,
+      "row": 80,
+      "benchmarks": 33,
+      "mismatches": [],
+      "means": {
+        "Z": "74.26",
+        "AM": "50.11",
+        "AP": "62.00",
+        "AS": "72.98"
+      }
+    },
+    {
+      "step": 30,
+      "row": 81,
+      "benchmarks": 33,
+      "mismatches": [],
+      "means": {
+        "Z": "74.08",
+        "AM": "50.45",
+        "AP": "61.88",
+        "AS": "73.76"
+      }
+    },
+    {
+      "step": 40,
+      "row": 82,
+      "benchmarks": 33,
+      "mismatches": [],
+      "means": {
+        "Z": "74.32",
+        "AM": "50.32",
+        "AP": "61.72",
+        "AS": "73.26"
+      }
+    },
+    {
+      "step": 50,
+      "row": 83,
+      "benchmarks": 33,
+      "mismatches": [],
+      "means": {
+        "Z": "74.19",
+        "AM": "50.38",
+        "AP": "61.56",
+        "AS": "74.42"
+      }
+    }
+  ],
+  "step90": {
+    "complete": false,
+    "generation_result_benchmarks": 31,
+    "expected_benchmarks": 33,
+    "math_configs_with_results": 10,
+    "math_samples": 21074,
+    "coverage_mismatches": [],
+    "branches": {
+      "base20_2gpu_a4": {
+        "result_files_excluding_judge": 18,
+        "sample_files": 18,
+        "sample_rows": 36374,
+        "bad_json": 0,
+        "request_failure_markers": 0,
+        "empty_resps": 0
+      },
+      "supplement_1gpu_a4": {
+        "result_files_excluding_judge": 13,
+        "sample_files": 26,
+        "sample_rows": 55618,
+        "bad_json": 0,
+        "request_failure_markers": 0,
+        "empty_resps": 0
+      },
+      "math_native_3gpu": {
+        "result_files_excluding_judge": 6,
+        "sample_files": 6,
+        "sample_rows": 12790,
+        "bad_json": 0,
+        "request_failure_markers": 0,
+        "empty_resps": 0
+      },
+      "math_reasoning_3gpu": {
+        "result_files_excluding_judge": 4,
+        "sample_files": 4,
+        "sample_rows": 8284,
+        "bad_json": 0,
+        "request_failure_markers": 0,
+        "empty_resps": 0
+      }
+    },
+    "general_rows": [
+      {
+        "sheet_column": "I",
+        "benchmark": "ai2d",
+        "task": "ai2d",
+        "expected_samples": 3088,
+        "saved_sample_or_raw_rows": 3088,
+        "provisional_native_score_percent": 88.3419689119171,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d/portfix90_recovery_base20_base20/20261021_192825_results.json"
+      },
+      {
+        "sheet_column": "J",
+        "benchmark": "ai2d_no_mask",
+        "task": "ai2d_no_mask",
+        "expected_samples": 3088,
+        "saved_sample_or_raw_rows": 3088,
+        "provisional_native_score_percent": 96.04922279792746,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ai2d_no_mask/portfix90_recovery_base20_base20/20261021_193220_results.json"
+      },
+      {
+        "sheet_column": "K",
+        "benchmark": "ChartQA",
+        "task": "chartqa",
+        "expected_samples": 2500,
+        "saved_sample_or_raw_rows": 2500,
+        "provisional_native_score_percent": 89.12,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/chartqa/portfix90_recovery_base20_base20/20261021_193603_results.json"
+      },
+      {
+        "sheet_column": "L",
+        "benchmark": "InfoVQA val",
+        "task": "infovqa_val",
+        "expected_samples": 2801,
+        "saved_sample_or_raw_rows": 2801,
+        "provisional_native_score_percent": 87.57204969246337,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/infovqa_val/portfix90_recovery_base20_base20/20261021_193920_results.json"
+      },
+      {
+        "sheet_column": "M",
+        "benchmark": "docvqa_val",
+        "task": "docvqa_val",
+        "expected_samples": 5349,
+        "saved_sample_or_raw_rows": 5349,
+        "provisional_native_score_percent": 96.77238355124638,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/docvqa_val/portfix90_recovery_supplement_regular/20261021_131659_results.json"
+      },
+      {
+        "sheet_column": "N",
+        "benchmark": "mmbench_en_dev",
+        "task": "mmbench_en_dev",
+        "expected_samples": 4329,
+        "saved_sample_or_raw_rows": 4329,
+        "provisional_native_score_percent": "",
+        "final_verified": false,
+        "status": "4329条原始回答已保存；Excel写出失败；未完成judge",
+        "result_path": ""
+      },
+      {
+        "sheet_column": "O",
+        "benchmark": "MME-RealWorld",
+        "task": "mmerealworld",
+        "expected_samples": 23609,
+        "saved_sample_or_raw_rows": 0,
+        "provisional_native_score_percent": "",
+        "final_verified": false,
+        "status": "6小时超时；日志最后进度18035/23609；无完整结果文件",
+        "result_path": ""
+      },
+      {
+        "sheet_column": "P",
+        "benchmark": "mmerealworld_cn",
+        "task": "mmerealworld_cn",
+        "expected_samples": 5917,
+        "saved_sample_or_raw_rows": 5917,
+        "provisional_native_score_percent": 58.88118979212439,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmerealworld_cn/portfix90_recovery_base20_base20/20261022_020446_results.json"
+      },
+      {
+        "sheet_column": "Q",
+        "benchmark": "mmmu_pro",
+        "task": "mmmu_pro_standard_reasoning_qwen3_official",
+        "expected_samples": 1730,
+        "saved_sample_or_raw_rows": 1730,
+        "provisional_native_score_percent": "",
+        "final_verified": false,
+        "status": "生成完成；必要judge尚未执行",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_pro_standard_reasoning_qwen3_official/portfix90_recovery_base20_base20/20261022_034412_results.json"
+      },
+      {
+        "sheet_column": "R",
+        "benchmark": "mmmu_val",
+        "task": "mmmu_val_qwen3_official",
+        "expected_samples": 900,
+        "saved_sample_or_raw_rows": 900,
+        "provisional_native_score_percent": "",
+        "final_verified": false,
+        "status": "生成完成；必要judge尚未执行",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmmu_val_qwen3_official/portfix90_recovery_base20_base20/20261022_040630_results.json"
+      },
+      {
+        "sheet_column": "S",
+        "benchmark": "mmstar",
+        "task": "mmstar",
+        "expected_samples": 1500,
+        "saved_sample_or_raw_rows": 1500,
+        "provisional_native_score_percent": 73.42778184577745,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/mmstar/portfix90_recovery_base20_base20/20261022_040828_results.json"
+      },
+      {
+        "sheet_column": "T",
+        "benchmark": "ocrbench",
+        "task": "ocrbench",
+        "expected_samples": 1000,
+        "saved_sample_or_raw_rows": 1000,
+        "provisional_native_score_percent": 88.4,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/ocrbench/portfix90_recovery_base20_base20/20261022_041023_results.json"
+      },
+      {
+        "sheet_column": "U",
+        "benchmark": "realworldqa",
+        "task": "realworldqa",
+        "expected_samples": 765,
+        "saved_sample_or_raw_rows": 765,
+        "provisional_native_score_percent": 76.99346405228759,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/realworldqa/portfix90_recovery_base20_base20/20261022_041341_results.json"
+      },
+      {
+        "sheet_column": "V",
+        "benchmark": "seedbench_2_plus",
+        "task": "seedbench_2_plus",
+        "expected_samples": 2277,
+        "saved_sample_or_raw_rows": 2277,
+        "provisional_native_score_percent": 72.41985068072024,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/seedbench_2_plus/portfix90_recovery_base20_base20/20261022_041603_results.json"
+      },
+      {
+        "sheet_column": "W",
+        "benchmark": "vstar_bench",
+        "task": "vstar_bench",
+        "expected_samples": 191,
+        "saved_sample_or_raw_rows": 191,
+        "provisional_native_score_percent": 91.62303664921467,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/vstar_bench/portfix90_recovery_base20_base20/20261022_041845_results.json"
+      },
+      {
+        "sheet_column": "X",
+        "benchmark": "SimpleVQA",
+        "task": "simplevqa",
+        "expected_samples": 2025,
+        "saved_sample_or_raw_rows": 2025,
+        "provisional_native_score_percent": "",
+        "final_verified": false,
+        "status": "生成完成；必要judge尚未执行",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/simplevqa/portfix90_recovery_base20_base20/20261022_042041_results.json"
+      },
+      {
+        "sheet_column": "Y",
+        "benchmark": "ScreenSpot",
+        "task": "screenspot_v2",
+        "expected_samples": 1272,
+        "saved_sample_or_raw_rows": 1272,
+        "provisional_native_score_percent": 27.830188679245282,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/screenspot/portfix90_modelviews__q35v-20e20a7c09d3-03dd65bf/20261021_194218_results.json"
+      },
+      {
+        "sheet_column": "AA",
+        "benchmark": "EMVista",
+        "task": "EMVista",
+        "expected_samples": 1850,
+        "saved_sample_or_raw_rows": 1850,
+        "provisional_native_score_percent": 49.351351351351354,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/emvista/portfix90_recovery_base20_base20/20261022_042348_results.json"
+      },
+      {
+        "sheet_column": "AB",
+        "benchmark": "scienceqa",
+        "task": "scienceqa",
+        "expected_samples": 4241,
+        "saved_sample_or_raw_rows": 4241,
+        "provisional_native_score_percent": 93.94010846498468,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/scienceqa/portfix90_recovery_supplement_regular/20261021_140719_results.json"
+      },
+      {
+        "sheet_column": "AC",
+        "benchmark": "MolParse",
+        "task": "MolParse",
+        "expected_samples": 2000,
+        "saved_sample_or_raw_rows": 2000,
+        "provisional_native_score_percent": 75.4,
+        "final_verified": false,
+        "status": "原生Qwen3.5-9B judge完成，2000/2000；最终全流程验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141124_results.json"
+      },
+      {
+        "sheet_column": "AD",
+        "benchmark": "OpenRxn",
+        "task": "OpenRxn",
+        "expected_samples": 2000,
+        "saved_sample_or_raw_rows": 2000,
+        "provisional_native_score_percent": 56.3,
+        "final_verified": false,
+        "status": "原生Qwen3.5-9B judge完成，2000/2000；最终全流程验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/judge/20261021_141559_results.json"
+      },
+      {
+        "sheet_column": "AE",
+        "benchmark": "rxnbench_en",
+        "task": "rxnbench_en",
+        "expected_samples": 1525,
+        "saved_sample_or_raw_rows": 1525,
+        "provisional_native_score_percent": 88.98360655737704,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/rxnbench_en/portfix90_recovery_supplement_regular/20261021_142314_results.json"
+      },
+      {
+        "sheet_column": "AF",
+        "benchmark": "superchem_en",
+        "task": "superchem_en",
+        "expected_samples": 500,
+        "saved_sample_or_raw_rows": 500,
+        "provisional_native_score_percent": 13.0,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_en/portfix90_recovery_supplement_regular/20261021_143156_results.json"
+      },
+      {
+        "sheet_column": "AG",
+        "benchmark": "superchem_cn",
+        "task": "superchem_cn",
+        "expected_samples": 500,
+        "saved_sample_or_raw_rows": 500,
+        "provisional_native_score_percent": 9.4,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/superchem_cn/portfix90_recovery_supplement_regular/20261021_154243_results.json"
+      },
+      {
+        "sheet_column": "AH",
+        "benchmark": "SmolInstruct_v2",
+        "task": "SmolInstruct_v2",
+        "expected_samples": 33061,
+        "saved_sample_or_raw_rows": 33061,
+        "provisional_native_score_percent": 26.58214497697947,
+        "final_verified": false,
+        "status": "14/14子任务原生结果已保存；解析补判及最终重算未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/smolinstruct_v2/portfix90_recovery_supplement_regular/20261021_175337_results.json"
+      },
+      {
+        "sheet_column": "AI",
+        "benchmark": "ProteinLMBench",
+        "task": "ProteinLMBench",
+        "expected_samples": 944,
+        "saved_sample_or_raw_rows": 944,
+        "provisional_native_score_percent": 61.86440677966102,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/proteinlmbench/portfix90_recovery_supplement_regular/20261021_184827_results.json"
+      },
+      {
+        "sheet_column": "AJ",
+        "benchmark": "msearth_mcq",
+        "task": "msearth_mcq",
+        "expected_samples": 2784,
+        "saved_sample_or_raw_rows": 2784,
+        "provisional_native_score_percent": 52.11925287356321,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/regular/run/tasks/msearth_mcq/portfix90_recovery_supplement_regular/20261021_184940_results.json"
+      },
+      {
+        "sheet_column": "AK",
+        "benchmark": "sfe-en",
+        "task": "sfe-en",
+        "expected_samples": 1660,
+        "saved_sample_or_raw_rows": 1660,
+        "provisional_native_score_percent": "",
+        "final_verified": false,
+        "status": "生成完成；必要judge尚未执行",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/sfe-en/portfix90_recovery_base20_base20/20261022_042600_results.json"
+      },
+      {
+        "sheet_column": "AL",
+        "benchmark": "MicroVQA",
+        "task": "microvqa",
+        "expected_samples": 1042,
+        "saved_sample_or_raw_rows": 1042,
+        "provisional_native_score_percent": 52.39923224568138,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/microvqa/portfix90_recovery_base20_base20/20261022_043338_results.json"
+      },
+      {
+        "sheet_column": "AN",
+        "benchmark": "EmbSpatial",
+        "task": "embspatial",
+        "expected_samples": 3640,
+        "saved_sample_or_raw_rows": 3640,
+        "provisional_native_score_percent": 77.41758241758242,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/embspatial/portfix90_recovery_base20_base20/20261022_044135_results.json"
+      },
+      {
+        "sheet_column": "AO",
+        "benchmark": "ERQA",
+        "task": "erqa",
+        "expected_samples": 400,
+        "saved_sample_or_raw_rows": 400,
+        "provisional_native_score_percent": 46.25,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/base20_2gpu_a4/results/run/tasks/erqa/portfix90_recovery_base20_base20/20261022_044620_results.json"
+      },
+      {
+        "sheet_column": "AQ",
+        "benchmark": "aecv_bench",
+        "task": "aecv_drawing_qa",
+        "expected_samples": 192,
+        "saved_sample_or_raw_rows": 192,
+        "provisional_native_score_percent": "",
+        "final_verified": false,
+        "status": "生成完成；语义judge尚未执行；规则分不替代最终分",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/aecv_drawing_qa/portfix90_recovery_supplement_industrial/20261021_192708_results.json"
+      },
+      {
+        "sheet_column": "AR",
+        "benchmark": "inspecsafe_v1",
+        "task": "inspecsafe_v1_test",
+        "expected_samples": 1250,
+        "saved_sample_or_raw_rows": 1250,
+        "provisional_native_score_percent": 76.24,
+        "final_verified": false,
+        "status": "原生输出已保存；最终补判/验收未完成",
+        "result_path": "/mnt/oss/tianleniu/Innovator-Tune/eval_recovery/portfix_step90_20261021/supplement_1gpu_a4/results/industrial/run/tasks/inspecsafe_v1_test/portfix90_recovery_supplement_industrial/20261021_192919_results.json"
+      }
+    ],
+    "last_monitor_heartbeat_cst": "2026-10-21T14:41:42+08:00",
+    "current_cloud_status": {
+      "base20": "Failed",
+      "supplement": "Succeeded",
+      "math_native": "Succeeded",
+      "math_reasoning": "Succeeded"
+    },
+    "missing_final_artifacts": [
+      "final_results.json",
+      "postprocess/results_full33.json",
+      "math_postprocess/completion.json",
+      "math_postprocess/fidelity_acceptance.json"
+    ]
+  },
+  "scope_note": "The sheet step20/30/40/50 uses bigbang_rl; step90 is the separate math77k portfix run. Raw stage completion does not establish full final score acceptance."
+}

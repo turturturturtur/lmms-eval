@@ -1,0 +1,70 @@
+{
+  "verified_at": "2026-10-18T05:58:53.993734+00:00",
+  "jobs": [
+    {
+      "row": 5,
+      "job_id": "dlcy6okjvhx9hdpc",
+      "status": "Queuing",
+      "cells": [
+        "AF5",
+        "AG5"
+      ],
+      "tasks": [
+        "superchem_en",
+        "superchem_cn"
+      ],
+      "webui_generation_defaults_verified": true,
+      "judge_required": false,
+      "compatibility": {
+        "attention_backend": "FLASHINFER",
+        "internvl_context_recovery": false,
+        "note": "Only a context-overflow HTTP 400 reduces image patch count; all images and text retained. Sampling remains at WebUI defaults."
+      },
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json"
+    },
+    {
+      "row": 6,
+      "job_id": "dlcyqnrbf2twc2hy",
+      "status": "Queuing",
+      "cells": [
+        "AH6"
+      ],
+      "tasks": [
+        "SmolInstruct_v2"
+      ],
+      "webui_generation_defaults_verified": true,
+      "judge_required": false,
+      "compatibility": {
+        "attention_backend": "TRITON_ATTN",
+        "internvl_context_recovery": false,
+        "note": "Only a context-overflow HTTP 400 reduces image patch count; all images and text retained. Sampling remains at WebUI defaults."
+      },
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json"
+    },
+    {
+      "row": 7,
+      "job_id": "dlcyqnrbfibmhflr",
+      "status": "Queuing",
+      "cells": [
+        "AF7",
+        "AG7"
+      ],
+      "tasks": [
+        "superchem_en",
+        "superchem_cn"
+      ],
+      "webui_generation_defaults_verified": true,
+      "judge_required": false,
+      "compatibility": {
+        "attention_backend": "FLASHINFER",
+        "internvl_context_recovery": true,
+        "note": "Only a context-overflow HTTP 400 reduces image patch count; all images and text retained. Sampling remains at WebUI defaults."
+      },
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_missing_webui_defaults_20261018/2026-10-18_13-56-00/runtime_config.json"
+    }
+  ],
+  "row8": "No missing benchmark in saved sheet revision 1193",
+  "sheet_access": "Live authorization unavailable; scope based on successful saved read at 2026-10-18 01:51 CST",
+  "full_gpu_evaluation": "Queued; no scores available yet",
+  "source_manifest_sha256": "09b812e4e575840df3b4cf35cb39e665aaa0f5dddfa4c4a206e07b87642b6514"
+}

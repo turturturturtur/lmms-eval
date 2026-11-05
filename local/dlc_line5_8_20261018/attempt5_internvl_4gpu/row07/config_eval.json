@@ -1,0 +1,94 @@
+{
+  "env": {
+    "hf_home": "/mnt/nasA/tianleniu/evaluation_cache/huggingface",
+    "hf_token": "",
+    "venv_path": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/.venv",
+    "lmms_eval_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_cache": "/mnt/nasA/tianleniu/evaluation_cache/lmms_eval",
+    "hf_datasets_offline": true,
+    "transformers_offline": true,
+    "api_type": "openai",
+    "openai_api_key": "",
+    "openai_api_url": ""
+  },
+  "log": {
+    "dir": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_webui_4gpu_processorfix_20261018_232015/2026-10-18_23-20-15"
+  },
+  "distributed": {
+    "master_addr": "127.0.0.1",
+    "master_port": 23456,
+    "world_size": 1,
+    "rank": 0
+  },
+  "model": {
+    "path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_model_views/internvl35_row07_nothink_20261018",
+    "tp": 2,
+    "max_model_len": 40960,
+    "gpu_memory_utilization": 0.88,
+    "max_num_seqs": 192,
+    "base_port": 8941,
+    "startup_timeout_seconds": 1800,
+    "reasoning_parser": "",
+    "enable_thinking": false,
+    "is_qwen3_vl": false,
+    "served_model_name": "InternVL3_5-8B",
+    "chat_template": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_model_views/internvl35_row07_nothink_20261018/chat_template.jinja",
+    "mm_encoder_tp_mode": "data",
+    "stop_token_ids": [
+      151645
+    ],
+    "source_path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_model_views/internvl35_row07_nothink_20261018",
+    "backend": "vllm",
+    "attention_backend": "FLASHINFER"
+  },
+  "eval": {
+    "tasks": "superchem_en,superchem_cn",
+    "output_path": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_4gpu_processorfix_20261018_232015",
+    "concurrency": 32,
+    "gen_kwargs": "",
+    "limit": -1,
+    "vllm_request_timeout_seconds": 300,
+    "task_timeout_seconds": 21600,
+    "task_timeout_kill_after_seconds": 300,
+    "system_instruction": "",
+    "debug": false,
+    "timestamp": "2026-10-18_23-20-15",
+    "batch_size": 1
+  },
+  "dlc": {
+    "submit": false
+  },
+  "provenance": {
+    "sheet_revision": 1193,
+    "sheet_row": 7,
+    "sheet_source": "saved successful user read at 2026-10-18 01:51 CST; live read currently unauthorized",
+    "cells": [
+      {
+        "cell": "AF7",
+        "task": "superchem_en"
+      },
+      {
+        "cell": "AG7",
+        "task": "superchem_cn"
+      }
+    ],
+    "source_root": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt4_internvl_processor/source",
+    "source_manifest_sha256": "b6a4103a0bb6c29bdbcef177fa34122e757e93e105ebcab97f7aab47a0f4c0a3",
+    "benchmark_source": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/lmms_eval/tasks",
+    "previous_job_id": "dlc1e5416zmhd4ts",
+    "webui_defaults": "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/local/dlc_line5_8_20261018/attempt3_webui_defaults/webui_eval_defaults.json",
+    "judge_model_if_required": "Qwen3.5-9B",
+    "judge_required": false,
+    "compatibility": {
+      "attention_backend": "FLASHINFER",
+      "internvl_context_recovery": true,
+      "note": "Only a context-overflow HTTP 400 reduces image patch count; all images and text retained. Sampling remains at WebUI defaults.",
+      "internvl_video_image_kwargs_fix": true
+    },
+    "attempt": 5,
+    "resource_adjustment": {
+      "worker_gpu": 4,
+      "reason": "Quota has 4 idle GPUs; retain TP=2, concurrency=32 and all generation defaults."
+    }
+  }
+}

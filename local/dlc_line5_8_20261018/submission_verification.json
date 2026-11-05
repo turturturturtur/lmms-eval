@@ -1,0 +1,26 @@
+[
+  {
+    "row": 5,
+    "job_id": "dlc1uqr9jfra24dk",
+    "status": "EnvPreparing",
+    "webui_runtime_discoverable": true,
+    "thinking": false,
+    "log_exists": false
+  },
+  {
+    "row": 6,
+    "job_id": "dlc1v0qux7u3fny9",
+    "status": "Queuing",
+    "webui_runtime_discoverable": true,
+    "thinking": false,
+    "log_exists": false
+  },
+  {
+    "row": 7,
+    "job_id": "dlc1vaqgazr1lmnl",
+    "status": "Queuing",
+    "webui_runtime_discoverable": true,
+    "thinking": false,
+    "log_exists": false
+  }
+]

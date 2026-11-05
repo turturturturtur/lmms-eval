@@ -1,0 +1,17 @@
+{
+  "passed": true,
+  "source_manifest_sha256": "b6a4103a0bb6c29bdbcef177fa34122e757e93e105ebcab97f7aab47a0f4c0a3",
+  "processor_regression_tests": 4,
+  "before": "diagnosis/processor_kwargs_before.log",
+  "after": "diagnosis/processor_kwargs_after.log",
+  "changed_source_files": [
+    "run_scripts/lmms_eval_sitecustomize/sitecustomize.py"
+  ],
+  "generation_settings_unchanged": true,
+  "model_settings_unchanged": true,
+  "gpu_gate_required": true,
+  "worker_gpu": 2,
+  "tensor_parallel": 2,
+  "num_backends": 1,
+  "concurrency": 32
+}

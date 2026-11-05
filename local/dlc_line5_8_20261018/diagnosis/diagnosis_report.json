@@ -1,0 +1,120 @@
+{
+  "completion_status": "awaiting_gpu_gate_and_full_evaluation",
+  "original_failures": [
+    {
+      "row": 5,
+      "job_id": "dlc1uqr9jfra24dk",
+      "cloud_status": "Failed",
+      "memory_peak_gib": 57.22,
+      "memory_failcnt_max": 0,
+      "oom_seen": false,
+      "tasks": {
+        "lmms_eval_rank0_superchem_cn.log": {
+          "read_timeouts": 200,
+          "context_errors": 0
+        },
+        "lmms_eval_rank0_superchem_en.log": {
+          "read_timeouts": 206,
+          "context_errors": 0
+        }
+      }
+    },
+    {
+      "row": 6,
+      "job_id": "dlc1v0qux7u3fny9",
+      "cloud_status": "Failed",
+      "memory_peak_gib": 27.95,
+      "memory_failcnt_max": 0,
+      "oom_seen": false,
+      "tasks": {}
+    },
+    {
+      "row": 7,
+      "job_id": "dlc1vaqgazr1lmnl",
+      "cloud_status": "Failed",
+      "memory_peak_gib": 56.93,
+      "memory_failcnt_max": 0,
+      "oom_seen": false,
+      "tasks": {
+        "lmms_eval_rank0_superchem_cn.log": {
+          "read_timeouts": 194,
+          "context_errors": 0
+        },
+        "lmms_eval_rank0_superchem_en.log": {
+          "read_timeouts": 162,
+          "context_errors": 8
+        }
+      }
+    }
+  ],
+  "root_causes": [
+    {
+      "models": [
+        "Qwen3-VL-8B",
+        "InternVL3.5-8B"
+      ],
+      "cause": "Client read timeout shorter than long SUPERChem generation; retries duplicated still-running work",
+      "evidence": "300 s ReadTimeout repeated while backend tokens continued and abort counts stayed zero; full 32768 output-token cap can exceed 300 s",
+      "fix": "Read timeout 300 -> 3600 s; per-task wall clock 21600 -> 172800 s; each successful independent trial is atomically journaled with its raw response",
+      "verification": "Actual local HTTP delay reproduced timeout; larger time budget passed; 8 identical-input trials remain 8 independent calls and 8 receipts; resume makes zero additional calls"
+    },
+    {
+      "models": [
+        "Gemma4-12B-IT"
+      ],
+      "cause": "Forced FLASHINFER rejects the Gemma4 partial multimodal full-attention configuration",
+      "evidence": "ValueError: Selected backend AttentionBackendEnum.FLASHINFER is not valid for this configuration. Reason: ['partial multimodal token full attention not supported']",
+      "fix": "Set attention_backend=TRITON_ATTN, whose installed implementation supports mm_prefix; retain model weights, context, no-think and task definitions",
+      "verification": "Installed backend capability inspected; actual GPU startup and 14 native Smol subtasks gated before full evaluation"
+    },
+    {
+      "models": [
+        "InternVL3.5-8B"
+      ],
+      "cause": "Some multimodal prompts exceed the native 40960 token context; deterministic HTTP 400 was retried unchanged",
+      "evidence": "Observed input length 43917 > 40960. Full CPU scan identifies doc_id 34 (30 images) and 313 (25 images) in each language as overlong estimates",
+      "fix": "Only on the precise context overflow HTTP 400, lower max_dynamic_patch one step at a time until the original complete text and image set fits; keep max_tokens=32768 and no-think. Other 400 errors fail immediately",
+      "verification": "HTTP regression confirms unchanged images/text/generation settings and bounded patch-only recovery; actual offending GPU samples are replayed before full evaluation"
+    }
+  ],
+  "preflight_gap": "Original checks covered CPU imports, files, prompt templates, selected input loading and metric smokes. They did not launch the attention kernels or generate long/multi-image samples on a GPU.",
+  "prevention": "New jobs must pass GPU kernel startup and real failure-triggering benchmark requests before full runs. Per-request journals preserve raw output, token usage, finish reason and context adaptation.",
+  "unchanged": {
+    "thinking": false,
+    "full_dataset": true,
+    "superchem_docs_per_language": 500,
+    "superchem_trials_per_doc": 8,
+    "smol_leaf_tasks": 14,
+    "smol_samples": 33061,
+    "gpus_per_job": 8,
+    "tensor_parallel": 2,
+    "backends_per_job": 4,
+    "concurrency": 32,
+    "max_model_len": 40960,
+    "generation_cap": 32768,
+    "sampling": "existing task-native values",
+    "task_source": "unaltered frozen benchmark definitions",
+    "priority": 6,
+    "workspace_id": "247143",
+    "resource_id": "quota1cauvwqouvn"
+  },
+  "new_jobs": [
+    {
+      "row": 5,
+      "job_id": "dlc1paq8ejxxyjkt",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row05_missing_nothink_retry2_20261018/2026-10-18_08-42-50/runtime_config.json"
+    },
+    {
+      "row": 6,
+      "job_id": "dlc1pkptsbj3fx2s",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row06_missing_nothink_retry2_20261018/2026-10-18_08-42-50/runtime_config.json"
+    },
+    {
+      "row": 7,
+      "job_id": "dlc1pupf633qmrlw",
+      "runtime_config": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_logs/eval_row07_missing_nothink_retry2_20261018/2026-10-18_08-42-50/runtime_config.json"
+    }
+  ],
+  "final_criteria": "All 3 cloud jobs Succeeded; GPU gates passed; full sample IDs and exact repeat counts; 49061 raw responses retained; finite native metrics and no request-failure sentinel.",
+  "source_manifest_sha256": "c1cb998934a72b07d8520fa83cb52ba3f5ae41f0ffa4ada3cf4dde6e8808f84c"
+}

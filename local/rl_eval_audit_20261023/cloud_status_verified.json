@@ -1,0 +1,45 @@
+{
+  "checked_at": "2026-10-23T16:40:17.287968+08:00",
+  "jobs": [
+    {
+      "JobId": "dlc6owhe3vq76nmx",
+      "DisplayName": "portfix90_recovery_base20_2gpu_a4_20261021",
+      "Status": "Failed",
+      "GmtCreateTime": "2026-10-21T05:07:37Z",
+      "GmtRunningTime": "2026-10-21T11:17:40Z",
+      "GmtFinishTime": "2026-10-21T20:47:25Z",
+      "ReasonMessage": "{\"overview\":\"PyTorchJob dlc6owhe3vq76nmx failed because 1 Master replica(s) failed.\",\"content\":[{\"time\":\"1792615645\",\"pods\":{\"Master\":[0]},\"reason\":\"1\"}]}",
+      "WorkspaceId": "247143"
+    },
+    {
+      "JobId": "dlc6yw2rvd3eogi9",
+      "DisplayName": "portfix90_recovery_supplement_1gpu_a4_20261021",
+      "Status": "Succeeded",
+      "GmtCreateTime": "2026-10-21T05:07:37Z",
+      "GmtRunningTime": "2026-10-21T05:08:12Z",
+      "GmtFinishTime": "2026-10-21T12:05:14Z",
+      "ReasonMessage": "PyTorchJob dlc6yw2rvd3eogi9 is successfully completed.",
+      "WorkspaceId": "247143"
+    },
+    {
+      "JobId": "dlcyfjg97k5rff4c",
+      "DisplayName": "portfix90_recovery_math_native_3gpu_20261021",
+      "Status": "Succeeded",
+      "GmtCreateTime": "2026-10-21T04:43:41Z",
+      "GmtRunningTime": "2026-10-21T04:44:38Z",
+      "GmtFinishTime": "2026-10-21T08:00:59Z",
+      "ReasonMessage": "PyTorchJob dlcyfjg97k5rff4c is successfully completed.",
+      "WorkspaceId": "247143"
+    },
+    {
+      "JobId": "dlcypj1mz39vlbyf",
+      "DisplayName": "portfix90_recovery_math_reasoning_3gpu_20261021",
+      "Status": "Succeeded",
+      "GmtCreateTime": "2026-10-21T04:43:42Z",
+      "GmtRunningTime": "2026-10-21T08:02:21Z",
+      "GmtFinishTime": "2026-10-21T11:10:37Z",
+      "ReasonMessage": "PyTorchJob dlcypj1mz39vlbyf is successfully completed.",
+      "WorkspaceId": "247143"
+    }
+  ]
+}

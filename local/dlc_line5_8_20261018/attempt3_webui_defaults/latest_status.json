@@ -1,0 +1,74 @@
+{
+  "checked_at": "2026-10-18T15:09:15.954670+00:00",
+  "jobs": [
+    {
+      "row": 5,
+      "job_id": "dlcy6okjvhx9hdpc",
+      "status": "Succeeded",
+      "gate_passed": true,
+      "gate_responses": 8,
+      "responses": {
+        "superchem_cn": 500,
+        "superchem_en": 500
+      },
+      "worker_tail": [
+        "[INFO][Machine 0] lmms-eval task completed: superchem_cn",
+        "[INFO][Machine 0] Evaluation completed successfully for all tasks.",
+        "[INFO][Machine 0] Stopping owned vLLM process groups...",
+        "[INFO][Machine 0] Done."
+      ],
+      "task_progress": {
+        "lmms_eval_rank0_superchem_cn.log": "500/500 [01:14<00:00,  6.75it/s]",
+        "lmms_eval_rank0_superchem_en.log": "500/500 [01:14<00:00,  6.68it/s]"
+      }
+    },
+    {
+      "row": 6,
+      "job_id": "dlcyqnrbf2twc2hy",
+      "status": "Succeeded",
+      "gate_passed": true,
+      "gate_responses": 14,
+      "responses": {
+        "smol_forward_synthesis": 4062,
+        "smol_molecule_captioning": 2538,
+        "smol_molecule_generation": 2493,
+        "smol_name_conversion-i2f": 2993,
+        "smol_name_conversion-i2s": 2993,
+        "smol_name_conversion-s2f": 2993,
+        "smol_name_conversion-s2i": 2993,
+        "smol_property_prediction-bbbp": 197,
+        "smol_property_prediction-clintox": 144,
+        "smol_property_prediction-esol": 112,
+        "smol_property_prediction-hiv": 4107,
+        "smol_property_prediction-lipo": 420,
+        "smol_property_prediction-sider": 2860,
+        "smol_retrosynthesis": 4156
+      },
+      "worker_tail": [
+        "[INFO][Machine 0] lmms-eval task completed: SmolInstruct_v2",
+        "[INFO][Machine 0] Evaluation completed successfully for all tasks.",
+        "[INFO][Machine 0] Stopping owned vLLM process groups...",
+        "[INFO][Machine 0] Done."
+      ],
+      "task_progress": {
+        "lmms_eval_rank0_smolinstruct_v2.log": [
+          "dlcyqnrbf2twc2hy-master-0:7818:7818 [0] NCCL INFO ENV/Plugin: Closing env plugin ncclEnvDefault"
+        ]
+      }
+    },
+    {
+      "row": 7,
+      "job_id": "dlcyqnrbfibmhflr",
+      "status": "Failed",
+      "gate_passed": false,
+      "gate_responses": 4,
+      "responses": {},
+      "worker_tail": [
+        "",
+        "VLLM Backend Responding:  12%|█▎        | 1/8 [00:05<00:37,  5.37s/it, tokens=7,629]",
+        "[INFO][Machine 0] Stopping owned vLLM process groups...",
+        "[INFO][Machine 0] Done."
+      ]
+    }
+  ]
+}

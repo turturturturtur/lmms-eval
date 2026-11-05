@@ -1,0 +1,112 @@
+{
+  "passed": true,
+  "models": [
+    {
+      "row": 5,
+      "architecture": "Qwen3VLForConditionalGeneration",
+      "native_context": 262144,
+      "weight_shards": 4,
+      "thinking": false,
+      "prompt_suffix": "<|im_start|>user\nReply with OK.<|im_end|>\n<|im_start|>assistant\n"
+    },
+    {
+      "row": 6,
+      "architecture": "Gemma4UnifiedForConditionalGeneration",
+      "native_context": 262144,
+      "weight_shards": 1,
+      "thinking": false,
+      "prompt_suffix": "<bos><|turn>user\nReply with OK.<turn|>\n<|turn>model\n<|channel>thought\n<channel|>"
+    },
+    {
+      "row": 7,
+      "architecture": "InternVLChatModel",
+      "native_context": 40960,
+      "weight_shards": 4,
+      "thinking": false,
+      "prompt_suffix": "<|im_start|>user\nReply with OK.<|im_end|>\n<|im_start|>assistant\n"
+    }
+  ],
+  "benchmarks": [
+    {
+      "benchmark": "superchem_en",
+      "members": [
+        {
+          "task": "superchem_en",
+          "samples": 500
+        }
+      ]
+    },
+    {
+      "benchmark": "superchem_cn",
+      "members": [
+        {
+          "task": "superchem_cn",
+          "samples": 500
+        }
+      ]
+    },
+    {
+      "benchmark": "SmolInstruct_v2",
+      "members": [
+        {
+          "task": "smol_forward_synthesis",
+          "samples": 4062
+        },
+        {
+          "task": "smol_retrosynthesis",
+          "samples": 4156
+        },
+        {
+          "task": "smol_molecule_captioning",
+          "samples": 2538
+        },
+        {
+          "task": "smol_molecule_generation",
+          "samples": 2493
+        },
+        {
+          "task": "smol_name_conversion-i2f",
+          "samples": 2993
+        },
+        {
+          "task": "smol_name_conversion-i2s",
+          "samples": 2993
+        },
+        {
+          "task": "smol_name_conversion-s2f",
+          "samples": 2993
+        },
+        {
+          "task": "smol_name_conversion-s2i",
+          "samples": 2993
+        },
+        {
+          "task": "smol_property_prediction-esol",
+          "samples": 112
+        },
+        {
+          "task": "smol_property_prediction-lipo",
+          "samples": 420
+        },
+        {
+          "task": "smol_property_prediction-bbbp",
+          "samples": 197
+        },
+        {
+          "task": "smol_property_prediction-clintox",
+          "samples": 144
+        },
+        {
+          "task": "smol_property_prediction-hiv",
+          "samples": 4107
+        },
+        {
+          "task": "smol_property_prediction-sider",
+          "samples": 2860
+        }
+      ]
+    }
+  ],
+  "metric_smokes": 3,
+  "source_manifest_sha256": "826916172adbc122a5deeb1bdb064e1f0d8f822fb3d9e74c0ea7f7411e1f8edc"
+}

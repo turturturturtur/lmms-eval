@@ -1,0 +1,48 @@
+{
+  "complete": true,
+  "jobs": [
+    {
+      "row": 7,
+      "job_id": "dlc9wv4ejam0n1as",
+      "status": "Succeeded",
+      "complete": true,
+      "tasks": {
+        "superchem_en": {
+          "samples": 500,
+          "responses": 500,
+          "metrics": {
+            "mcp_accuracy,none": 0.082
+          },
+          "finish_reasons": {
+            "stop": 377,
+            "length": 123
+          },
+          "adapted_doc_trials": {
+            "313": 1,
+            "34": 1
+          },
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_en/InternVL3_5-8B/20261018_233131_samples_superchem_en.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_en/InternVL3_5-8B/20261018_233131_results.json"
+        },
+        "superchem_cn": {
+          "samples": 500,
+          "responses": 500,
+          "metrics": {
+            "mcp_accuracy,none": 0.114
+          },
+          "finish_reasons": {
+            "length": 114,
+            "stop": 386
+          },
+          "adapted_doc_trials": {
+            "313": 1,
+            "34": 1
+          },
+          "sample_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_cn/InternVL3_5-8B/20261018_233517_samples_superchem_cn.jsonl",
+          "result_file": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17/tasks/superchem_cn/InternVL3_5-8B/20261018_233517_results.json"
+        }
+      },
+      "result_root": "/mnt/nasA/tianleniu/Innovator-Tune/lmms-eval/eval_result/eval_row07_webui_2gpu_processorfix_20261018_232417/2026-10-18_23-24-17"
+    }
+  ]
+}
