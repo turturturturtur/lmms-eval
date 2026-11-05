@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -36,6 +37,7 @@ def test_run_judge_rejects_raw_qwen35_checkpoint_before_vllm_launch(
 
     venv = tmp_path / "venv"
     (venv / "bin").mkdir(parents=True)
+    (venv / "bin" / "python").symlink_to(sys.executable)
     (venv / "bin" / "activate").write_text("", encoding="utf-8")
     config = {
         "env": {

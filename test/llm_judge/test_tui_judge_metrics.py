@@ -6,7 +6,7 @@ from lmms_eval.tui.server import _build_metric_rows, _result_status_for_root
 
 
 def test_build_metric_rows_from_judged_samples_only(tmp_path):
-    """Historical judge dirs with only judged samples should expose real judge metrics."""
+    """Samples remain inspectable while the authoritative aggregate is missing."""
     result_root = tmp_path / "judge"
     result_root.mkdir()
     sample_file = result_root / "20260701_031944_samples_ocrbench.jsonl"
@@ -53,7 +53,8 @@ def test_build_metric_rows_from_judged_samples_only(tmp_path):
     row = metric_rows[0]
     assert row.display_name == "ocrbench"
     assert row.metric_name == "ocrbench_accuracy.score"
-    assert row.value == 0.5
+    assert row.value is None
+    assert row.status == "pending_judge"
     assert row.n_samples == 2
     assert row.sample_jsonls == [str(sample_file)]
     assert row.value_source == "judged_samples"

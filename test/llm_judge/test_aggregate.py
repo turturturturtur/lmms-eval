@@ -4,6 +4,7 @@ This module tests the Aggregator class and aggregate CLI command
 for aggregating judged results with task-specific logic.
 """
 
+import importlib
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -11,21 +12,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 
-# Skip all tests if aggregate dependencies are not available
-try:
-    from lmms_eval.llm_judge.aggregator import Aggregator
-    from lmms_eval.cli.aggregate_cmd import (
-        _detect_task_from_filename,
-        _get_output_path,
-        add_aggregate_parser,
-        run_aggregate,
-    )
-    AGGREGATE_AVAILABLE = True
-except ImportError:
-    AGGREGATE_AVAILABLE = False
-
-
-pytestmark = pytest.mark.skipif(not AGGREGATE_AVAILABLE, reason="Aggregate dependencies not available")
+from lmms_eval.llm_judge.aggregator import Aggregator
+from lmms_eval.cli.aggregate_cmd import _load_jsonl, add_aggregate_parser, run_aggregate
 
 
 # -----------------------------------------------------------------------------
@@ -344,30 +332,18 @@ class TestAggregatorWeMath:
         """Test WeMath loose aggregation."""
         aggregator = Aggregator()
         
-        # Note: This test may fail if wemath_utils is not available
-        # In that case, it tests the error handling path
-        try:
-            results = aggregator.aggregate(wemath_samples, "wemath_testmini_reasoning", metric_name="wemath_loose")
-            
-            # If successful, verify the result structure
-            if results:
-                assert "Score (Loose)" in results
-        except (ImportError, AttributeError):
-            # Expected if wemath_utils functions are not available in test environment
-            pytest.skip("WeMath utils not available")
+        pytest.importorskip("lmms_eval.tasks.wemath.reasoning.utils", exc_type=ImportError)
+        results = aggregator.aggregate(wemath_samples, "wemath_testmini_reasoning", metric_name="wemath_loose")
+        assert "Score (Loose)" in results
     
     @patch("lmms_eval.llm_judge.aggregator._get_task_manager")
     def test_aggregate_wemath_strict(self, mock_tm, wemath_samples):
         """Test WeMath strict aggregation."""
         aggregator = Aggregator()
         
-        try:
-            results = aggregator.aggregate(wemath_samples, "wemath_testmini_reasoning", metric_name="wemath_strict")
-            
-            if results:
-                assert "Score (Strict)" in results
-        except (ImportError, AttributeError):
-            pytest.skip("WeMath utils not available")
+        pytest.importorskip("lmms_eval.tasks.wemath.reasoning.utils", exc_type=ImportError)
+        results = aggregator.aggregate(wemath_samples, "wemath_testmini_reasoning", metric_name="wemath_strict")
+        assert "Score (Strict)" in results
     
     def test_wemath_data_extraction(self, wemath_samples):
         """Test extraction of WeMath data from samples."""
@@ -484,63 +460,25 @@ class TestAggregatorDictAccuracy:
         del aggregator.SPECIAL_AGGREGATIONS["__test_none__"]
 
 
-class TestTaskDetection:
-    """Tests for task name detection from filename."""
-    
-    def test_detect_from_judged_pattern(self):
-        """Test detection from *_judged.jsonl pattern."""
-        # Aggregate command works with judged files
-        assert _detect_task_from_filename(
-            "20240328_samples_wemath_testmini_reasoning_judged.jsonl"
-        ) == "wemath_testmini_reasoning_judged"
-    
-    def test_detect_from_samples_pattern(self):
-        """Test detection from *_samples_*.jsonl pattern."""
-        assert _detect_task_from_filename(
-            "20240328_samples_mathvision_testmini.jsonl"
-        ) == "mathvision_testmini"
-
-
-class TestOutputPath:
-    """Tests for output path determination."""
-    
-    def test_explicit_output(self, tmp_path):
-        """Test with explicit output path."""
-        input_file = tmp_path / "input.jsonl"
-        output = tmp_path / "output.json"
-        
-        result = _get_output_path(input_file, str(output), None)
-        
-        assert result == output
-    
-    def test_output_dir(self, tmp_path):
-        """Test with output directory."""
-        input_file = tmp_path / "input.jsonl"
-        output_dir = tmp_path / "output"
-        
-        result = _get_output_path(input_file, None, str(output_dir))
-        
-        assert result == output_dir / "input.jsonl"
-        assert output_dir.exists()
-    
-    def test_default_suffix(self, tmp_path):
-        """Test default output with _aggregated suffix."""
-        input_file = tmp_path / "input.jsonl"
-        
-        result = _get_output_path(input_file, None, None)
-        
-        assert result == tmp_path / "input_aggregated.jsonl"
-
-
 class TestArgumentParser:
     """Tests for argument parsing."""
+
+    @pytest.mark.parametrize("arguments", [["--input", "samples.jsonl"], ["--task", "mmbench_en_dev"]])
+    def test_input_and_task_are_required(self, arguments):
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        add_aggregate_parser(parser.add_subparsers())
+        with pytest.raises(SystemExit) as error:
+            parser.parse_args(["aggregate", *arguments])
+        assert error.value.code == 2
     
     def test_add_aggregate_parser(self):
         """Test that aggregate parser is added correctly."""
         import argparse
         
         parser = argparse.ArgumentParser()
-        subparsers = parser.add_subparsers()
+        subparsers = parser.add_subparsers(dest="subcommand")
         
         add_aggregate_parser(subparsers)
         
@@ -576,8 +514,24 @@ class TestArgumentParser:
 
 class TestAggregateIntegration:
     """Integration tests for the aggregate command."""
+
+    def test_real_aggregation_writes_score_to_requested_path(self, tmp_path, generic_samples):
+        import argparse
+
+        input_path = tmp_path / "judged.jsonl"
+        input_path.write_text("".join(json.dumps(sample) + "\n" for sample in generic_samples))
+        output_path = tmp_path / "new_directory/results.json"
+        parser = argparse.ArgumentParser()
+        add_aggregate_parser(parser.add_subparsers())
+        args = parser.parse_args([
+            "aggregate", "--input", str(input_path), "--task", "generic_task",
+            "--metric", "accuracy", "--output", str(output_path),
+        ])
+        args.func(args)
+
+        assert json.loads(output_path.read_text()) == {"accuracy": 0.7667}
     
-    @patch("lmms_eval.cli.aggregate_cmd.Aggregator")
+    @patch("lmms_eval.llm_judge.aggregator.Aggregator")
     def test_run_aggregate_single_file(self, mock_aggregator_class, tmp_path, generic_samples):
         """Test aggregating a single file."""
         mock_aggregator = MagicMock()
@@ -599,16 +553,15 @@ class TestAggregateIntegration:
             verbose=False,
         )
         
-        with patch("sys.exit"):
-            run_aggregate(args)
+        run_aggregate(args)
         
         mock_aggregator.aggregate.assert_called_once()
         call_args = mock_aggregator.aggregate.call_args
-        assert call_args[1]["task_name"] == "test_task"
+        assert call_args.args[1] == "test_task"
+        assert list(tmp_path.iterdir()) == [test_file]
     
-    @patch("lmms_eval.cli.aggregate_cmd.Aggregator")
-    @patch("sys.exit")
-    def test_run_aggregate_file_not_found(self, mock_exit, mock_aggregator_class, tmp_path):
+    @patch("lmms_eval.llm_judge.aggregator.Aggregator")
+    def test_run_aggregate_file_not_found(self, mock_aggregator_class, tmp_path):
         """Test handling of file not found."""
         import argparse
         
@@ -620,11 +573,12 @@ class TestAggregateIntegration:
             verbose=False,
         )
         
-        run_aggregate(args)
-        
-        mock_exit.assert_called_with(1)
+        with pytest.raises(SystemExit) as error:
+            run_aggregate(args)
+        assert error.value.code == 1
+        mock_aggregator_class.assert_not_called()
     
-    @patch("lmms_eval.cli.aggregate_cmd.Aggregator")
+    @patch("lmms_eval.llm_judge.aggregator.Aggregator")
     def test_run_aggregate_with_output(self, mock_aggregator_class, tmp_path, generic_samples):
         """Test aggregating with output file."""
         mock_aggregator = MagicMock()
@@ -648,8 +602,7 @@ class TestAggregateIntegration:
             verbose=False,
         )
         
-        with patch("sys.exit"):
-            run_aggregate(args)
+        run_aggregate(args)
         
         # Verify output file was created
         assert output_file.exists()
@@ -676,10 +629,7 @@ class TestEdgeCases:
             f.write('invalid json line\n')
             f.write('{"doc_id": 1, "metrics": {"accuracy": 0.0}}\n')
         
-        # Aggregator has no _load_jsonl; use standalone JudgeRunner for loading
-        from lmms_eval.llm_judge.standalone import JudgeRunner
-        runner = JudgeRunner()
-        samples = runner._load_jsonl(test_file)
+        samples = _load_jsonl(test_file)
         
         # Should skip invalid line and load 2 valid samples
         assert len(samples) == 2

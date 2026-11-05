@@ -17,7 +17,7 @@ def _job(job_id: str, name: str, create_time: str) -> dict[str, object]:
         "job_id": job_id,
         "name": name,
         "status": "Succeeded",
-        "workspace_id": "240810",
+        "workspace_id": "247143",
         "resource_id": "quota",
         "job_type": "PyTorchJob",
         "priority": "6",
@@ -119,7 +119,7 @@ def main() -> None:
             lambda route: route.fulfill(
                 status=200,
                 content_type="application/json",
-                body=json.dumps({"workspace_id": "240810", "resource_id": "quota", "resource_name": "smoke", "active_statuses": [], "gpu": {"used": 0, "total": 1, "percent": 0, "capacity_source": "smoke"}, "cpu": {"used": 0, "total": 1, "percent": 0, "capacity_source": "smoke"}, "jobs": [], "errors": [], "fetched_at": _timestamp(now), "source": "smoke"}),
+                body=json.dumps({"workspace_id": "247143", "resource_id": "quota", "resource_name": "smoke", "active_statuses": [], "gpu": {"used": 0, "total": 1, "percent": 0, "capacity_source": "smoke"}, "cpu": {"used": 0, "total": 1, "percent": 0, "capacity_source": "smoke"}, "jobs": [], "errors": [], "fetched_at": _timestamp(now), "source": "smoke"}),
             ),
         )
         page.route("**/eval/preview", lambda route: route.fulfill(status=200, content_type="application/json", body=json.dumps({"command": "smoke"})))

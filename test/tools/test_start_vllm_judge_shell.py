@@ -42,6 +42,7 @@ def test_start_vllm_judge_uses_all_eight_visible_gpus_and_qwen35_runtime_flags(t
         fake_bin / "setsid",
         "#!/usr/bin/env bash\n"
         "printf 'CUDA_VISIBLE_DEVICES=%s\\n' \"${CUDA_VISIBLE_DEVICES:-}\" > \"${CAPTURE_FILE}\"\n"
+        "printf 'VLLM_USE_MODELSCOPE=%s\\n' \"${VLLM_USE_MODELSCOPE:-}\" >> \"${CAPTURE_FILE}\"\n"
         "printf '%s\\n' \"$*\" >> \"${CAPTURE_FILE}\"\n"
         "touch \"${READY_FILE}\"\n"
         "sleep 30\n",
@@ -54,6 +55,7 @@ def test_start_vllm_judge_uses_all_eight_visible_gpus_and_qwen35_runtime_flags(t
             "PATH": f"{fake_bin}:{env['PATH']}",
             "CAPTURE_FILE": str(capture_path),
             "READY_FILE": str(ready_path),
+            "VLLM_USE_MODELSCOPE": "True",
         }
     )
     proc = subprocess.run(
@@ -108,6 +110,7 @@ def test_start_vllm_judge_uses_all_eight_visible_gpus_and_qwen35_runtime_flags(t
     pid_match = re.search(r"^VLLM_PID=(\d+)$", proc.stdout, re.MULTILINE)
     assert pid_match is not None
     os.kill(int(pid_match.group(1)), 9)
+    assert "VLLM_USE_MODELSCOPE=False" in launched
 
 
 def test_start_vllm_judge_rejects_tp_larger_than_visible_gpu_count(tmp_path: Path):

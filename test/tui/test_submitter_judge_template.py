@@ -2,15 +2,16 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-DEFAULT_DLC_RESOURCE_ID = "quotaev2tl4w6aw0"
-REQUIRED_NAS_MOUNT_URI = "nas://292a8d49e93-kgi71.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasB"
-MOUNT_URIS = f"cpfs://example/::/mnt/cpfsB,{REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss"
-MOUNT_URIS_WITHOUT_NAS = "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss"
-MOUNT_URIS_WITHOUT_CPFSB = f"{REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss"
+DEFAULT_DLC_RESOURCE_ID = "quota1cauvwqouvn"
+REQUIRED_NAS_MOUNT_URI = "nas://2926de4a653-hnb54.cn-wulanchabu.nas.aliyuncs.com/::/mnt/nasA"
+MOUNT_URIS = f"bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/::/mnt/cpfsA/user/tianleniu,{REQUIRED_NAS_MOUNT_URI}"
+MOUNT_URIS_WITHOUT_NAS = "bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/::/mnt/cpfsA/user/tianleniu"
+MOUNT_URIS_WITHOUT_CPFSA = f"{REQUIRED_NAS_MOUNT_URI}"
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -50,6 +51,7 @@ def _configs(tmp_path: Path, lmms_root: Path) -> tuple[Path, Path, Path]:
     fake_python.write_text(
         """#!/usr/bin/env bash
 set -euo pipefail
+if [[ "${1:-}" == */runtime_preflight.py ]]; then exit 0; fi
 source_path=""
 view_root=""
 run_id=""
@@ -91,7 +93,7 @@ printf '{"source_path":"%s","resolved_path":"%s","model_type":"qwen3_5","process
             "worker_image": "eval-image",
             "data_source_uris": MOUNT_URIS,
             "resource_id": DEFAULT_DLC_RESOURCE_ID,
-            "workspace_id": "workspace-eval",
+            "workspace_id": "247143",
             "vpc_id": "vpc-eval",
             "switch_id": "switch-eval",
             "security_group_id": "sg-eval",
@@ -110,7 +112,7 @@ printf '{"source_path":"%s","resolved_path":"%s","model_type":"qwen3_5","process
                 "worker_image": "judge-image",
                 "data_source_uris": MOUNT_URIS,
                 "resource_id": DEFAULT_DLC_RESOURCE_ID,
-                "workspace_id": "workspace-judge",
+                "workspace_id": "247143",
                 "vpc_id": "vpc-judge",
                 "switch_id": "switch-judge",
                 "security_group_id": "sg-judge",
@@ -158,6 +160,56 @@ printf '{"source_path":"%s","resolved_path":"%s","model_type":"qwen3_5","process
     _write_json(eval_path, eval_config)
     _write_json(judge_path, judge_config)
     return dlc_path, eval_path, judge_path
+
+
+@pytest.mark.parametrize("terminal,exit_code", [("Succeeded", 0), ("Failed", 1)])
+def test_no_judge_workflow_waits_for_remote_terminal_state(tmp_path, terminal, exit_code):
+    """A successful CreateJob receipt alone must never mean evaluation done."""
+    if shutil.which("jq") is None:
+        pytest.skip("submitter requires jq")
+    lmms_root = Path(__file__).resolve().parents[2]
+    dlc_path, eval_path, _ = _configs(tmp_path, lmms_root)
+    binaries = tmp_path / "bin"
+    binaries.mkdir()
+    python3 = binaries / "python3"
+    python3.write_text('''#!/bin/bash
+if [[ "$1" == */dlc_create_job.py ]]; then
+  printf '%s\\n' "$@" > "$TEST_SUBMIT_ARGS"
+  echo '| dlcfixture |'
+else
+  exec "$TEST_REAL_PYTHON" "$@"
+fi
+''')
+    python3.chmod(0o755)
+    (binaries / "python").symlink_to(sys.executable)
+    dlc = binaries / "dlc"
+    dlc.write_text('''#!/bin/bash
+echo poll >> "$TEST_POLL_FILE"
+if [[ $(wc -l < "$TEST_POLL_FILE") -eq 1 ]]; then
+  echo '{"JobId":"dlcfixture","Status":"Running"}'
+else
+  printf '{"JobId":"dlcfixture","Status":"%s"}\\n' "$TEST_TERMINAL"
+fi
+''')
+    dlc.chmod(0o755)
+    config = json.loads(dlc_path.read_text())
+    config["dlc"]["binary"] = str(dlc)
+    _write_json(dlc_path, config)
+    polls = tmp_path / "polls"
+    env = {**os.environ, "PATH": f"{binaries}:{os.environ['PATH']}",
+           "TEST_REAL_PYTHON": sys.executable, "TEST_POLL_FILE": str(polls),
+           "TEST_TERMINAL": terminal, "DLC_POLL_INTERVAL_SECONDS": "0", "DRY_RUN": "0",
+           "TEST_SUBMIT_ARGS": str(tmp_path / "submit_args")}
+    result = subprocess.run(["bash", str(lmms_root / "run_scripts/qwen35_submit.sh"),
+                             str(dlc_path), str(eval_path)], env=env, text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
+    assert result.returncode == exit_code, result.stdout
+    submitted_args = (tmp_path / "submit_args").read_text()
+    assert f"cd {lmms_root};" in submitted_args
+    assert "/source/run_scripts/qwen35_worker.sh" in submitted_args
+    assert "/worker.log" in submitted_args
+    assert polls.read_text().splitlines() == ["poll", "poll"]
+    assert ("Evaluation completed successfully" in result.stdout) == (terminal == "Succeeded")
 
 
 def test_qwen35_submitter_preflight_resolves_raw_checkpoint_in_runtime_config(
@@ -300,14 +352,14 @@ def test_judge_dlc_uses_cpu_only_template_resource(script_name: str, tmp_path: P
     judge_line = next(line for line in lines if line.startswith("[DRY_RUN][judge]"))
 
     assert f"--resource_id={DEFAULT_DLC_RESOURCE_ID}" in eval_line
-    assert "--workspace_id=workspace-eval" in eval_line
+    assert "--workspace_id=247143" in eval_line
     assert "--worker_gpu=8" in eval_line
     assert "--worker_image=eval-image" in eval_line
     assert "--priority=6" in eval_line
     assert REQUIRED_NAS_MOUNT_URI in eval_line
 
     assert f"--resource_id={DEFAULT_DLC_RESOURCE_ID}" in judge_line
-    assert "--workspace_id=workspace-judge" in judge_line
+    assert "--workspace_id=247143" in judge_line
     assert "--worker_gpu=0" in judge_line
     assert "--worker_cpu=4" in judge_line
     assert "--worker_memory=8Gi" in judge_line
@@ -331,7 +383,7 @@ def test_qwen35_local_vllm_dry_run_uses_one_priority_nine_eval_job_with_inline_j
     judge_payload["judge"]["model"] = "Qwen3.5-9B"
     judge_payload["judge"]["api"] = {"key": "", "base_url": ""}
     judge_payload["judge"]["vllm"] = {
-        "model_path": "/mnt/cpfsB/tianleniu/Innovator-Tune/models/Qwen3.5-9B",
+        "model_path": "/mnt/nasA/tianleniu/models/Qwen3.5-9B",
         "tp": 8,
         "max_model_len": 40960,
         "gpu_memory_utilization": "0.88",
@@ -428,11 +480,11 @@ def test_qwen35_submitter_accepts_cpu_only_api_eval(tmp_path: Path):
     _write_json(dlc_config, dlc_payload)
 
     eval_payload = json.loads(eval_config.read_text(encoding="utf-8"))
-    eval_payload["env"] = {
+    eval_payload["env"].update({
         "api_type": "openai",
         "openai_api_key": "sk-test",
         "openai_api_url": "https://api.example.invalid/v1",
-    }
+    })
     eval_payload["model"]["backend"] = "openai"
     eval_payload["model"]["path"] = "router_fs_eval"
     eval_payload["eval"]["tasks"] = "ai2d"
@@ -577,12 +629,12 @@ def test_submitter_rejects_missing_required_nas_mount(
     )
 
     assert proc.returncode != 0
-    assert f"must include {REQUIRED_NAS_MOUNT_URI}" in proc.stdout
+    assert "Both CPFS A" in proc.stdout
 
 
 @pytest.mark.parametrize("script_name", ["qwen35_submit.sh", "qwen3_vl_submit.sh"])
 @pytest.mark.parametrize("field_path", [("dlc", "data_source_uris"), ("dlc", "judge", "data_source_uris")])
-def test_submitter_rejects_missing_cpfsb_mount(
+def test_submitter_rejects_missing_cpfsa_mount(
     script_name: str,
     field_path: tuple[str, ...],
     tmp_path: Path,
@@ -596,7 +648,7 @@ def test_submitter_rejects_missing_cpfsb_mount(
     target = payload
     for key in field_path[:-1]:
         target = target[key]
-    target[field_path[-1]] = MOUNT_URIS_WITHOUT_CPFSB
+    target[field_path[-1]] = MOUNT_URIS_WITHOUT_CPFSA
     _write_json(dlc_config, payload)
     env = os.environ.copy()
     env["DRY_RUN"] = "1"
@@ -618,4 +670,4 @@ def test_submitter_rejects_missing_cpfsb_mount(
     )
 
     assert proc.returncode != 0
-    assert "must include a CPFS URI mounted at /mnt/cpfsB" in proc.stdout
+    assert "Both CPFS A" in proc.stdout

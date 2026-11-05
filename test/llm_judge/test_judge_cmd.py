@@ -332,3 +332,34 @@ class TestRunJudge:
         
         # Should process all 3 files
         assert mock_runner.judge_file.call_count == 3
+
+
+@pytest.mark.parametrize('failure_metrics', [
+    {'judge_failed': True, 'error': 'timeout'},
+    {'llm_judge_failed': True},
+    {'llm_judge_failed': False, 'llm_judge_success': False},
+])
+def test_partial_judge_failure_is_saved_but_exits_unsuccessfully(tmp_path, failure_metrics):
+    import json
+    from lmms_eval.cli import judge_cmd
+    source = tmp_path / 'input_samples_fixture.jsonl'
+    source.write_text('{"doc_id": 0}\n{"doc_id": 1}\n')
+    runner = MagicMock()
+    runner.judge_file.return_value = [
+        {'doc_id': 0, 'metrics': {'llm_judge_score': 0, 'llm_judge_success': True}},
+        {'doc_id': 1, 'metrics': failure_metrics},
+    ]
+    runner.compute_summary.return_value = {'total_acc': 0.0}
+    args = argparse.Namespace(input_result=str(source), task='fixture',
+        output=str(tmp_path / 'output.jsonl'), output_dir=None, judge_mode='llm',
+        judge_model='fixture', judge_api_key='fixture', judge_base_url='http://localhost/v1',
+        parallel=1, dry_run=False, verbose=False)
+    with patch.object(judge_cmd, 'JudgeRunner', return_value=runner), \
+         patch.object(judge_cmd, '_expand_group_tasks', side_effect=lambda tasks: tasks), \
+         patch.object(judge_cmd, '_make_table', return_value='table'):
+        with pytest.raises(SystemExit) as error:
+            judge_cmd.run_judge(args)
+    assert error.value.code == 1
+    runner.save_results.assert_called_once()
+    result = json.loads(next(tmp_path.glob('*_results.json')).read_text())
+    assert result['judge']['failed_samples'] == 1

@@ -64,7 +64,7 @@ def _dlc_config() -> dict:
             "worker_memory": 128,
             "worker_shared_memory": 64,
             "worker_image": "registry.example/image:latest",
-            "data_source_uris": f"cpfs://example/::/mnt/cpfsB,{server.REQUIRED_NAS_MOUNT_URI},oss://example/::/mnt/oss",
+            "data_source_uris": f"bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/::/mnt/cpfsA/user/tianleniu,{server.REQUIRED_NAS_MOUNT_URI}",
             "resource_id": server.DEFAULT_DLC_RESOURCE_ID,
             "workspace_id": server.DEFAULT_DLC_WORKSPACE_ID,
             "vpc_id": "vpc-id",
@@ -307,26 +307,26 @@ def test_username_alias_placeholder_is_replaced_for_webui_preview(tmp_path: Path
 
     payload = _eval_payload()
     payload["user"] = "alice"
-    payload["model"] = "/mnt/cpfsB/<USERNAME>/model"
-    payload["output_path"] = "/mnt/cpfsB/<USERNAME>/lmms-eval/eval_result/eval_alias"
-    payload["dlc_path"] = "/mnt/cpfsB/<USERNAME>/dlc"
-    payload["dlc_config"]["dlc"]["binary"] = "/mnt/cpfsB/<USERNAME>/dlc"
-    payload["dlc_config"]["dlc"]["run_script"] = "/mnt/cpfsB/<USERNAME>/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh"
+    payload["model"] = "/mnt/cpfsA/user/<USERNAME>/model"
+    payload["output_path"] = "/mnt/cpfsA/user/<USERNAME>/lmms-eval/eval_result/eval_alias"
+    payload["dlc_path"] = "/mnt/cpfsA/user/<USERNAME>/dlc"
+    payload["dlc_config"]["dlc"]["binary"] = "/mnt/cpfsA/user/<USERNAME>/dlc"
+    payload["dlc_config"]["dlc"]["run_script"] = "/mnt/cpfsA/user/<USERNAME>/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh"
 
     response = client.post("/eval/preview", json=payload)
 
     assert response.status_code == 200
     command = response.json()["command"]
-    assert "/mnt/cpfsB/alice/dlc" in command
-    assert "/mnt/cpfsB/alice/model" in command
+    assert "/mnt/cpfsA/user/alice/dlc" in command
+    assert "/mnt/cpfsA/user/alice/model" in command
     assert "<USERNAME>" not in command
 
 
 def test_default_dlc_config_uses_qwen35_worker():
     config = server._replace_user_placeholder(server._default_dlc_config(), "tianleniu")
 
-    assert config["dlc"]["binary"] == "/mnt/cpfsB/tianleniu/dlc"
-    assert config["dlc"]["run_script"] == "/mnt/cpfsB/tianleniu/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh"
+    assert config["dlc"]["binary"] == "/mnt/cpfsA/user/tianleniu/Innovator-Tune/bin/dlc"
+    assert config["dlc"]["run_script"] == "/mnt/cpfsA/user/tianleniu/Innovator-Tune/lmms-eval/run_scripts/qwen35_worker.sh"
     assert config["dlc"]["resource_id"] == server.DEFAULT_DLC_RESOURCE_ID
     assert config["dlc"]["judge"]["resource_id"] == server.DEFAULT_DLC_RESOURCE_ID
     assert server.REQUIRED_NAS_MOUNT_URI in config["dlc"]["data_source_uris"]
@@ -343,12 +343,12 @@ def test_preview_rejects_missing_eval_nas_mount(tmp_path: Path, monkeypatch: pyt
     assert _login(client).status_code == 200
 
     payload = _eval_payload()
-    payload["dlc_config"]["dlc"]["data_source_uris"] = "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss"
+    payload["dlc_config"]["dlc"]["data_source_uris"] = "bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/::/mnt/cpfsA/user/tianleniu"
 
     response = client.post("/eval/preview", json=payload)
 
     assert response.status_code == 400
-    assert f"dlc.data_source_uris must include {server.REQUIRED_NAS_MOUNT_URI}" in response.json()["detail"]
+    assert "Both CPFS A" in response.json()["detail"]
 
 
 def test_preview_rejects_missing_judge_nas_mount(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -362,13 +362,13 @@ def test_preview_rejects_missing_judge_nas_mount(tmp_path: Path, monkeypatch: py
     payload = _eval_payload()
     payload["dlc_config"]["dlc"]["judge"] = {
         "resource_id": server.DEFAULT_DLC_RESOURCE_ID,
-        "data_source_uris": "cpfs://example/::/mnt/cpfsB,oss://example/::/mnt/oss",
+        "data_source_uris": "bmcpfs://cpfs-29001wm47tsv6qpysnl0y-vpc-tm0qfl.cn-wulanchabu.cpfs.aliyuncs.com/user/tianleniu/::/mnt/cpfsA/user/tianleniu",
     }
 
     response = client.post("/eval/preview", json=payload)
 
     assert response.status_code == 400
-    assert f"dlc.judge.data_source_uris must include {server.REQUIRED_NAS_MOUNT_URI}" in response.json()["detail"]
+    assert "Both CPFS A" in response.json()["detail"]
 
 
 def test_preview_rejects_non_default_dlc_resource_id(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -644,8 +644,8 @@ def test_import_legacy_api_runtime_yaml_recovers_model_path_as_api_model():
 
 def test_import_runtime_yaml_prefers_source_model_over_resolved_view():
     payload = _eval_payload()
-    source_model = "/mnt/cpfsB/user/checkpoint-227"
-    resolved_model = "/mnt/cpfsB/user/views/checkpoint-227-video-compat"
+    source_model = "/mnt/cpfsA/user/user/checkpoint-227"
+    resolved_model = "/mnt/cpfsA/user/user/views/checkpoint-227-video-compat"
     config = server._build_eval_config(server.ExportYamlRequest(**payload))
     config["model"]["source_path"] = source_model
     config["model"]["path"] = resolved_model
@@ -674,7 +674,7 @@ def test_ckpt_webui_config_records_submit_time_preflight_contract():
     assert config["model"]["source_path"] == payload["model"]
     assert config["model"]["processor_compat"] == "required"
     assert config["model"]["view_root"] == (
-        "/mnt/cpfsB/test-user/lmms_eval_views"
+        "/mnt/nasA/test-user/Innovator-Tune/lmms-eval/eval_model_views"
     )
     assert config["model"]["startup_timeout_seconds"] == 1800
     assert "resolved_path" not in config["model"]

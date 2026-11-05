@@ -92,6 +92,33 @@ def test_generate_until_ignores_task_until_but_keeps_model_stop_token_ids(monkey
     assert generation_kwargs == original_generation_kwargs
 
 
+@pytest.mark.parametrize("reasoning_field", ["reasoning_content", "reasoning"])
+def test_thinking_output_preserves_reasoning_and_truncation_separately(monkeypatch, reasoning_field):
+    backend = _backend(monkeypatch, enable_thinking=True, max_new_tokens=65536)
+    requests = [_request(doc_id=i, max_new_tokens=65536)[0] for i in range(2)]
+
+    def fake_request(payload, url):
+        assert payload["max_tokens"] == 65536
+        assert payload["chat_template_kwargs"] == {"enable_thinking": True}
+        question = payload["messages"][0]["content"][0]["text"]
+        truncated = question == "question-1"
+        return {
+            "choices": [{
+                "message": {"content": None if truncated else "Answer: B",
+                            reasoning_field: "thinking-" + question},
+                "finish_reason": "length" if truncated else "stop",
+            }],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 65536 if truncated else 20},
+        }
+
+    backend._make_request = fake_request
+    results = backend.generate_until(requests)
+    assert [r.text for r in results] == ["Answer: B", ""]
+    assert [r.reasoning_content for r in results] == ["thinking-question-0", "thinking-question-1"]
+    assert [r.finish_reason for r in results] == ["stop", "length"]
+    assert results[1].token_counts.output_tokens == 65536
+
+
 def test_generate_until_ignores_task_until_for_all_requests(monkeypatch):
     backend = _backend(monkeypatch, stop_token_ids="[248046]")
     request_0, _ = _request(doc_id=0, until="END-0")
@@ -204,3 +231,17 @@ def test_backend_rejects_invalid_stop_token_ids(monkeypatch, stop_token_ids):
 def test_backend_rejects_invalid_stop_strings(monkeypatch, stop_strings):
     with pytest.raises(ValueError, match="stop_strings"):
         _backend(monkeypatch, stop_strings=stop_strings)
+
+
+def test_preprocessing_failure_aborts_instead_of_becoming_a_model_answer(monkeypatch):
+    backend = _backend(monkeypatch)
+    request, _ = _request(doc_id=50)
+    with pytest.raises(backend_module.VLLMBackendRequestError, match='preprocessing'):
+        backend.generate_until([request])
+
+
+def test_preprocessing_failure_can_be_explicitly_tolerated(monkeypatch):
+    backend = _backend(monkeypatch, fail_fast_on_request_error=False)
+    request, _ = _request(doc_id=50)
+    result = backend.generate_until([request])
+    assert result[0].text.startswith('[PREPROC_FAILED]')

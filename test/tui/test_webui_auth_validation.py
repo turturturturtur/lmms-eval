@@ -18,7 +18,7 @@ def test_validate_auth_credentials_uses_resolved_dlc_binary(monkeypatch):
     assert calls
     command = calls[0]
     assert command[0] == "/tmp/resolved-dlc"
-    assert "/mnt/cpfsB/<USER>/dlc" not in command
+    assert "/mnt/cpfsA/user/<USER>/Innovator-Tune/bin/dlc" not in command
     assert "--access_id" in command
     assert "--access_key" in command
     assert "--ignore_local_config" in command

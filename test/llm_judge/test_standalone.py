@@ -727,16 +727,17 @@ class TestComputeSummary:
         assert summary["total_acc"] == 0.65
     
     def test_compute_summary_flat_scores(self):
-        """Standard flat-score summary with rule_acc + llm_fallback_acc."""
+        """Final rule and fallback scores each contribute once."""
         runner = JudgeRunner()
         results = [
-            {"metrics": {"acc_score": 1.0, "llm_judge_score": 0}},
-            {"metrics": {"acc_score": 0.0, "llm_judge_score": 1}},
+            {"judge_mode": "rule", "metrics": {"acc_score": 1.0}},
+            {"judge_mode": "llm_fallback", "metrics": {"acc_score": 1.0, "llm_judge_score": 1}},
+            {"judge_mode": "llm_fallback", "metrics": {"acc_score": 0.0, "llm_judge_score": 0}},
         ]
         summary = runner.compute_summary(results)
-        assert summary["rule_acc"] == 0.5
-        assert summary["llm_fallback_acc"] == 0.25
-        assert summary["total_acc"] == 0.75
+        assert "rule_acc" not in summary
+        assert "llm_fallback_acc" not in summary
+        assert summary["total_acc"] == 0.6667
     
     def test_compute_summary_pure_llm_judge_tasks(self):
         """Pure LLM-judge tasks (e.g. MolParse, OpenRxn) should report total_acc."""
